@@ -1,6 +1,5 @@
 /* jshint browser:true, strict:true, undef:true, unused:true */
 
-
 var ascii_draw = (function() {
     'use strict';
 
@@ -116,7 +115,7 @@ var ascii_draw = (function() {
 
         clipboard.on('dataRequested', function(client, args) {
             console.log("ZeroClipboard copying");
-            clip.setText("whatever text you want");
+            clipoard.setText("whatever text you want");
         });
 
         clipboard.on('complete', function(client, args) {
