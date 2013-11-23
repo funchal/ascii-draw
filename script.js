@@ -13,16 +13,16 @@ var ascii_draw = (function() {
         var x, y;
         [x, y] = coord
         return drawingarea.rows[y].cells[x];
-    }
+    };
 
     me.removeClass = function(elem, old_class) {
         var re = new RegExp('(?:^|\\s)' + old_class + '(?!\\S)', 'g');
         elem.className = elem.className.replace(re, '');
-    }
+    };
 
     me.addClass = function(elem, new_class) {
         elem.className = elem.className + ' ' + new_class;
-    }
+    };
 
     /* find the index of a given element in its parent */
     function indexInParent(element) {
@@ -33,7 +33,7 @@ var ascii_draw = (function() {
             }
         }
         return -1;
-    }
+    };
 
     /* resize the table by adding or removing rows and columns */
     me.resize = function(new_rows, new_cols, grow_only) {
@@ -104,6 +104,7 @@ var ascii_draw = (function() {
         var cell = drawingarea.rows[x].cells[y];
         me.addClass(cell, 'highlight');
 
+        ZeroClipboard.setDefaults({moviePath: 'lib/ZeroClipboard.swf'});
         var copy_button = document.getElementById('copy-button');
         var clipboard = new ZeroClipboard(copy_button);
 
@@ -114,7 +115,7 @@ var ascii_draw = (function() {
 
         clipboard.on('dataRequested', function(client, args) {
             console.log("ZeroClipboard copying");
-            clipoard.setText("whatever text you want");
+            clipboard.setText("whatever text you want");
         });
 
         clipboard.on('complete', function(client, args) {
@@ -141,7 +142,7 @@ var ascii_draw = (function() {
                 me.moveSelectedCell(0, 1);
                 break;
         }
-    }
+    };
 
     me.isPrintableKeyPress = function(evt) {
         if (typeof evt.which == "undefined") {
@@ -154,7 +155,7 @@ var ascii_draw = (function() {
             return !evt.ctrlKey && !evt.metaKey && !evt.altKey && evt.which != 8;
         }
         return false;
-    }
+    };
 
     me.onKeyPress = function(e) {
         var e = e || window.event;
@@ -214,7 +215,7 @@ var ascii_draw = (function() {
         /* scroll to the selected cell */
         // FIXME this is bugged
         // drawingarea.rows[new_y].cells[new_x].scrollIntoView(false);
-    }
+    };
 
     me.getFontDimensions = function() {
         var t = document.createElement('table');
