@@ -1,10 +1,10 @@
 function addRow() {
     drawingarea = document.getElementById('drawingarea');
-    var cells = drawingarea.rows[0].cells;
-    r = drawingarea.insertRow();
-    for (var i = 0; i < cells.length; i++) {
-        c = r.insertCell();
-        c.appendChild(document.createTextNode('b'));
+    row = drawingarea.insertRow();
+    var length = drawingarea.rows[0].cells.length;
+    for (var i = 0; i < length; i++) {
+        cell = row.insertCell();
+        cell.appendChild(document.createTextNode('b'));
     }
 }
 
@@ -12,8 +12,9 @@ function addCol() {
     drawingarea = document.getElementById('drawingarea');
     var length = drawingarea.rows.length;
     for (var i = 0; i < length; i++) {
-        c = drawingarea.rows[i].insertCell();
-        c.appendChild(document.createTextNode('b'));
+        row = drawingarea.rows[i];
+        cell = row.insertCell();
+        cell.appendChild(document.createTextNode('b'));
     }
 }
 
