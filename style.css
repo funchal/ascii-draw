@@ -106,6 +106,14 @@ button.pressed {
     background-image: linear-gradient(top, #BBB, #CCC 10%, #CCC);
 }
 
+button.disabled {
+    color: #DDD;
+    background-color: #CCC;
+    background-image: -webkit-linear-gradient(top, #EEE, #DDD 90%, #DDD);
+    background-image: -moz-linear-gradient(top, #BBB, #CCC 90%, #BBB);
+    background-image: linear-gradient(top, #EEE, #DDD 90%, #DDD);
+}
+
 button.left {
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
