@@ -1,3 +1,5 @@
+
+
 table, td {
     margin: 0;
     padding: 0;
@@ -15,10 +17,12 @@ table, td {
 }
 
 table {
+    table-layout: fixed;  /* override the browser's automatic column resizing */
     border-width: 0 0 1px 1px;
 }
 
 td {
+    overflow: hidden;
     border-width: 1px 1px 0 0;
 }
 
