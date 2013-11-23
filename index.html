@@ -7,8 +7,16 @@
         <title>ascii-draw</title>
     </head>
     <body>
-        <button onclick='ascii_draw.addRow()'>addRow</button>
-        <button onclick='ascii_draw.addCol()'>addCol</button>
+        <button>ascii-draw</button>
+
+        <button class="left pressed"><img src="move.png" height="20"></button><button class="middle"><img src="rectangle.png" height="20"></button><button class="middle"><img src="pencil.png" height="20"></button><button class="right"><img src="fill.png" height="20"></button>
+
+        <button class="left"><img src="undo.png" height="20"/></button><button class="right" height="20"><img src="redo.png" height="20"/></button></button>
+
+        <button class="left"><img src="copy.png"/ height="20"></button><button class="middle"><img src="cut.png" height="20"/></button><button class="right"><img src="paste.png" height="20"/></button>
+
+        <br/><br/>
+
         <table id='drawingarea'></table>
     </body>
 </html>
