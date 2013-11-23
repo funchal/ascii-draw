@@ -19,47 +19,74 @@ var ascii_draw = (function() {
         elem.className = elem.className + ' ' + new_class;
     }
 
-    me.addRow = function() {
-        var drawingarea = document.getElementById('drawingarea');
-        var row = drawingarea.insertRow();
-        var length = drawingarea.rows[0].cells.length;
-        for (var i = 0; i < length; i++) {
-            var cell = row.insertCell();
-            cell.style.width = font_dimensions[0]+'px';
-            cell.style.height = font_dimensions[1]+'px';
-            cell.appendChild(document.createTextNode(' '));
+    /* find the index of a given element in its parent */
+    function indexInParent(element) {
+        var children = element.parentElement.children;
+        for (var i = 0; i < children.length; i++) {
+             if (children[i] == element) {
+                return i;
+            }
         }
-    };
+        return -1;
+    }
 
-    me.addCol = function() {
+    /* resize the table by adding or removing rows and columns */
+    me.resize = function(new_rows, new_cols, grow_only) {
         var drawingarea = document.getElementById('drawingarea');
-        var length = drawingarea.rows.length;
-        for (var i = 0; i < length; i++) {
+
+        var rows = drawingarea.rows.length;
+
+        if (grow_only) {
+            new_rows = Math.max(new_rows, rows);
+        }
+
+        if (new_rows < rows) {
+            for (var i = rows - new_rows; i > 0; i--) {
+                drawingarea.deleteRow(i);
+            }
+        } else if (new_rows > rows) {
+            for (var i = 0; i < (new_rows - rows); i++) {
+                drawingarea.insertRow();
+            }
+        }
+
+        if (grow_only) {
+            new_cols = Math.max(new_cols, drawingarea.rows[0].cells.length);
+        }
+
+        for (var i = 0; i < new_rows; i++) {
             var row = drawingarea.rows[i];
-            var cell = row.insertCell();
-            cell.style.width = font_dimensions[0]+'px';
-            cell.style.height = font_dimensions[1]+'px';
-            cell.appendChild(document.createTextNode(''));
+            var cols = row.cells.length;
+            if (new_cols < cols) {
+                for (var j = cols - new_cols; j > 0; j--) {
+                    row.deleteCell(i);
+                }
+            } else {
+                for (var j = 0; j < (new_cols - cols); j++) {
+                    var cell = row.insertCell();
+                    cell.style.width = font_dimensions[0]+'px';
+                    cell.style.height = font_dimensions[1]+'px';
+                    cell.appendChild(document.createTextNode(' '));
+                }
+            }
         }
     };
 
     me.onWindowLoad = function() {
+        var drawingarea = document.getElementById('drawingarea');
 
         font_dimensions = me.getFontDimensions();
 
         // create cells in the drawing area table
-        for (var r = 0; r < 20; r++) {
-            me.addRow();
-        }
-        for (var c = 0; c < 80; c++) {
-            me.addCol();
-        }
+        me.resize(25, 80, false);
 
         // hightlight selected cell
         var x, y;
         [x, y] = selected_cell;
         var cell = drawingarea.rows[x].cells[y];
         me.addClass(cell, 'highlight');
+
+        drawingarea.addEventListener('click', me.onClick, false);
     };
 
     me.onKeyDown = function(e) {
@@ -82,7 +109,7 @@ var ascii_draw = (function() {
         else if (e.keyCode == '40') {
             // down arrow
             me.moveSelectedCell(0, 1);
-        }        
+        }
     }
 
     me.moveSelectedCell = function(dx, dy) {
@@ -96,12 +123,7 @@ var ascii_draw = (function() {
         if (0 <= new_y && 0 <= new_x) {
 
             // add rows and columns if necessary
-            for (var i = nrows; i <= new_y; i++) {
-                me.addRow();
-            }
-            for (var i = ncols; i <= new_x; i++) {
-                me.addCol();
-            }
+            me.resize(new_y+1, new_x+1, true);
 
             var cell = drawingarea.rows[y].cells[x];
             me.removeClass(cell, 'highlight');
@@ -111,6 +133,10 @@ var ascii_draw = (function() {
             var new_cell = drawingarea.rows[new_y].cells[new_x];
             me.addClass(new_cell, 'highlight');
         }
+
+        /* scroll to the selected cell */
+        // FIXME this is bugged
+        // drawingarea.rows[new_y].cells[new_x].scrollIntoView(false);
     }
 
     me.getFontDimensions = function() {
@@ -129,6 +155,13 @@ var ascii_draw = (function() {
         document.body.removeChild(t);
 
         return size;
+    };
+
+    me.onClick = function(element) {
+        var cell = element.target;
+        var col = indexInParent(cell);
+        var row = indexInParent(cell.parentElement);
+        me.moveSelectedCell(col - selected_cell[0], row - selected_cell[1]);
     };
 
     window.addEventListener('load', me.onWindowLoad, false);
