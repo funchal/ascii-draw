@@ -104,7 +104,6 @@ var ascii_draw = (function() {
         var cell = drawingarea.rows[x].cells[y];
         me.addClass(cell, 'highlight');
 
-        ZeroClipboard.setDefaults({moviePath: 'ZeroClipboard.swf'});
         var copy_button = document.getElementById('copy-button');
         var clipboard = new ZeroClipboard(copy_button);
 
