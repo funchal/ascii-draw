@@ -55,9 +55,11 @@ var ascii_draw = (function() {
             me.addCol();
         }
 
-        // hightlight the top left cell
-        var cell = drawingarea.rows[0].cells[0];
-        addClass(cell, 'highlight');
+        // hightlight selected cell
+        var x, y;
+        [x, y] = selected_cell;
+        var cell = drawingarea.rows[x].cells[y];
+        me.addClass(cell, 'highlight');
     };
 
     me.onKeyDown = function(e) {
