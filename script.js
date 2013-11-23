@@ -72,6 +72,19 @@ var ascii_draw = (function() {
         }
     };
 
+    me.copyText = function(text) {
+        var div = document.getElementById('copyarea');
+        div.textContent = text;
+        if (document.createRange) {
+            var range = document.createRange();
+            range.selectNodeContents(div);
+            window.getSelection().addRange(range);
+            console.log("copy " + text);
+        } else {
+            console.log("copy failed");
+        }
+    };
+
     me.onWindowLoad = function() {
         var drawingarea = document.getElementById('drawingarea');
 
@@ -85,6 +98,22 @@ var ascii_draw = (function() {
         [x, y] = selected_cell;
         var cell = drawingarea.rows[x].cells[y];
         me.addClass(cell, 'highlight');
+
+        var clip = new ZeroClipboard(
+            document.getElementById('copy-button'));
+
+        clip.on( 'load', function ( client, args ) {
+            console.log("loaded");
+        } );
+
+        clip.on( 'dataRequested', function ( client, args ) {
+            clip.setText( "whatever text you want");
+        } );
+
+        //this event happens upon the copy finishing
+        clip.on( 'complete', function(client, args) {
+          alert("Copied text to clipboard: " + args.text );
+        } );
 
         drawingarea.addEventListener('click', me.onClick, false);
     };
@@ -110,7 +139,23 @@ var ascii_draw = (function() {
             // down arrow
             me.moveSelectedCell(0, 1);
         }
-    }
+
+        /* user pressed CTRL, prepare for copy/paste action */
+        if (e.ctrlKey && !e.altKey && !e.shiftKey) {
+            switch (e.keyCode) {
+                case 67: /*CTRL+C*/
+                    var text = 'example text';
+                    me.copyText(text);
+                    break;
+                case 86: /*CTRL+V*/
+                    me.pasteText(function(text) {
+                        alert("pasted: " + text);
+                    });
+                    break;
+            }
+        }
+        return true;
+    };
 
     me.moveSelectedCell = function(dx, dy) {
         var x, y;

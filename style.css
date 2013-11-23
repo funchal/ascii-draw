@@ -132,3 +132,10 @@ button.right {
 button::-moz-focus-inner {
     border: 0;
 }
+
+#copyarea {
+    opacity: 0;
+    position: absolute;
+    top: -10000px;
+    right: 0;
+}
