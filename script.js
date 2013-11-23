@@ -105,21 +105,23 @@ var ascii_draw = (function() {
         var cell = drawingarea.rows[x].cells[y];
         me.addClass(cell, 'highlight');
 
-        var clip = new ZeroClipboard(
-            document.getElementById('copy-button'));
+        ZeroClipboard.setDefaults({moviePath: 'lib/ZeroClipboard.swf'});
+        var copy_button = document.getElementById('copy-button');
+        var clipboard = new ZeroClipboard(copy_button);
 
-        clip.on( 'load', function ( client, args ) {
-            console.log("loaded");
-        } );
+        clipboard.on('load', function(client, args) {
+            console.log("ZeroClipboard loaded");
+            me.removeClass(copy_button, "disabled");
+        });
 
-        clip.on( 'dataRequested', function ( client, args ) {
-            clip.setText( "whatever text you want");
-        } );
+        clipboard.on('dataRequested', function(client, args) {
+            console.log("ZeroClipboard copying");
+            clip.setText("whatever text you want");
+        });
 
-        //this event happens upon the copy finishing
-        clip.on( 'complete', function(client, args) {
-          alert("Copied text to clipboard: " + args.text );
-        } );
+        clipboard.on('complete', function(client, args) {
+            console.log("ZeroClipboard copied");
+        });
 
         drawingarea.addEventListener('click', me.onClick, false);
     };
