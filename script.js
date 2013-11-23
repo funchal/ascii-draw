@@ -1,30 +1,40 @@
-function addRow() {
-    drawingarea = document.getElementById('drawingarea');
-    row = drawingarea.insertRow();
-    var length = drawingarea.rows[0].cells.length;
-    for (var i = 0; i < length; i++) {
-        cell = row.insertCell();
-        cell.appendChild(document.createTextNode('b'));
-    }
-}
+/* jshint browser:true, strict:true, undef: true, unused: true */
 
-function addCol() {
-    drawingarea = document.getElementById('drawingarea');
-    var length = drawingarea.rows.length;
-    for (var i = 0; i < length; i++) {
-        row = drawingarea.rows[i];
-        cell = row.insertCell();
-        cell.appendChild(document.createTextNode('b'));
-    }
-}
+var ascii_draw = (function() {
+    'use strict';
 
-function onWindowLoad() {
-    for (var i = 0; i < 25; i++) {
-        addRow();
-    }
-    for (var i = 0; i < 80; i++) {
-        addCol();
-    }
-}
+    var me = {};
 
-window.addEventListener('load', onWindowLoad, false);
+    me.addRow = function() {
+        var drawingarea = document.getElementById('drawingarea');
+        var row = drawingarea.insertRow();
+        var length = drawingarea.rows[0].cells.length;
+        for (var i = 0; i < length; i++) {
+            var cell = row.insertCell();
+            cell.appendChild(document.createTextNode('b'));
+        }
+    };
+
+    me.addCol = function() {
+        var drawingarea = document.getElementById('drawingarea');
+        var length = drawingarea.rows.length;
+        for (var i = 0; i < length; i++) {
+            var row = drawingarea.rows[i];
+            var cell = row.insertCell();
+            cell.appendChild(document.createTextNode('b'));
+        }
+    };
+
+    me.onWindowLoad = function() {
+        for (var r = 0; r < 25; r++) {
+            me.addRow();
+        }
+        for (var c = 0; c < 80; c++) {
+            me.addCol();
+        }
+    };
+
+    window.addEventListener('load', me.onWindowLoad, false);
+
+    return me;
+})();
