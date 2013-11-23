@@ -36,7 +36,7 @@ var ascii_draw = (function() {
         font_dimensions = me.getFontDimensions();
 
         // create cells in the drawing area table
-        for (var r = 0; r < 25; r++) {
+        for (var r = 0; r < 20; r++) {
             me.addRow();
         }
         for (var c = 0; c < 80; c++) {

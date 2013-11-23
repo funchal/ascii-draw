@@ -8,10 +8,6 @@ html {
     height: 100%;
 }
 
-body {
-    padding: 16px;
-}
-
 table, td {
     font-family: courier;
     border-color: #CCC;
@@ -27,9 +23,38 @@ table, td {
     user-select: none;
 }
 
+.toolbar {
+    overflow: hidden;
+    position: absolute;
+    height: 38px;
+    padding: 8px;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    background-color: #BBB;
+    background-image: -webkit-linear-gradient(top, #AAA, #CCC);
+    background-image: -moz-linear-gradient(top, #AAA, #CCC);
+    background-image: linear-gradient(top, #AAA, #CCC);
+}
+
+.apparea {
+    overflow: scroll;
+    position: absolute;
+    padding: 8px;
+    top: 54px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #BBB;
+    background-image: -webkit-linear-gradient(top, #CCC, #BBB);
+    background-image: -moz-linear-gradient(top, #CCC, #BBB);
+    background-image: linear-gradient(top, #CCC, #BBB);
+}
+
 table {
     table-layout: fixed;  /* override the browser's automatic column resizing */
     border-width: 0 0 1px 1px;
+    background-color: #FFF;
 }
 
 td {
