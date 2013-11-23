@@ -141,6 +141,10 @@ button::-moz-focus-inner {
     border: 0;
 }
 
+button img {
+    height: 20px;
+}
+
 #copyarea {
     opacity: 0;
     position: absolute;
