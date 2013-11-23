@@ -1,13 +1,24 @@
-
-
-table, td {
+html, body, div, ul, li, p, table, td {
     margin: 0;
     padding: 0;
+}
+
+/* make the body stretch to the bottom */
+html {
+    height: 100%;
+}
+
+body {
+    padding: 16px;
+}
+
+table, td {
     font-family: courier;
-    border-color: #C0C0C0;
+    border-color: #CCC;
     border-style: solid;
     border-spacing: 0;
     border-collapse: collapse;
+    /* disable table selection */
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     -khtml-user-select: none;
@@ -26,6 +37,69 @@ td {
     border-width: 1px 1px 0 0;
 }
 
-#test {
-    font-family: courier;
+img {
+    border: 0;
+    vertical-align: middle;
+}
+
+button {
+    outline: none;
+    display: inline-block;
+    vertical-align: middle;
+    padding: 0 10px;
+    border: 1px solid #666;
+    border-radius: 10px;
+    height: 38px;
+    background-color: #DDD;
+    background-image: -webkit-linear-gradient(top, #EEE, #DDD 90%, #DDD);
+    background-image: -moz-linear-gradient(top, #EEE, #DDD 90%, #DDD);
+    background-image: linear-gradient(top, #EEE, #DDD 90%, #DDD);
+}
+
+button:hover {
+    background-color: #EEE;
+    background-image: -webkit-linear-gradient(top, #EEE, #DDD 80%, #CCC);
+    background-image: -moz-linear-gradient(top, #EEE, #DDD 80%, #CCC);
+    background-image: linear-gradient(top, #EEE, #DDD 80%, #CCC);
+}
+
+button:active {
+    background-color: #BBB;
+    background-image: -webkit-linear-gradient(top, #CCC, #DDD 10%, #CCC);
+    background-image: -moz-linear-gradient(top, #CCC, #DDD 10%, #CCC);
+    background-image: linear-gradient(top, #CCC, #DDD 10%, #CCC);
+}
+
+button.pressed {
+    background-color: #CCC;
+    background-image: -webkit-linear-gradient(top, #BBB, #CCC 10%, #CCC);
+    background-image: -moz-linear-gradient(top, #BBB, #CCC 10%, #CCC);
+    background-image: linear-gradient(top, #BBB, #CCC 10%, #CCC);
+}
+
+button.left {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    margin-right: 0;
+    border-right-width: 0;
+}
+
+button.middle {
+    border-radius: 0;
+    margin-left: 0;
+    margin-right: 0;
+    border-left-color: #AAA;
+    border-right-width: 0;
+}
+
+button.right {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    margin-left: 0;
+    border-left-color: #AAA;
+}
+
+/* remove ugly border in firefox */
+button::-moz-focus-inner {
+    border: 0;
 }

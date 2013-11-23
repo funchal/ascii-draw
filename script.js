@@ -1,4 +1,4 @@
-/* jshint browser:true, strict:true, undef: true, unused: true */
+/* jshint browser:true, strict:true, undef:true, unused:true */
 
 var ascii_draw = (function() {
     'use strict';
@@ -36,10 +36,10 @@ var ascii_draw = (function() {
         font_dimensions = me.getFontDimensions();
 
         // create cells in the drawing area table
-        for (var r = 0; r < 5; r++) {
+        for (var r = 0; r < 25; r++) {
             me.addRow();
         }
-        for (var c = 0; c < 8; c++) {
+        for (var c = 0; c < 80; c++) {
             me.addCol();
         }
 
