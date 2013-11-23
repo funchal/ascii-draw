@@ -10,6 +10,12 @@ var ascii_draw = (function() {
 
     var selected_cell = [0, 0];
 
+    me.get_cell = function(coord) {
+        var x, y;
+        [x, y] = coord
+        return drawingarea.rows[y].cells[x];
+    }
+
     me.removeClass = function(elem, old_class) {
         var re = new RegExp('(?:^|\\s)' + old_class + '(?!\\S)', 'g');
         elem.className = elem.className.replace(re, '');
@@ -121,23 +127,49 @@ var ascii_draw = (function() {
     me.onKeyDown = function(e) {
         var e = e || window.event;
 
-        [x, y] = selected_cell;
+        switch (e.keyCode) {
+            case 37: // left arrow
+                me.moveSelectedCell(-1, 0);
+                break;
+            case 38: // up arrow
+                me.moveSelectedCell(0, -1);
+                break;
+            case 39: // right arrow
+                me.moveSelectedCell(1, 0);
+                break;
+            case 40: // down arrow
+                me.moveSelectedCell(0, 1);
+                break;
+        }
+    }
 
-        if (e.keyCode == '37') {
-            // left arrow
-            me.moveSelectedCell(-1, 0);
+    me.isPrintableKeyPress = function(evt) {
+        if (typeof evt.which == "undefined") {
+            // This is IE, which only fires keypress events for printable keys
+            return true;
+        } else if (typeof evt.which == "number" && evt.which > 0) {
+            // In other browsers except old versions of WebKit, evt.which is
+            // only greater than zero if the keypress is a printable key.
+            // We need to filter out backspace and ctrl/alt/meta key combinations
+            return !evt.ctrlKey && !evt.metaKey && !evt.altKey && evt.which != 8;
         }
-        else if (e.keyCode == '38') {
-            // up arrow
-            me.moveSelectedCell(0, -1);
+        return false;
+    }
+
+    me.onKeyPress = function(e) {
+        var e = e || window.event;
+
+        if (e.keyCode == 13) {  // 'enter' key
+            // TODO: move the selected cell to the cell immediately below the
+            // first cell we entered text in.
+            return;
         }
-        else if (e.keyCode == '39') {
-            // right arrow
+
+        var printable = me.isPrintableKeyPress(e);
+        if (printable) {
+            var cell = me.get_cell(selected_cell);
+            cell.innerHTML = String.fromCharCode(e.charCode);
             me.moveSelectedCell(1, 0);
-        }
-        else if (e.keyCode == '40') {
-            // down arrow
-            me.moveSelectedCell(0, 1);
         }
 
         /* user pressed CTRL, prepare for copy/paste action */
@@ -170,12 +202,12 @@ var ascii_draw = (function() {
             // add rows and columns if necessary
             me.resize(new_y+1, new_x+1, true);
 
-            var cell = drawingarea.rows[y].cells[x];
+            var cell = me.get_cell([x, y]);
             me.removeClass(cell, 'highlight');
 
             selected_cell = [new_x, new_y];
 
-            var new_cell = drawingarea.rows[new_y].cells[new_x];
+            var new_cell = me.get_cell([new_x, new_y]);
             me.addClass(new_cell, 'highlight');
         }
 
@@ -211,6 +243,7 @@ var ascii_draw = (function() {
 
     window.addEventListener('load', me.onWindowLoad, false);
     window.addEventListener('keydown', me.onKeyDown, false);
+    window.addEventListener('keypress', me.onKeyPress, false);
 
     return me;
 })();
