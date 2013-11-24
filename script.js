@@ -7,8 +7,6 @@ var ascii_draw = (function() {
 
     var me = {};
 
-    var font_dimensions;
-
     var start_selection = [0, 0];
     var end_selection = [0, 0];
     var selecting = false;
@@ -75,8 +73,6 @@ var ascii_draw = (function() {
             } else {
                 for (j = 0; j < (new_cols - cols); j++) {
                     var cell = row.insertCell();
-                    cell.style.width = font_dimensions[0]+'px';
-                    cell.style.height = font_dimensions[1]+'px';
                     cell.appendChild(document.createTextNode(' '));
                 }
             }
@@ -267,7 +263,7 @@ var ascii_draw = (function() {
     var init = function() {
         var drawingarea = document.getElementById('drawingarea');
 
-        font_dimensions = getFontDimensions();
+        me.changeFontAction();
 
         // create cells in the drawing area table
         resizeTable(25, 80, false);
@@ -367,22 +363,47 @@ var ascii_draw = (function() {
         selecting = false;
     };
 
-    var getFontDimensions = function() {
+    var changeStyleRule = function (selector, style, value) {
+        var rules = document.styleSheets[0].cssRules ||
+                    document.styleSheets[0].rules;
+
+        var match = null;
+        for (var i = 0; i != rules.length; i++) {
+            if (rules[i].type === CSSRule.STYLE_RULE &&
+                rules[i].selectorText == selector) {
+                match = rules[i].style;
+                break;
+            }
+        }
+
+        if (match === null) {
+            if (document.styleSheets[0].insertRule) {
+                 document.styleSheets[0].insertRule(selector + ' {' + style +
+                                                    ':' + value + "}",
+                                                    rules.length);
+            } else {
+                document.styleSheets[0].addRule(selector, style + ':' + value);
+            }
+        } else {
+            match[style] = value;
+            console.log(value);
+        }
+    };
+
+    me.changeFontAction = function() {
+        changeStyleRule('td', 'width', 'auto');
+        changeStyleRule('td', 'height', 'auto');
+
         var t = document.createElement('table');
         var row = t.insertRow();
         var cell = row.insertCell();
         cell.appendChild(document.createTextNode('M'));
         document.body.appendChild(t);
 
-        var size =
-            [
-                cell.offsetWidth,
-                cell.offsetHeight
-            ];
+        changeStyleRule('td', 'width', cell.clientWidth + 'px');
+        changeStyleRule('td', 'height', cell.clientHeight + 'px');
 
         document.body.removeChild(t);
-
-        return size;
     };
 
     window.addEventListener('load', init, false);

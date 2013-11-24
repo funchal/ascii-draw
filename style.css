@@ -1,6 +1,30 @@
-html, body, div, ul, li, p, table, td {
+@font-face {
+    font-family: 'Inconsolata-g';
+    src: url('font/Inconsolata-g.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Classic Console';
+    src: url('font/Classic-Console.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+* {
+    font-family: inherit;
+    font-size: inherit;
+}
+
+html, body, div, ul, li, p, table, td, button, div, textarea {
     margin: 0;
     padding: 0;
+}
+
+body {
+    font-family: 'Inconsolata-g', monospace;
+    font-size: 12px;
 }
 
 /* make the body stretch to the bottom */
@@ -9,11 +33,12 @@ html {
 }
 
 table, td {
-    font-family: courier;
-    border-color: #CCC;
+    text-align: center;
+    border-color: #DDD;
     border-style: solid;
     border-spacing: 0;
     border-collapse: collapse;
+    background-color: #FFF;
     /* disable table selection */
     -webkit-touch-callout: none;
     -webkit-user-select: none;
@@ -54,7 +79,6 @@ table, td {
 table {
     table-layout: fixed;  /* override the browser's automatic column resizing */
     border-width: 0 0 1px 1px;
-    background-color: #FFF;
 }
 
 td {

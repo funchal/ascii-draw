@@ -5,39 +5,65 @@
         <link rel='stylesheet' href='style.css' type='text/css'/>
         <script src='lib/ZeroClipboard.min.js' type='text/javascript'></script>
         <script src='script.js' type='text/javascript'></script>
+        <script type='text/javascript'>
+            function fontChange() {
+                var font_select = document.getElementById('font-select');
+                switch (font_select.selectedIndex) {
+                    case 0:
+                        document.body.style.fontFamily = 'Inconsolata-g';
+                        document.body.style.fontSize = '12px';
+                        break;
+                    case 1:
+                        document.body.style.fontFamily = 'Classic Console';
+                        document.body.style.fontSize = '18px';
+                        break;
+                    case 2:
+                        document.body.style.fontFamily = 'monospace';
+                        document.body.style.fontSize = '12px';
+                        break;
+                }
+                ascii_draw.changeFontAction();
+            }
+        </script>
         <title>ascii-draw</title>
     </head>
     <body>
-        <div class="toolbar">
+        <div class='toolbar'>
             <button>ascii-draw</button>
 
-            <button class="left pressed">
-                <img src="img/move.png" alt="Move"/>
-            </button><button class="middle">
-                <img src="img/rectangle.png" alt="Rectangle"/>
-            </button><button class="middle">
-                <img src="img/pencil.png" alt="Pencil"/>
-            </button><button class="right">
-                <img src="img/fill.png" alt="Fill"/>
+            <button class='left pressed'>
+                <img src='img/move.png' alt='Move'/>
+            </button><button class='middle'>
+                <img src='img/rectangle.png' alt='Rectangle'/>
+            </button><button class='middle'>
+                <img src='img/pencil.png' alt='Pencil'/>
+            </button><button class='right'>
+                <img src='img/fill.png' alt='Fill'/>
             </button>
 
-            <button class="left">
-                <img src="img/undo.png" alt="Undo"/>
-            </button><button class="right">
-                <img src="img/redo.png" alt="Redo"/>
+            <button class='left'>
+                <img src='img/undo.png' alt='Undo'/>
+            </button><button class='right'>
+                <img src='img/redo.png' alt='Redo'/>
             </button>
 
-            <button class="left" id="copy-button">
-                <img src="img/copy.png" alt="Copy"/>
-            </button><button class="middle">
-                <img src="img/cut.png" alt="Cut"/>
-            </button><button class="right">
-                <img src="img/paste.png" alt="Paste"/>
+            <button class='left' id='copy-button'>
+                <img src='img/copy.png' alt='Copy'/>
+            </button><button class='middle'>
+                <img src='img/cut.png' alt='Cut'/>
+            </button><button class='right'>
+                <img src='img/paste.png' alt='Paste'/>
             </button>
+
+            <select onchange='fontChange()' id='font-select'>
+                <option>Inconsolata-g</option>
+                <option>Classic Console</option>
+                <option>Default monospace</option>
+            </select>
         </div>
-        <div class="apparea" style="overflow:scroll">
+        <div class='apparea' style='overflow:scroll'>
             <table id='drawingarea'></table>
         </div>
-        <textarea id="copypastearea"></textarea>
+        <textarea id='copypastearea'></textarea>
     </body>
 </html>
