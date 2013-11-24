@@ -23,7 +23,7 @@ html, body, div, ul, li, p, table, td, button, div, textarea {
 }
 
 body {
-    font-family: 'Inconsolata-g', monospace;
+    font-family: 'Inconsolata-g';
     font-size: 12px;
 }
 
@@ -56,10 +56,10 @@ table, td {
     top: 0px;
     left: 0px;
     right: 0px;
-    background-color: #BBB;
-    background-image: -webkit-linear-gradient(top, #AAA, #CCC);
-    background-image: -moz-linear-gradient(top, #AAA, #CCC);
-    background-image: linear-gradient(top, #AAA, #CCC);
+    background-color: #252525;
+    background-image: -webkit-linear-gradient(to top, #202020, #313131);
+    background-image: -moz-linear-gradient(to top, #202020, #313131);
+    background-image: linear-gradient(to top, #202020, #313131);
 }
 
 .apparea {
@@ -70,10 +70,7 @@ table, td {
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #BBB;
-    background-image: -webkit-linear-gradient(top, #CCC, #BBB);
-    background-image: -moz-linear-gradient(top, #CCC, #BBB);
-    background-image: linear-gradient(top, #CCC, #BBB);
+    background-color: #1F1F1F;
 }
 
 table {
@@ -100,46 +97,45 @@ embed {
 }
 
 button {
+    cursor: pointer;
     outline: none;
     display: inline-block;
     vertical-align: middle;
-    padding: 0 10px;
-    border: 1px solid #666;
+    padding: 1px 8px;
+    border: 1px double #000;
     border-radius: 10px;
     height: 38px;
-    background-color: #DDD;
-    background-image: -webkit-linear-gradient(top, #EEE, #DDD 90%, #DDD);
-    background-image: -moz-linear-gradient(top, #EEE, #DDD 90%, #DDD);
-    background-image: linear-gradient(top, #EEE, #DDD 90%, #DDD);
+    background-color: #424242;
+    box-shadow: 1px 1px 1px 0px #303030, 1px 1px 1px 0px #505050 inset;
+    background-image: -webkit-linear-gradient(to top, #383838, #444444);
+    background-image: -moz-linear-gradient(to top, #383838, #444444);
+    background-image: linear-gradient(to top, #383838, #444444);
 }
 
 button:hover, .zeroclipboard-is-hover {
-    background-color: #EEE;
-    background-image: -webkit-linear-gradient(top, #EEE, #DDD 80%, #CCC);
-    background-image: -moz-linear-gradient(top, #EEE, #DDD 80%, #CCC);
-    background-image: linear-gradient(top, #EEE, #DDD 80%, #CCC);
+    background-color: #525252;
+    box-shadow: 1px 1px 1px 0px #303030, 1px 1px 1px 0px #585858 inset;
+    background-image: -webkit-linear-gradient(to top, #3D3D3D, #4B4B4B);
+    background-image: -moz-linear-gradient(to top, #3D3D3D, #4B4B4B);
+    background-image: linear-gradient(to top, #3D3D3D, #4B4B4B);
 }
 
-button:active, .zeroclipboard-is-active {
-    background-color: #BBB;
-    background-image: -webkit-linear-gradient(top, #CCC, #DDD 10%, #CCC);
-    background-image: -moz-linear-gradient(top, #CCC, #DDD 10%, #CCC);
-    background-image: linear-gradient(top, #CCC, #DDD 10%, #CCC);
+button:active, .zeroclipboard-is-active, button.pressed {
+    background-color: #1A1A1A;
+    padding: 2px 7px 0 9px;
+    box-shadow: 2px 2px 1px 0px #202020, 1px 1px 3px 0px #000000 inset;
+    background-image: -webkit-linear-gradient(to top, #1A1A1A, #121212);
+    background-image: -moz-linear-gradient(to top, #1A1A1A, #121212);
+    background-image: linear-gradient(to top, #1A1A1A, #121212);
 }
 
 button.pressed {
     background-color: #CCC;
-    background-image: -webkit-linear-gradient(top, #BBB, #CCC 10%, #CCC);
-    background-image: -moz-linear-gradient(top, #BBB, #CCC 10%, #CCC);
-    background-image: linear-gradient(top, #BBB, #CCC 10%, #CCC);
 }
 
 button.disabled {
     color: #DDD;
     background-color: #CCC;
-    background-image: -webkit-linear-gradient(top, #EEE, #DDD 90%, #DDD);
-    background-image: -moz-linear-gradient(top, #BBB, #CCC 90%, #BBB);
-    background-image: linear-gradient(top, #EEE, #DDD 90%, #DDD);
 }
 
 button.left {
@@ -153,7 +149,6 @@ button.middle {
     border-radius: 0;
     margin-left: 0;
     margin-right: 0;
-    border-left-color: #AAA;
     border-right-width: 0;
 }
 
@@ -161,7 +156,6 @@ button.right {
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
     margin-left: 0;
-    border-left-color: #AAA;
 }
 
 /* remove ugly border in firefox */
@@ -170,6 +164,7 @@ button::-moz-focus-inner {
 }
 
 button img {
+    width: 18px;
     height: 20px;
 }
 
