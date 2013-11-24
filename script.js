@@ -123,11 +123,11 @@ var ascii_draw = (function() {
     /* execute a copy action initiated by the keyboard */
     var keyboardCopyAction = function() {
         if (window.getSelection && document.createRange) {
-            var div = document.getElementById('copyarea');
-            div.textContent = getSelectionContent();
+            var copypastearea = document.getElementById('copypastearea');
+            copypastearea.textContent = getSelectionContent();
             var sel = window.getSelection();
             var range = document.createRange();
-            range.selectNodeContents(div);
+            range.selectNodeContents(copypastearea);
             sel.removeAllRanges();
             sel.addRange(range);
         } else {
@@ -158,23 +158,32 @@ var ascii_draw = (function() {
         });
     };
 
-    var onWindowLoad = function() {
-        var drawingarea = document.getElementById('drawingarea');
+    var initiateKeyboardPasteAction = function() {
+        var copypastearea = document.getElementById('copypastearea');
+        copypastearea.value = "";
+        copypastearea.focus();
+    };
 
-        font_dimensions = getFontDimensions();
+    var completeKeyboardPasteAction = function() {
+        var copypastearea = document.getElementById('copypastearea');
+        console.log("paste: " + copypastearea.value);
+    };
 
-        // create cells in the drawing area table
-        resizeTable(25, 80, false);
+    var onKeyUp = function(event) {
+        var e = event || window.event;
 
-        // hightlight selected cell
-        var cell = getCellAt(start_selection);
-        addClass(cell, 'highlight');
+        if (popupOpened) {
+            return;
+        }
 
-        initClipboard();
-
-        drawingarea.addEventListener('mousedown', onMouseDown, false);
-        drawingarea.addEventListener('mouseup', onMouseUp, false);
-        drawingarea.addEventListener('mouseover', onMouseOver, false);
+        console.log('onKeyUp: ' + e.keyCode);
+        if (e.ctrlKey && !e.altKey && !e.shiftKey) {
+            switch (e.keyCode) {
+                case 86: /*CTRL+V*/
+                    completeKeyboardPasteAction();
+                    break;
+            }
+        }
     };
 
     var onKeyDown = function(event) {
@@ -185,7 +194,7 @@ var ascii_draw = (function() {
         var e = event || window.event;
         console.log('onKeyDown: ' + e.keyCode);
 
-        var shift;
+        var shift = null;
         switch (e.keyCode) {
             case 37: // left arrow
                 shift = [-1, 0];
@@ -199,14 +208,14 @@ var ascii_draw = (function() {
             case 40: // down arrow
                 shift = [0, 1];
                 break;
-            default:
-                // do nothing if the key is not an arrow
-                return;
         }
-        selecting = false;
-        var new_selection = [end_selection[0] + shift[0],
-                             end_selection[1] + shift[1]];
-        changeSelectedArea(new_selection, new_selection);
+
+        if (shift) {
+            selecting = false;
+            var new_selection = [end_selection[0] + shift[0],
+                                 end_selection[1] + shift[1]];
+            changeSelectedArea(new_selection, new_selection);
+        }
 
         /* user pressed CTRL, prepare for copy/paste action */
         if (e.ctrlKey && !e.altKey && !e.shiftKey) {
@@ -215,9 +224,7 @@ var ascii_draw = (function() {
                     keyboardCopyAction();
                     break;
                 case 86: /*CTRL+V*/
-                    me.pasteText(function(text) {
-                        alert('pasted: ' + text);
-                    });
+                    initiateKeyboardPasteAction();
                     break;
             }
         }
@@ -266,14 +273,20 @@ var ascii_draw = (function() {
         resizeTable(25, 80, false);
 
         // hightlight selected cell
-        var cell = drawingarea.rows[selected_cell[0]].cells[selected_cell[1]];
+        var cell = getCellAt(start_selection);;
         addClass(cell, 'highlight');
 
         initClipboard();
 
-        drawingarea.addEventListener('click', onClick, false);
+        drawingarea.addEventListener('mousedown', onMouseDown, false);
+        drawingarea.addEventListener('mouseup', onMouseUp, false);
+        drawingarea.addEventListener('mouseover', onMouseOver, false);
+
+        // keydown: A key is pressed down. Gives scan-code.
         window.addEventListener('keydown', onKeyDown, false);
+        // keypress: A character key is pressed. Gives char-code.
         window.addEventListener('keypress', onKeyPress, false);
+        window.addEventListener('keyup', onKeyUp, false);
     };
 
     var isPrintableKeyPress = function(evt) {
@@ -371,14 +384,6 @@ var ascii_draw = (function() {
 
         return size;
     };
-
-    window.addEventListener('load', onWindowLoad, false);
-
-    // keydown: A key is pressed down. Gives scan-code.
-    window.addEventListener('keydown', onKeyDown, false);
-
-    // keypress: A character key is pressed. Gives char-code.
-    window.addEventListener('keypress', onKeyPress, false);
 
     window.addEventListener('load', init, false);
 
