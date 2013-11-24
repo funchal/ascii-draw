@@ -71,6 +71,10 @@ img {
     vertical-align: middle;
 }
 
+embed {
+    outline: none;
+}
+
 button {
     outline: none;
     display: inline-block;
