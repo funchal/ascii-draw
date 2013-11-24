@@ -83,8 +83,12 @@ var ascii_draw = (function() {
 
     /* return the selection content for copy */
     var getSelectionContent = function() {
-        return 'content\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\n';
-    }
+        return 'content\ncontent\ncontent\ncontent\ncontent\ncontent\n' +
+               'content\ncontent\ncontent\ncontent\ncontent\ncontent\n' +
+               'content\ncontent\ncontent\ncontent\ncontent\ncontent\n' +
+               'content\ncontent\ncontent\ncontent\ncontent\ncontent\n' +
+               'content\ncontent\ncontent\ncontent\ncontent\ncontent\n';
+    };
 
     var closeCopyPopup = function() {
         var popup = document.getElementById('popup');
