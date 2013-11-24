@@ -85,14 +85,14 @@ button {
     background-image: linear-gradient(top, #EEE, #DDD 90%, #DDD);
 }
 
-button:hover {
+button:hover, .zeroclipboard-is-hover {
     background-color: #EEE;
     background-image: -webkit-linear-gradient(top, #EEE, #DDD 80%, #CCC);
     background-image: -moz-linear-gradient(top, #EEE, #DDD 80%, #CCC);
     background-image: linear-gradient(top, #EEE, #DDD 80%, #CCC);
 }
 
-button:active {
+button:active, .zeroclipboard-is-active {
     background-color: #BBB;
     background-image: -webkit-linear-gradient(top, #CCC, #DDD 10%, #CCC);
     background-image: -moz-linear-gradient(top, #CCC, #DDD 10%, #CCC);
