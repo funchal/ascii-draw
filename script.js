@@ -148,7 +148,6 @@ var ascii_draw = (function() {
         /* when the SWF loads, enable the button */
         clipboard.on('load', function() {
             clipboard.glue(copy_button);
-            removeClass(copy_button, 'disabled');
         });
 
         /* copy when the SWF requests data (because it has been clicked) */
