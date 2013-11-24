@@ -10,6 +10,7 @@ var ascii_draw = (function() {
     var font_dimensions;
 
     var selected_cell = [0, 0];
+    var popupOpened = false;
 
     var getCellAt = function(coord) {
         var drawingarea = document.getElementById('drawingarea');
@@ -80,24 +81,55 @@ var ascii_draw = (function() {
         }
     };
 
+    /* return the selection content for copy */
+    var getSelectionContent = function() {
+        return 'content\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\ncontent\n';
+    }
+
+    var closeCopyPopup = function() {
+        var popup = document.getElementById('popup');
+        document.body.removeChild(popup);
+        var popup2 = document.getElementById('popup2');
+        document.body.removeChild(popup2);
+        popupOpened = false;
+    };
+
+    var openCopyPopup = function() {
+        popupOpened = true;
+        var popup = document.createElement('div');
+        popup.id = 'popup';
+        document.body.appendChild(popup);
+        popup.addEventListener('click', closeCopyPopup, false);
+
+        var popup2 = document.createElement('div');
+        popup2.id = 'popup2';
+        popup2.textContent = 'Your browser does not support automated copy, ' +
+                             'but you can manually copy the text below:';
+        var textarea = document.createElement('textarea');
+        textarea.value = getSelectionContent();
+        textarea.readOnly = true;
+        popup2.appendChild(textarea);
+        document.body.appendChild(popup2);
+        textarea.focus();
+        textarea.select();
+    };
+
+    /* execute a copy action initiated by the keyboard */
     var keyboardCopyAction = function() {
         if (window.getSelection && document.createRange) {
             var div = document.getElementById('copyarea');
-            div.textContent = 'content';
+            div.textContent = getSelectionContent();
             var sel = window.getSelection();
             var range = document.createRange();
             range.selectNodeContents(div);
             sel.removeAllRanges();
             sel.addRange(range);
         } else {
-            console.log("keyboardCopyAction failed");
+            openCopyPopup();
         }
     };
 
-    var mouseCopyAction = function() {
-        console.log("mouseCopyAction failed");
-    };
-
+    /* this initializes the clipboard used for the mouse copy action */
     var initClipboard = function() {
         /* load flash SWF */
         ZeroClipboard.setDefaults({moviePath: 'lib/ZeroClipboard.swf'});
@@ -107,7 +139,7 @@ var ascii_draw = (function() {
         var clipboard = new ZeroClipboard();
 
         /* if the copy button is clicked, its because the SWF failed to load */
-        copy_button.addEventListener('click', mouseCopyAction, false);
+        copy_button.addEventListener('click', openCopyPopup, false);
 
         /* when the SWF loads, enable the button */
         clipboard.on('load', function() {
@@ -117,30 +149,18 @@ var ascii_draw = (function() {
 
         /* copy when the SWF requests data (because it has been clicked) */
         clipboard.on('dataRequested', function() {
-            clipboard.setText('content');
+            clipboard.setText(getSelectionContent());
         });
-    };
-
-    var onWindowLoad = function() {
-        var drawingarea = document.getElementById('drawingarea');
-
-        font_dimensions = getFontDimensions();
-
-        // create cells in the drawing area table
-        resizeTable(25, 80, false);
-
-        // hightlight selected cell
-        var cell = drawingarea.rows[selected_cell[0]].cells[selected_cell[1]];
-        addClass(cell, 'highlight');
-
-        initClipboard();
-
-        drawingarea.addEventListener('click', onClick, false);
     };
 
     var onKeyDown = function(event) {
         var e = event || window.event;
 
+        if (popupOpened) {
+            return;
+        }
+
+        console.log('onKeyDown: ' + e.keyCode);
         switch (e.keyCode) {
             case 37: // left arrow
                 moveSelectedCell(-1, 0);
@@ -155,6 +175,64 @@ var ascii_draw = (function() {
                 moveSelectedCell(0, 1);
                 break;
         }
+
+        /* user pressed CTRL, prepare for copy/paste action */
+        if (e.ctrlKey && !e.altKey && !e.shiftKey) {
+            switch (e.keyCode) {
+                case 67: /*CTRL+C*/
+                    keyboardCopyAction();
+                    break;
+                case 86: /*CTRL+V*/
+                    me.pasteText(function(text) {
+                        alert('pasted: ' + text);
+                    });
+                    break;
+            }
+        }
+    };
+
+    var onKeyPress = function(event) {
+        var e = event || window.event;
+
+        if (popupOpened) {
+            if (e.keyCode == 13 || e.keyCode == 27) {
+                closeCopyPopup();
+            }
+            return;
+        }
+
+        console.log('onKeyPress: ' + e.keyCode);
+        if (e.keyCode == 13) {  // 'enter' key
+            // TODO: move the selected cell to the cell immediately below the
+            // first cell we entered text in.
+            return;
+        }
+
+        var printable = isPrintableKeyPress(e);
+        if (printable) {
+            var cell = getCellAt(selected_cell);
+            cell.innerHTML = String.fromCharCode(e.charCode);
+            moveSelectedCell(1, 0);
+        }
+    };
+
+    var init = function() {
+        var drawingarea = document.getElementById('drawingarea');
+
+        font_dimensions = getFontDimensions();
+
+        // create cells in the drawing area table
+        resizeTable(25, 80, false);
+
+        // hightlight selected cell
+        var cell = drawingarea.rows[selected_cell[0]].cells[selected_cell[1]];
+        addClass(cell, 'highlight');
+
+        initClipboard();
+
+        drawingarea.addEventListener('click', onClick, false);
+        window.addEventListener('keydown', onKeyDown, false);
+        window.addEventListener('keypress', onKeyPress, false);
     };
 
     var isPrintableKeyPress = function(evt) {
@@ -169,38 +247,6 @@ var ascii_draw = (function() {
                    !evt.altKey && evt.which != 8;
         }
         return false;
-    };
-
-    var onKeyPress = function(event) {
-        var e = event || window.event;
-
-        if (e.keyCode == 13) {  // 'enter' key
-            // TODO: move the selected cell to the cell immediately below the
-            // first cell we entered text in.
-            return;
-        }
-
-        var printable = isPrintableKeyPress(e);
-        if (printable) {
-            var cell = getCellAt(selected_cell);
-            cell.innerHTML = String.fromCharCode(e.charCode);
-            moveSelectedCell(1, 0);
-        }
-
-        /* user pressed CTRL, prepare for copy/paste action */
-        if (e.ctrlKey && !e.altKey && !e.shiftKey) {
-            switch (e.keyCode) {
-                case 67: /*CTRL+C*/
-                    copyAction(true /*is_keyboard*/);
-                    break;
-                case 86: /*CTRL+V*/
-                    me.pasteText(function(text) {
-                        alert('pasted: ' + text);
-                    });
-                    break;
-            }
-        }
-        return true;
     };
 
     var moveSelectedCell = function(dx, dy) {
@@ -250,9 +296,7 @@ var ascii_draw = (function() {
         moveSelectedCell(col - selected_cell[0], row - selected_cell[1]);
     };
 
-    window.addEventListener('load', onWindowLoad, false);
-    window.addEventListener('keydown', onKeyDown, false);
-    window.addEventListener('keypress', onKeyPress, false);
+    window.addEventListener('load', init, false);
 
     return me;
 })();
