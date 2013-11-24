@@ -80,17 +80,45 @@ var ascii_draw = (function() {
         }
     };
 
-    var copyText = function(text) {
-        var div = document.getElementById('copyarea');
-        div.textContent = text;
-        if (document.createRange) {
+    var keyboardCopyAction = function() {
+        if (window.getSelection && document.createRange) {
+            var div = document.getElementById('copyarea');
+            div.textContent = 'content';
+            var sel = window.getSelection();
             var range = document.createRange();
             range.selectNodeContents(div);
-            window.getSelection().addRange(range);
-            console.log('copy ' + text);
+            sel.removeAllRanges();
+            sel.addRange(range);
         } else {
-            console.log('copy failed');
+            console.log("keyboardCopyAction failed");
         }
+    };
+
+    var mouseCopyAction = function() {
+        console.log("mouseCopyAction failed");
+    };
+
+    var initClipboard = function() {
+        /* load flash SWF */
+        ZeroClipboard.setDefaults({moviePath: 'lib/ZeroClipboard.swf'});
+
+        /* put the hidden SWF on top of the copy button */
+        var copy_button = document.getElementById('copy-button');
+        var clipboard = new ZeroClipboard();
+
+        /* if the copy button is clicked, its because the SWF failed to load */
+        copy_button.addEventListener('click', mouseCopyAction, false);
+
+        /* when the SWF loads, enable the button */
+        clipboard.on('load', function() {
+            clipboard.glue(copy_button);
+            removeClass(copy_button, 'disabled');
+        });
+
+        /* copy when the SWF requests data (because it has been clicked) */
+        clipboard.on('dataRequested', function() {
+            clipboard.setText('content');
+        });
     };
 
     var onWindowLoad = function() {
@@ -105,18 +133,7 @@ var ascii_draw = (function() {
         var cell = drawingarea.rows[selected_cell[0]].cells[selected_cell[1]];
         addClass(cell, 'highlight');
 
-        ZeroClipboard.setDefaults({moviePath: 'lib/ZeroClipboard.swf'});
-        var copy_button = document.getElementById('copy-button');
-        var clipboard = new ZeroClipboard(copy_button);
-
-        clipboard.on('load', function(client, args) {
-            removeClass(copy_button, 'disabled');
-        });
-
-        clipboard.on('dataRequested', function(client, args) {
-            console.log('ZeroClipboard copying');
-            clipboard.setText('whatever text you want');
-        });
+        initClipboard();
 
         drawingarea.addEventListener('click', onClick, false);
     };
@@ -174,8 +191,7 @@ var ascii_draw = (function() {
         if (e.ctrlKey && !e.altKey && !e.shiftKey) {
             switch (e.keyCode) {
                 case 67: /*CTRL+C*/
-                    var text = 'example text';
-                    copyText(text);
+                    copyAction(true /*is_keyboard*/);
                     break;
                 case 86: /*CTRL+V*/
                     me.pasteText(function(text) {
