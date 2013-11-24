@@ -160,13 +160,13 @@ var ascii_draw = (function() {
 
     var initiateKeyboardPasteAction = function() {
         var copypastearea = document.getElementById('copypastearea');
-        copypastearea.value = "";
+        copypastearea.value = '';
         copypastearea.focus();
     };
 
     var completeKeyboardPasteAction = function() {
         var copypastearea = document.getElementById('copypastearea');
-        console.log("paste: " + copypastearea.value);
+        console.log('paste: ' + copypastearea.value);
     };
 
     var onKeyUp = function(event) {
@@ -273,7 +273,7 @@ var ascii_draw = (function() {
         resizeTable(25, 80, false);
 
         // hightlight selected cell
-        var cell = getCellAt(start_selection);;
+        var cell = getCellAt(start_selection);
         addClass(cell, 'highlight');
 
         initClipboard();
@@ -363,7 +363,7 @@ var ascii_draw = (function() {
         }
     };
 
-    var onMouseUp = function(element) {
+    var onMouseUp = function() {
         selecting = false;
     };
 
