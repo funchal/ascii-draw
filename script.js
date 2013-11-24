@@ -243,7 +243,7 @@ var ascii_draw = (function() {
         var printable = isPrintableKeyPress(e);
         if (printable) {
             var writeIntoCell = function(cell) {
-                cell.innerHTML = String.fromCharCode(e.charCode);
+                cell.textContent = String.fromCharCode(e.charCode);
             };
             applyToArea(start_selection, end_selection, writeIntoCell);
 
