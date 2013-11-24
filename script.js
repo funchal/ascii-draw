@@ -9,7 +9,9 @@ var ascii_draw = (function() {
 
     var font_dimensions;
 
-    var selected_cell = [0, 0];
+    var start_selection = [0, 0];
+    var end_selection = [0, 0];
+    var selecting = false;
 
     var getCellAt = function(coord) {
         var drawingarea = document.getElementById('drawingarea');
@@ -130,31 +132,40 @@ var ascii_draw = (function() {
         resizeTable(25, 80, false);
 
         // hightlight selected cell
-        var cell = drawingarea.rows[selected_cell[0]].cells[selected_cell[1]];
+        var cell = getCellAt(start_selection);
         addClass(cell, 'highlight');
 
         initClipboard();
 
-        drawingarea.addEventListener('click', onClick, false);
+        drawingarea.addEventListener('mousedown', onMouseDown, false);
+        drawingarea.addEventListener('mouseup', onMouseUp, false);
+        drawingarea.addEventListener('mouseover', onMouseOver, false);
     };
 
     var onKeyDown = function(event) {
         var e = event || window.event;
-
+        var shift;
         switch (e.keyCode) {
             case 37: // left arrow
-                moveSelectedCell(-1, 0);
+                shift = [-1, 0];
                 break;
             case 38: // up arrow
-                moveSelectedCell(0, -1);
+                shift = [0, -1];
                 break;
             case 39: // right arrow
-                moveSelectedCell(1, 0);
+                shift = [1, 0];
                 break;
             case 40: // down arrow
-                moveSelectedCell(0, 1);
+                shift = [0, 1];
                 break;
+            default:
+                // do nothing if the key is not an arrow
+                return;
         }
+        selecting = false;
+        var new_selection = [end_selection[0] + shift[0],
+                             end_selection[1] + shift[1]];
+        changeSelectedArea(new_selection, new_selection);
     };
 
     var isPrintableKeyPress = function(evt) {
@@ -182,9 +193,18 @@ var ascii_draw = (function() {
 
         var printable = isPrintableKeyPress(e);
         if (printable) {
-            var cell = getCellAt(selected_cell);
-            cell.innerHTML = String.fromCharCode(e.charCode);
-            moveSelectedCell(1, 0);
+            var writeIntoCell = function(cell) {
+                cell.innerHTML = String.fromCharCode(e.charCode);
+            };
+            applyToArea(start_selection, end_selection, writeIntoCell);
+
+            // Move selected cell to the right if only one cell is selected.
+            if (start_selection[0] == end_selection[0] &&
+                    start_selection[1] == end_selection[1]) {
+                var new_selection = [start_selection[0] + 1,
+                                     start_selection[1]];
+                changeSelectedArea(new_selection, new_selection);
+            }
         }
 
         /* user pressed CTRL, prepare for copy/paste action */
@@ -194,7 +214,7 @@ var ascii_draw = (function() {
                     copyAction(true /*is_keyboard*/);
                     break;
                 case 86: /*CTRL+V*/
-                    me.pasteText(function(text) {
+                    pasteText(function(text) {
                         alert('pasted: ' + text);
                     });
                     break;
@@ -203,26 +223,68 @@ var ascii_draw = (function() {
         return true;
     };
 
-    var moveSelectedCell = function(dx, dy) {
-        var new_x = selected_cell[0] + dx;
-        var new_y = selected_cell[1] + dy;
-
-        if (0 <= new_y && 0 <= new_x) {
-            // add rows and columns if necessary
-            resizeTable(new_y+1, new_x+1, true);
-
-            var cell = getCellAt(selected_cell);
-            removeClass(cell, 'highlight');
-
-            selected_cell = [new_x, new_y];
-
-            var new_cell = getCellAt([new_x, new_y]);
-            addClass(new_cell, 'highlight');
+    var applyToArea = function(start_area, end_area, fun) {
+        var min_x = Math.min(start_area[0], end_area[0]);
+        var max_x = Math.max(start_area[0], end_area[0]);
+        var min_y = Math.min(start_area[1], end_area[1]);
+        var max_y = Math.max(start_area[1], end_area[1]);
+        for (var x = min_x; x <= max_x; x++) {
+            for (var y = min_y; y <= max_y; y++) {
+                var cell = getCellAt([x, y]);
+                fun(cell);
+            }
         }
+    };
 
-        /* scroll to the selected cell */
-        // FIXME this is bugged
-        // drawingarea.rows[new_y].cells[new_x].scrollIntoView(false);
+    var removeHighlight = function(cell) {
+        removeClass(cell, 'highlight');
+    };
+
+    var addHighlight = function(cell) {
+        addClass(cell, 'highlight');
+    };
+
+    var changeSelectedArea = function(new_start, new_end) {
+        /*
+         * update start_selection and end_selection and update cell highlight
+         * If new_sart is undefined, does not update start_selection.
+         */
+        // un-highlight previous selection
+        applyToArea(start_selection, end_selection, removeHighlight);
+
+        // update start_selection and end_selection with the cell under cursor.
+        start_selection = new_start || start_selection;
+        end_selection = new_end;
+
+        // highlight new selection
+        applyToArea(start_selection, end_selection, addHighlight);
+    };
+
+    var onMouseDown = function(element) {
+        var cell = element.target;
+        var col = indexInParent(cell);
+        var row = indexInParent(cell.parentElement);
+
+        selecting = true;
+        changeSelectedArea([col, row], [col, row]);
+    };
+
+    var onMouseOver = function(element) {
+        if (selecting) {
+            var cell = element.target;
+            var col = indexInParent(cell);
+            var row = indexInParent(cell.parentElement);
+
+            changeSelectedArea(undefined, [col, row]);
+
+            /* scroll to the selected cell */
+            // FIXME this is bugged
+            // drawingarea.rows[new_y].cells[new_x].scrollIntoView(false);
+        }
+    };
+
+    var onMouseUp = function(element) {
+        selecting = false;
     };
 
     var getFontDimensions = function() {
@@ -243,15 +305,12 @@ var ascii_draw = (function() {
         return size;
     };
 
-    var onClick = function(element) {
-        var cell = element.target;
-        var col = indexInParent(cell);
-        var row = indexInParent(cell.parentElement);
-        moveSelectedCell(col - selected_cell[0], row - selected_cell[1]);
-    };
-
     window.addEventListener('load', onWindowLoad, false);
+
+    // keydown: A key is pressed down. Gives scan-code.
     window.addEventListener('keydown', onKeyDown, false);
+
+    // keypress: A character key is pressed. Gives char-code.
     window.addEventListener('keypress', onKeyPress, false);
 
     return me;
