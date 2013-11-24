@@ -155,3 +155,38 @@ button img {
     top: -10000px;
     right: 0;
 }
+
+#popup {
+    opacity: 0.5;
+    background-color: #888;
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+}
+
+#popup2 {
+    border: 1px solid #666;
+    text-align:center;
+    border-radius: 10px;
+    background-color: #BBB;
+    background-image: -webkit-linear-gradient(top, #CCC, #BBB);
+    background-image: -moz-linear-gradient(top, #CCC, #BBB);
+    background-image: linear-gradient(top, #CCC, #BBB);
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    width: 300px;
+    height: 200px;
+    padding: 16px;
+    margin-left: -150px;
+    margin-top: -100px;
+}
+
+#popup2 textarea {
+    margin: 10px;
+    width: 280px;
+    height: 120px;
+    resize: none;
+}
