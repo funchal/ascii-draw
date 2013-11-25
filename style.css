@@ -56,10 +56,10 @@ table, td {
     top: 0px;
     left: 0px;
     right: 0px;
-    background-color: #252525;
-    background-image: -webkit-linear-gradient(to top, #202020, #313131);
-    background-image: -moz-linear-gradient(to top, #202020, #313131);
-    background-image: linear-gradient(to top, #202020, #313131);
+    background-color: #383838;
+    //background-image: -webkit-linear-gradient(to top, #202020, #313131);
+    //background-image: -moz-linear-gradient(to top, #202020, #313131);
+    //background-image: linear-gradient(to top, #202020, #313131);
 }
 
 .apparea {
@@ -102,36 +102,32 @@ button {
     outline: none;
     display: inline-block;
     vertical-align: middle;
-    padding: 1px 8px;
+    padding: 1px 4px;
     border: 1px double #000;
     border-radius: 10px;
     height: 40px;
-    background-color: #424242;
-    box-shadow: 1px 1px 1px 0px #303030, 1px 1px 1px 0px #505050 inset;
-    background-image: -webkit-linear-gradient(to top, #383838, #444444);
-    background-image: -moz-linear-gradient(to top, #383838, #444444);
-    background-image: linear-gradient(to top, #383838, #444444);
+    background-color: #999;
+    box-shadow: 1px 1px 1px 0px #303030, 1px 1px 1px 0px #AAA inset;
+    //background-image: -webkit-linear-gradient(to top, #383838, #444444);
+    background-image: -moz-linear-gradient(to top, #888, #AAA);
+    //background-image: linear-gradient(to top, #383838, #444444);
 }
 
 button:hover {
-    background-color: #3C3C3C;
-    box-shadow: 1px 1px 1px 0px #303030, 1px 1px 1px 0px #484848 inset;
-    background-image: -webkit-linear-gradient(to top, #343434, #3D3D3D);
-    background-image: -moz-linear-gradient(to top, #343434, #3D3D3D);
-    background-image: linear-gradient(to top, #343434, #3D3D3D);
+    background-color: #888;
+    box-shadow: 1px 1px 1px 0px #303030, 1px 1px 1px 0px #999 inset;
+    //background-image: -webkit-linear-gradient(to top, #343434, #3D3D3D);
+    background-image: -moz-linear-gradient(to top, #777, #999);
+    //background-image: linear-gradient(to top, #343434, #3D3D3D);
 }
 
 button:active, button.pressed {
-    background-color: #1A1A1A;
-    padding: 2px 7px 0 9px;
-    box-shadow: 2px 2px 1px 0px #202020, 1px 1px 3px 0px #000000 inset;
-    background-image: -webkit-linear-gradient(to top, #1A1A1A, #121212);
-    background-image: -moz-linear-gradient(to top, #1A1A1A, #121212);
-    background-image: linear-gradient(to top, #1A1A1A, #121212);
-}
-
-button.pressed {
-    background-color: #CCC;
+    background-color: #666;
+    padding: 2px 3px 0 5px;
+    box-shadow: 1px 1px 1px 0px #303030, 1px 1px 3px 0px #222 inset;
+    //background-image: -webkit-linear-gradient(to top, #1A1A1A, #121212);
+    background-image: -moz-linear-gradient(to top, #666, #444);
+    //background-image: linear-gradient(to top, #1A1A1A, #121212);
 }
 
 button.disabled {
