@@ -105,7 +105,7 @@ button {
     padding: 1px 8px;
     border: 1px double #000;
     border-radius: 10px;
-    height: 38px;
+    height: 40px;
     background-color: #424242;
     box-shadow: 1px 1px 1px 0px #303030, 1px 1px 1px 0px #505050 inset;
     background-image: -webkit-linear-gradient(to top, #383838, #444444);
@@ -165,8 +165,8 @@ button::-moz-focus-inner {
 }
 
 button img {
-    width: 18px;
-    height: 20px;
+    width: 32px;
+    height: 32px;
 }
 
 #copypastearea {

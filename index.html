@@ -28,16 +28,16 @@
     </head>
     <body>
         <div class='toolbar'>
-            <button>ascii-draw</button>
-
             <button class='left pressed'>
-                <img src='img/move.png' alt='Move'/>
+                <img src='img/select.png' alt='Select/Move'/>
             </button><button class='middle'>
                 <img src='img/rectangle.png' alt='Rectangle'/>
             </button><button class='middle'>
-                <img src='img/pencil.png' alt='Pencil'/>
-            </button><button class='right'>
+                <img src='img/connector.png' alt='Pencil'/>
+            </button><button class='middle'>
                 <img src='img/fill.png' alt='Fill'/>
+            </button><button class='right'>
+                <img src='img/pencil.png' alt='Fill'/>
             </button>
 
             <button class='left'>
@@ -46,14 +46,17 @@
                 <img src='img/redo.png' alt='Redo'/>
             </button>
 
+            <button>
+                <img src='img/gears.png' alt='Gears'/>
+            </button>
+        </div>
+        <div class='apparea' style='overflow:scroll'>
+            <table id='drawingarea'></table>
             <select onchange='fontChange()' id='font-select'>
                 <option>Inconsolata-g</option>
                 <option>Classic Console</option>
                 <option>Default monospace</option>
             </select>
-        </div>
-        <div class='apparea' style='overflow:scroll'>
-            <table id='drawingarea'></table>
         </div>
         <textarea id='copypastearea'></textarea>
     </body>
