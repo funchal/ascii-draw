@@ -96,6 +96,8 @@ embed {
 }
 
 button {
+    color: #999;
+    font-weight: bold;
     cursor: pointer;
     outline: none;
     display: inline-block;
@@ -112,11 +114,11 @@ button {
 }
 
 button:hover {
-    background-color: #525252;
-    box-shadow: 1px 1px 1px 0px #303030, 1px 1px 1px 0px #585858 inset;
-    background-image: -webkit-linear-gradient(to top, #3D3D3D, #4B4B4B);
-    background-image: -moz-linear-gradient(to top, #3D3D3D, #4B4B4B);
-    background-image: linear-gradient(to top, #3D3D3D, #4B4B4B);
+    background-color: #3C3C3C;
+    box-shadow: 1px 1px 1px 0px #303030, 1px 1px 1px 0px #484848 inset;
+    background-image: -webkit-linear-gradient(to top, #343434, #3D3D3D);
+    background-image: -moz-linear-gradient(to top, #343434, #3D3D3D);
+    background-image: linear-gradient(to top, #343434, #3D3D3D);
 }
 
 button:active, button.pressed {
