@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns='http://www.w3.org/1999/xhtml' lang='en'>
+    <head>
+        <meta charset='UTF-8'/>
+        <link rel='stylesheet' href='style.css' type='text/css'/>
+        <title>ascii-draw</title>
+        <script type='text/javascript'>
+        function loadd() {
+            t = document.getElementById('drawingarea');
+            for (i = 0; i != 50; i++) {
+                var row = t.insertRow();
+                for (j = 0; j != 160; j++) {
+                    var cell = row.insertCell();
+                    var div = document.createElement('div');
+                    div.textContent = 'M';
+                    cell.appendChild(div);
+                }
+            }
+        }
+        </script>
+    </head>
+    <body onload="loadd()">
+        <div class='toolbar'>
+            <button class='left pressed'>
+                <img src='img/select.png' alt='Select/Move'/>
+            </button><button class='middle'>
+                <img src='img/rectangle.png' alt='Rectangle'/>
+            </button><button class='middle'>
+                <img src='img/connector.png' alt='Pencil'/>
+            </button><button class='right'>
+                <img src='img/pencil.png' alt='Fill'/>
+            </button><button class='left'>
+                <img src='img/undo.png' alt='Undo'/>
+            </button><button class='right'>
+                <img src='img/redo.png' alt='Redo'/>
+            </button>
+            ascii-draw (alpha)
+        </div>
+        <div class='apparea'>
+            <table id='drawingarea'></table>
+        </div>
+        <div class='footer'>Position xx x yy - Selection ww x hh - Size ww x hh</div>
+    </body>
+</html>

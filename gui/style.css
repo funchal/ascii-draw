@@ -1,0 +1,121 @@
+* {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    white-space: nowrap;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none; /* disable table selection */
+    cursor: default;
+    font-family: monospace;
+    color: #252525;
+    text-shadow: rgb(255, 255, 255) 0px 1px 0px;
+}
+
+img {
+    vertical-align: middle;
+}
+
+table, td {
+    text-align: center;
+    border: 1px solid #DDD;
+    border-spacing: 0;
+    border-collapse: collapse;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none; /* disable table selection */
+    overflow: hidden;
+    table-layout: fixed; /* override the browser's automatic column resizing */
+}
+
+td div {
+    min-width: 7px;
+    max-width: 7px;
+    width: 7px;
+    min-height: 15px;
+    max-height: 15px;
+    height: 15px;
+    overflow: hidden;
+}
+
+button {
+    margin: 4px 8px;
+    cursor: pointer;
+    outline: none;
+    display: inline-block;
+    vertical-align: middle;
+    padding: 5px 5px;
+    border-radius: 8px;
+    width: 42px;
+    height: 42px;
+    background-color: #DDD;
+}
+
+button:active, button.pressed {
+    background-color: #AAA;
+    box-shadow: 0px 3px 7px rgba(0, 0, 0, 0.25) inset;
+    padding: 6px 4px 4px 6px;
+}
+
+button.left {
+    margin-right: 2px;
+}
+
+button.middle {
+    margin-left: 2px;
+    margin-right: 2px;
+}
+
+button.right {
+    margin-left: 2px;
+}
+
+/* remove ugly border in firefox */
+button::-moz-focus-inner {
+    border: 0;
+}
+
+button img {
+    width: 32px;
+    height: 32px;
+}
+
+.toolbar {
+    position: fixed;
+    background-color: #DDD;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    height: 50px; /* button.height + 2*button.margin */
+    white-space: nowrap;
+    border-bottom: 1px solid #BBB;
+}
+
+.apparea {
+    overflow: auto;
+    position: fixed;
+    top: 51px;
+    left: 0;
+    right: 0;
+    bottom: 21px;
+    white-space: nowrap;
+}
+
+.footer {
+    font-size: 11px;
+    position: fixed;
+    line-height: 16px;
+    padding: 2px 8px;
+    height: 16px;
+    background-color: #DDD;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-top: 1px solid #BBB;
+}
