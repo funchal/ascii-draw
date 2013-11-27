@@ -7,14 +7,14 @@ var ascii_draw = (function() {
 
     var me = {};
 
-    var start_selection = [0, 0];
-    var end_selection = [0, 0];
+    var start_selection = [0, 0];  // [row, col]
+    var end_selection = [0, 0];  // [row, col]
     var selecting = false;
     var popupOpened = false;
 
     var getCellAt = function(coord) {
         var drawingarea = document.getElementById('drawingarea');
-        return drawingarea.rows[coord[1]].cells[coord[0]];
+        return drawingarea.rows[coord[0]].cells[coord[1]];
     };
 
     var removeClass = function(elem, old_class) {
@@ -193,16 +193,16 @@ var ascii_draw = (function() {
         var shift = null;
         switch (e.keyCode) {
             case 37: // left arrow
-                shift = [-1, 0];
-                break;
-            case 38: // up arrow
                 shift = [0, -1];
                 break;
+            case 38: // up arrow
+                shift = [-1, 0];
+                break;
             case 39: // right arrow
-                shift = [1, 0];
+                shift = [0, 1];
                 break;
             case 40: // down arrow
-                shift = [0, 1];
+                shift = [1, 0];
                 break;
         }
 
@@ -241,7 +241,7 @@ var ascii_draw = (function() {
             // TODO: move the selected cell to the cell immediately below the
             // first cell we entered text in.
             return;
-        }
+        }   
 
         var printable = isPrintableKeyPress(e);
         if (printable) {
@@ -253,8 +253,8 @@ var ascii_draw = (function() {
             // Move selected cell to the right if only one cell is selected.
             if (start_selection[0] == end_selection[0] &&
                     start_selection[1] == end_selection[1]) {
-                var new_selection = [start_selection[0] + 1,
-                                     start_selection[1]];
+                var new_selection = [start_selection[0], 
+                                     start_selection[1] + 1];
                 changeSelectedArea(new_selection, new_selection);
             }
         }
@@ -300,13 +300,15 @@ var ascii_draw = (function() {
     };
 
     var applyToArea = function(start_area, end_area, fun) {
-        var min_x = Math.min(start_area[0], end_area[0]);
-        var max_x = Math.max(start_area[0], end_area[0]);
-        var min_y = Math.min(start_area[1], end_area[1]);
-        var max_y = Math.max(start_area[1], end_area[1]);
-        for (var x = min_x; x <= max_x; x++) {
-            for (var y = min_y; y <= max_y; y++) {
-                var cell = getCellAt([x, y]);
+        var drawingarea = document.getElementById('drawingarea');
+        var min_row = Math.min(start_area[0], end_area[0]);
+        var max_row = Math.max(start_area[0], end_area[0]);
+        var min_col = Math.min(start_area[1], end_area[1]);
+        var max_col = Math.max(start_area[1], end_area[1]);
+        for (var r = min_row; r <= max_row; r++) {
+            var row = drawingarea.rows[r];
+            for (var c = min_col; c <= max_col; c++) {
+                var cell = row.cells[c];
                 fun(cell);
             }
         }
@@ -342,7 +344,7 @@ var ascii_draw = (function() {
         var row = indexInParent(cell.parentElement);
 
         selecting = true;
-        changeSelectedArea([col, row], [col, row]);
+        changeSelectedArea([row, col], [row, col]);
     };
 
     var onMouseOver = function(element) {
@@ -351,7 +353,7 @@ var ascii_draw = (function() {
             var col = indexInParent(cell);
             var row = indexInParent(cell.parentElement);
 
-            changeSelectedArea(undefined, [col, row]);
+            changeSelectedArea(undefined, [row, col]);
 
             /* scroll to the selected cell */
             // FIXME this is bugged
