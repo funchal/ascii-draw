@@ -10,7 +10,6 @@ var ascii_draw = (function() {
     var start_selection = [0, 0];  // [row, col]
     var end_selection = [0, 0];  // [row, col]
     var selecting = false;
-    var popupOpened = false;
 
     var getCellAt = function(coord) {
         var drawingarea = document.getElementById('drawingarea');
@@ -75,7 +74,7 @@ var ascii_draw = (function() {
                     var cell = row.insertCell();
                     cell.appendChild(document.createTextNode(' '));
                 }
-            }
+            }H
         }
     };
 
@@ -88,36 +87,7 @@ var ascii_draw = (function() {
                'content\ncontent\ncontent\ncontent\ncontent\ncontent\n';
     };
 
-    var closeCopyPopup = function() {
-        var popup = document.getElementById('popup');
-        document.body.removeChild(popup);
-        var popup2 = document.getElementById('popup2');
-        document.body.removeChild(popup2);
-        popupOpened = false;
-    };
-
-    var openCopyPopup = function() {
-        popupOpened = true;
-        var popup = document.createElement('div');
-        popup.id = 'popup';
-        document.body.appendChild(popup);
-        popup.addEventListener('click', closeCopyPopup, false);
-
-        var popup2 = document.createElement('div');
-        popup2.id = 'popup2';
-        popup2.textContent = 'Your browser does not support automated copy, ' +
-                             'but you can manually copy the text below:';
-        var textarea = document.createElement('textarea');
-        textarea.value = getSelectionContent();
-        textarea.readOnly = true;
-        popup2.appendChild(textarea);
-        document.body.appendChild(popup2);
-        textarea.focus();
-        textarea.select();
-    };
-
-    /* execute a copy action initiated by the keyboard */
-    var keyboardCopyAction = function() {
+    var copyAction = function() {
         if (window.getSelection && document.createRange) {
             var copypastearea = document.getElementById('copypastearea');
             copypastearea.textContent = getSelectionContent();
@@ -127,40 +97,17 @@ var ascii_draw = (function() {
             sel.removeAllRanges();
             sel.addRange(range);
         } else {
-            openCopyPopup();
+            console.log('fail to copy');
         }
     };
 
-    /* this initializes the clipboard used for the mouse copy action */
-    var initClipboard = function() {
-        /* load flash SWF */
-        ZeroClipboard.setDefaults({moviePath: 'lib/ZeroClipboard.swf'});
-
-        /* put the hidden SWF on top of the copy button */
-        var copy_button = document.getElementById('copy-button');
-        var clipboard = new ZeroClipboard();
-
-        /* if the copy button is clicked, its because the SWF failed to load */
-        copy_button.addEventListener('click', openCopyPopup, false);
-
-        /* when the SWF loads, enable the button */
-        clipboard.on('load', function() {
-            clipboard.glue(copy_button);
-        });
-
-        /* copy when the SWF requests data (because it has been clicked) */
-        clipboard.on('dataRequested', function() {
-            clipboard.setText(getSelectionContent());
-        });
-    };
-
-    var initiateKeyboardPasteAction = function() {
+    var initiatePasteAction = function() {
         var copypastearea = document.getElementById('copypastearea');
         copypastearea.value = '';
         copypastearea.focus();
     };
 
-    var completeKeyboardPasteAction = function() {
+    var completePasteAction = function() {
         var copypastearea = document.getElementById('copypastearea');
         console.log('paste: ' + copypastearea.value);
     };
@@ -168,32 +115,24 @@ var ascii_draw = (function() {
     var onKeyUp = function(event) {
         var e = event || window.event;
 
-        if (popupOpened) {
-            return;
-        }
-
         console.log('onKeyUp: ' + e.keyCode);
         if (e.ctrlKey && !e.altKey && !e.shiftKey) {
             switch (e.keyCode) {
                 case 86: /*CTRL+V*/
-                    completeKeyboardPasteAction();
+                    completePasteAction();
                     break;
             }
         }
     };
 
     var onKeyDown = function(event) {
-        if (popupOpened) {
-            return;
-        }
-
         var e = event || window.event;
         console.log('onKeyDown: ' + e.keyCode);
 
         var shift = null;
         switch (e.keyCode) {
             case 37: // left arrow
-                shift = [0, -1];
+                shift = [0, -1key];
                 break;
             case 38: // up arrow
                 shift = [-1, 0];
@@ -217,10 +156,10 @@ var ascii_draw = (function() {
         if (e.ctrlKey && !e.altKey && !e.shiftKey) {
             switch (e.keyCode) {
                 case 67: /*CTRL+C*/
-                    keyboardCopyAction();
+                    copyAction();
                     break;
                 case 86: /*CTRL+V*/
-                    initiateKeyboardPasteAction();
+                    initiatePasteAction();
                     break;
             }
         }
@@ -229,19 +168,12 @@ var ascii_draw = (function() {
     var onKeyPress = function(event) {
         var e = event || window.event;
 
-        if (popupOpened) {
-            if (e.keyCode == 13 || e.keyCode == 27) {
-                closeCopyPopup();
-            }
-            return;
-        }
-
         console.log('onKeyPress: ' + e.keyCode);
         if (e.keyCode == 13) {  // 'enter' key
             // TODO: move the selected cell to the cell immediately below the
             // first cell we entered text in.
             return;
-        }   
+        }
 
         var printable = isPrintableKeyPress(e);
         if (printable) {
@@ -271,8 +203,6 @@ var ascii_draw = (function() {
         // hightlight selected cell
         var cell = getCellAt(start_selection);
         addClass(cell, 'highlight');
-
-        initClipboard();
 
         drawingarea.addEventListener('mousedown', onMouseDown, false);
         drawingarea.addEventListener('mouseup', onMouseUp, false);
