@@ -74,7 +74,7 @@ var ascii_draw = (function() {
                     var cell = row.insertCell();
                     cell.appendChild(document.createTextNode(' '));
                 }
-            }H
+            }
         }
     };
 
@@ -132,7 +132,7 @@ var ascii_draw = (function() {
         var shift = null;
         switch (e.keyCode) {
             case 37: // left arrow
-                shift = [0, -1key];
+                shift = [0, -1];
                 break;
             case 38: // up arrow
                 shift = [-1, 0];
