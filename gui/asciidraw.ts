@@ -13,7 +13,7 @@ module ascii_draw {
             selecting = true;
             clearSelection();
             // FIXME: share some code with onMouseOver
-            begin_selection = getCellCellPosition(target);
+            begin_selection = getCellPosition(target);
             end_selection = begin_selection;
             setSelected(target, true);
         }
@@ -28,12 +28,12 @@ module ascii_draw {
             }
             utils.addClass(target, 'mouse');
 
-            mouse_pos = getCellCellPosition(target);
+            mouse_pos = getCellPosition(target);
 
-            var new_end_selection = getCellCellPosition(target);
+            var new_end_selection = getCellPosition(target);
 
             var statusbar = document.getElementById('statusbar');
-            statusbar.textContent = 'CellPosition: ' + new_end_selection;
+            statusbar.textContent = 'Position: ' + new_end_selection;
             statusbar.textContent += ' - Size: ' + grid.rows.length + 'x' +
                 (<HTMLTableRowElement>grid.rows[0]).cells.length;
 
@@ -88,20 +88,20 @@ module ascii_draw {
 
     var emptyCell: string = ' ';
 
-    function getCellCellPosition(cell: HTMLTableCellElement): CellPosition {
+    function getCellPosition(cell: HTMLTableCellElement): CellPosition {
         return new CellPosition(utils.indexInParent(cell.parentElement),
                          utils.indexInParent(cell));
     }
 
     function applyToRectangle(rect: Rectangle,
-                              functor: (cell: HTMLTableCellElement, ...params: any[]) => void,
+                              functor: Function,
                               ...params: any[]): void
     {
         for (var r = rect.top_left.row; r <= rect.bottom_right.row; r++) {
             var row = <HTMLTableRowElement>grid.rows[r];
             for (var c = rect.top_left.col; c <= rect.bottom_right.col; c++) {
                 var cell = <HTMLTableCellElement>row.cells[c];
-                functor.bind(undefined, cell).apply(undefined, params);
+                functor.apply(undefined, [cell].concat(params));
             }
         }
     }

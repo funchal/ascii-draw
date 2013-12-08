@@ -160,7 +160,7 @@ var ascii_draw;
             clearSelection();
 
             // FIXME: share some code with onMouseOver
-            begin_selection = getCellCellPosition(target);
+            begin_selection = getCellPosition(target);
             end_selection = begin_selection;
             setSelected(target, true);
         }
@@ -173,17 +173,17 @@ var ascii_draw;
 
         function onMouseOver(target) {
             if (mouse_pos !== null) {
-                ascii_draw.utils.removeClass((ascii_draw.grid.rows[mouse_pos.row]).cells[mouse_pos.col], 'mouse');
+                ascii_draw.utils.removeClass(ascii_draw.grid.rows[mouse_pos.row].cells[mouse_pos.col], 'mouse');
             }
             ascii_draw.utils.addClass(target, 'mouse');
 
-            mouse_pos = getCellCellPosition(target);
+            mouse_pos = getCellPosition(target);
 
-            var new_end_selection = getCellCellPosition(target);
+            var new_end_selection = getCellPosition(target);
 
             var statusbar = document.getElementById('statusbar');
-            statusbar.textContent = 'CellPosition: ' + new_end_selection;
-            statusbar.textContent += ' - Size: ' + ascii_draw.grid.rows.length + 'x' + (ascii_draw.grid.rows[0]).cells.length;
+            statusbar.textContent = 'Position: ' + new_end_selection;
+            statusbar.textContent += ' - Size: ' + ascii_draw.grid.rows.length + 'x' + ascii_draw.grid.rows[0].cells.length;
 
             if (!selecting) {
                 return;
@@ -219,7 +219,7 @@ var ascii_draw;
 
         function onMouseLeave() {
             if (mouse_pos !== null) {
-                ascii_draw.utils.removeClass((ascii_draw.grid.rows[mouse_pos.row]).cells[mouse_pos.col], 'mouse');
+                ascii_draw.utils.removeClass(ascii_draw.grid.rows[mouse_pos.row].cells[mouse_pos.col], 'mouse');
             }
             mouse_pos = null;
         }
@@ -236,7 +236,7 @@ var ascii_draw;
 
     var emptyCell = ' ';
 
-    function getCellCellPosition(cell) {
+    function getCellPosition(cell) {
         return new CellPosition(ascii_draw.utils.indexInParent(cell.parentElement), ascii_draw.utils.indexInParent(cell));
     }
 
@@ -249,7 +249,7 @@ var ascii_draw;
             var row = ascii_draw.grid.rows[r];
             for (var c = rect.top_left.col; c <= rect.bottom_right.col; c++) {
                 var cell = row.cells[c];
-                functor.bind(undefined, cell).apply(undefined, params);
+                functor.apply(undefined, [cell].concat(params));
             }
         }
     }
@@ -306,7 +306,7 @@ var ascii_draw;
 
     function getTargetCell(target) {
         if (target instanceof HTMLDivElement) {
-            target = (target).parentElement;
+            target = target.parentElement;
         }
         if (target instanceof HTMLTableCellElement) {
             return target;
