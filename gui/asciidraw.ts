@@ -1,99 +1,12 @@
 module ascii_draw {
-    class Coordinates {
-        constructor(public row: number = 0, public col: number = 0) {}
-
-        toString(): string {
-            return this.row + 'x' + this.col;
-        }
-
-        isEqual(other: Coordinates) {
-            return (this.row == other.row && this.col == other.col);
-        }
-    }
-
-    class Rectangle {
-        constructor(public top_left: Coordinates,
-                    public bottom_right: Coordinates) {}
-
-        intersect(other: Rectangle): Rectangle {
-            var top_left = new Coordinates(
-                Math.max(this.top_left.row, other.top_left.row),
-                Math.max(this.top_left.col, other.top_left.col));
-            var bottom_right = new Coordinates(
-                Math.min(this.bottom_right.row, other.bottom_right.row),
-                Math.min(this.bottom_right.col, other.bottom_right.col));
-            return new Rectangle(top_left, bottom_right);
-        }
-
-        normalize(): void {
-            if (this.top_left.row > this.bottom_right.row) {
-                var tmp = this.top_left.row;
-                this.top_left = new Coordinates(this.bottom_right.row,
-                                                this.top_left.col);
-                this.bottom_right = new Coordinates(tmp, this.bottom_right.col);
-            }
-            if (this.top_left.col > this.bottom_right.col) {
-                var tmp = this.top_left.col;
-                this.top_left = new Coordinates(this.top_left.row,
-                                                this.bottom_right.col);
-                this.bottom_right = new Coordinates(this.bottom_right.row, tmp);
-            }
-        }
-
-        isNormalized(): boolean {
-            return (this.top_left.row <= this.bottom_right.row) &&
-                   (this.top_left.col <= this.bottom_right.col);
-        }
-
-        subtract(other: Rectangle): Array<Rectangle> {
-            var rect_array: Array<Rectangle> = [];
-            var top_rectangle = new Rectangle(
-                this.top_left,
-                new Coordinates(other.top_left.row - 1, this.bottom_right.col));
-            if (top_rectangle.isNormalized()) {
-                rect_array.push(top_rectangle);
-            }
-            var left_rectangle = new Rectangle(
-                new Coordinates(other.top_left.row, this.top_left.col),
-                new Coordinates(other.bottom_right.row, other.top_left.col - 1));
-            if (left_rectangle.isNormalized()) {
-                rect_array.push(left_rectangle);
-            }
-            var right_rectangle = new Rectangle(
-                new Coordinates(other.top_left.row, other.bottom_right.col + 1),
-                new Coordinates(other.bottom_right.row, this.bottom_right.col));
-            if (right_rectangle.isNormalized()) {
-                rect_array.push(right_rectangle);
-            }
-            var bottom_rectangle = new Rectangle(
-                new Coordinates(other.bottom_right.row + 1, this.top_left.col),
-                this.bottom_right);
-            if (bottom_rectangle.isNormalized()) {
-                rect_array.push(bottom_rectangle);
-            }
-            return rect_array;
-        }
-
-        toString(): string {
-            return this.top_left + "/" + this.bottom_right;
-        }
-
-        applyForEach(functor: (cell: HTMLTableCellElement) => void): void
-        {
-            for (var r = this.top_left.row; r <= this.bottom_right.row; r++) {
-                var row = <HTMLTableRowElement>grid.rows[r];
-                for (var c = this.top_left.col; c <= this.bottom_right.col; c++) {
-                    var cell = <HTMLTableCellElement>row.cells[c];
-                    functor(cell);
-                }
-            }
-        }
-    }
+    import Rectangle = ascii_draw.utils.Rectangle;
+    import Point = ascii_draw.utils.Point;
 
     module SelectMoveController {
+        var begin_selection: Point = new Point(0, 0);
+        var end_selection: Point = new Point(0, 0);
         var selecting = false;
-        var begin_selection: Coordinates = new Coordinates(0, 0);
-        var end_selection: Coordinates = new Coordinates(0, 0);
+        var mouse_pos: Point = new Point(0, 0);
 
         export function onMouseDown(target: HTMLTableCellElement): void {
             // TODO: if current cell is selected change to move mode
@@ -106,12 +19,12 @@ module ascii_draw {
             setSelected(target, true);
         }
 
-        export function onMouseUp(target: HTMLTableCellElement): void {
+        export function onMouseUp(): void {
             selecting = false;
         }
 
         export function onMouseOver(target: HTMLTableCellElement): void {
-            var new_end_selection = new Coordinates(
+            var new_end_selection = new Point(
                 utils.indexInParent(target.parentElement),
                 utils.indexInParent(target));
 
@@ -142,18 +55,14 @@ module ascii_draw {
             var clear = selection.subtract(keep);
             var paint = new_selection.subtract(keep);
 
-            console.log('clear:' + clear);
+            //console.log('clear:' + clear);
             for (var i = 0; i < clear.length; i++) {
-                clear[i].applyForEach(function(cell) {
-                    setSelected(cell, false);
-                });
+                applyToRectangle(clear[i], setSelected, false);
             }
 
-            console.log('paint:' + paint);
+            //console.log('paint:' + paint);
             for (var i = 0; i < paint.length; i++) {
-                paint[i].applyForEach(function(cell) {
-                    setSelected(cell, true);
-                });
+                applyToRectangle(paint[i], setSelected, true);
             }
 
             end_selection = new_end_selection;
@@ -162,17 +71,26 @@ module ascii_draw {
         function clearSelection(): void {
             var selection = new Rectangle(begin_selection, end_selection);
             selection.normalize();
-
-            selection.applyForEach(function(cell) {
-                setSelected(cell, false);
-            });
+            applyToRectangle(selection, setSelected, false);
         }
-
     }
 
     export var grid: HTMLTableElement;
 
     var emptyCell: string = ' ';
+
+    function applyToRectangle(rect: Rectangle,
+                              functor: (cell: HTMLTableCellElement, ...params: any[]) => void,
+                              ...params: any[]): void
+    {
+        for (var r = rect.top_left.row; r <= rect.bottom_right.row; r++) {
+            var row = <HTMLTableRowElement>grid.rows[r];
+            for (var c = rect.top_left.col; c <= rect.bottom_right.col; c++) {
+                var cell = <HTMLTableCellElement>row.cells[c];
+                functor.bind(undefined, cell).apply(undefined, params);
+            }
+        }
+    }
 
     function resizeGrid(new_nrows: number, new_ncols: number): void {
         var nrows = grid.rows.length;
@@ -244,10 +162,7 @@ module ascii_draw {
     }
 
     function onMouseUp(event: MouseEvent): void {
-        var target = findCell(event.target);
-        if (target !== null) {
-            SelectMoveController.onMouseUp(target);
-        }
+        SelectMoveController.onMouseUp();
         event.preventDefault();
     }
 
@@ -270,7 +185,7 @@ module ascii_draw {
         setSelected(cell, true);
 
         grid.addEventListener('mousedown', onMouseDown, false);
-        grid.addEventListener('mouseup', onMouseUp, false);
+        window.addEventListener('mouseup', onMouseUp, false);
         grid.addEventListener('mouseover', onMouseOver, false);
     }
 }

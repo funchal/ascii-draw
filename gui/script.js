@@ -66,107 +66,100 @@ var ascii_draw;
         }
         utils.indexInParent = indexInParent;
 
-        function between(a, b, c) {
-            return (a <= b && b <= c) || (c <= b && b <= a);
-        }
-        utils.between = between;
+        var Point = (function () {
+            function Point(row, col) {
+                if (typeof row === "undefined") { row = 0; }
+                if (typeof col === "undefined") { col = 0; }
+                this.row = row;
+                this.col = col;
+            }
+            Point.prototype.toString = function () {
+                return this.row + 'x' + this.col;
+            };
+
+            Point.prototype.isEqual = function (other) {
+                return (this.row == other.row && this.col == other.col);
+            };
+            return Point;
+        })();
+        utils.Point = Point;
+
+        var Rectangle = (function () {
+            function Rectangle(top_left, bottom_right) {
+                this.top_left = top_left;
+                this.bottom_right = bottom_right;
+            }
+            Rectangle.prototype.intersect = function (other) {
+                var top_left = new Point(Math.max(this.top_left.row, other.top_left.row), Math.max(this.top_left.col, other.top_left.col));
+                var bottom_right = new Point(Math.min(this.bottom_right.row, other.bottom_right.row), Math.min(this.bottom_right.col, other.bottom_right.col));
+                return new Rectangle(top_left, bottom_right);
+            };
+
+            Rectangle.prototype.normalize = function () {
+                if (this.top_left.row > this.bottom_right.row) {
+                    var tmp = this.top_left.row;
+                    this.top_left = new Point(this.bottom_right.row, this.top_left.col);
+                    this.bottom_right = new Point(tmp, this.bottom_right.col);
+                }
+                if (this.top_left.col > this.bottom_right.col) {
+                    var tmp = this.top_left.col;
+                    this.top_left = new Point(this.top_left.row, this.bottom_right.col);
+                    this.bottom_right = new Point(this.bottom_right.row, tmp);
+                }
+            };
+
+            Rectangle.prototype.isNormalized = function () {
+                return (this.top_left.row <= this.bottom_right.row) && (this.top_left.col <= this.bottom_right.col);
+            };
+
+            Rectangle.prototype.subtract = function (other) {
+                var rect_array = [];
+                var top_rectangle = new Rectangle(this.top_left, new Point(other.top_left.row - 1, this.bottom_right.col));
+                if (top_rectangle.isNormalized()) {
+                    rect_array.push(top_rectangle);
+                }
+                var left_rectangle = new Rectangle(new Point(other.top_left.row, this.top_left.col), new Point(other.bottom_right.row, other.top_left.col - 1));
+                if (left_rectangle.isNormalized()) {
+                    rect_array.push(left_rectangle);
+                }
+                var right_rectangle = new Rectangle(new Point(other.top_left.row, other.bottom_right.col + 1), new Point(other.bottom_right.row, this.bottom_right.col));
+                if (right_rectangle.isNormalized()) {
+                    rect_array.push(right_rectangle);
+                }
+                var bottom_rectangle = new Rectangle(new Point(other.bottom_right.row + 1, this.top_left.col), this.bottom_right);
+                if (bottom_rectangle.isNormalized()) {
+                    rect_array.push(bottom_rectangle);
+                }
+                return rect_array;
+            };
+
+            Rectangle.prototype.toString = function () {
+                return this.top_left + "/" + this.bottom_right;
+            };
+            return Rectangle;
+        })();
+        utils.Rectangle = Rectangle;
     })(ascii_draw.utils || (ascii_draw.utils = {}));
     var utils = ascii_draw.utils;
 })(ascii_draw || (ascii_draw = {}));
 var ascii_draw;
 (function (ascii_draw) {
-    var Coordinates = (function () {
-        function Coordinates(row, col) {
-            if (typeof row === "undefined") { row = 0; }
-            if (typeof col === "undefined") { col = 0; }
-            this.row = row;
-            this.col = col;
-        }
-        Coordinates.prototype.toString = function () {
-            return this.row + 'x' + this.col;
-        };
-
-        Coordinates.prototype.isEqual = function (other) {
-            return (this.row == other.row && this.col == other.col);
-        };
-        return Coordinates;
-    })();
-
-    var Rectangle = (function () {
-        function Rectangle(top_left, bottom_right) {
-            this.top_left = top_left;
-            this.bottom_right = bottom_right;
-        }
-        Rectangle.prototype.intersect = function (other) {
-            var top_left = new Coordinates(Math.max(this.top_left.row, other.top_left.row), Math.max(this.top_left.col, other.top_left.col));
-            var bottom_right = new Coordinates(Math.min(this.bottom_right.row, other.bottom_right.row), Math.min(this.bottom_right.col, other.bottom_right.col));
-            return new Rectangle(top_left, bottom_right);
-        };
-
-        Rectangle.prototype.normalize = function () {
-            if (this.top_left.row > this.bottom_right.row) {
-                var tmp = this.top_left.row;
-                this.top_left = new Coordinates(this.bottom_right.row, this.top_left.col);
-                this.bottom_right = new Coordinates(tmp, this.bottom_right.col);
-            }
-            if (this.top_left.col > this.bottom_right.col) {
-                var tmp = this.top_left.col;
-                this.top_left = new Coordinates(this.top_left.row, this.bottom_right.col);
-                this.bottom_right = new Coordinates(this.bottom_right.row, tmp);
-            }
-        };
-
-        Rectangle.prototype.isNormalized = function () {
-            return (this.top_left.row <= this.bottom_right.row) && (this.top_left.col <= this.bottom_right.col);
-        };
-
-        Rectangle.prototype.subtract = function (other) {
-            var rectangle_list = [];
-            var top_rectangle = new Rectangle(this.top_left, new Coordinates(other.top_left.row - 1, this.bottom_right.col));
-            if (top_rectangle.isNormalized()) {
-                rectangle_list.push(top_rectangle);
-            }
-            var left_rectangle = new Rectangle(new Coordinates(other.top_left.row, this.top_left.col), new Coordinates(other.bottom_right.row, other.top_left.col - 1));
-            if (left_rectangle.isNormalized()) {
-                rectangle_list.push(left_rectangle);
-            }
-            var right_rectangle = new Rectangle(new Coordinates(other.top_left.row, other.bottom_right.col + 1), new Coordinates(other.bottom_right.row, this.bottom_right.col));
-            if (right_rectangle.isNormalized()) {
-                rectangle_list.push(right_rectangle);
-            }
-            var bottom_rectangle = new Rectangle(new Coordinates(other.bottom_right.row + 1, this.top_left.col), this.bottom_right);
-            if (bottom_rectangle.isNormalized()) {
-                rectangle_list.push(bottom_rectangle);
-            }
-            return rectangle_list;
-        };
-
-        Rectangle.prototype.toString = function () {
-            return this.top_left + "/" + this.bottom_right;
-        };
-
-        Rectangle.prototype.applyForEach = function (functor) {
-            for (var r = this.top_left.row; r <= this.bottom_right.row; r++) {
-                var row = ascii_draw.grid.rows[r];
-                for (var c = this.top_left.col; c <= this.bottom_right.col; c++) {
-                    var cell = row.cells[c];
-                    functor(cell);
-                }
-            }
-        };
-        return Rectangle;
-    })();
+    var Rectangle = ascii_draw.utils.Rectangle;
+    var Point = ascii_draw.utils.Point;
 
     var SelectMoveController;
     (function (SelectMoveController) {
+        var begin_selection = new Point(0, 0);
+        var end_selection = new Point(0, 0);
         var selecting = false;
-        var begin_selection = new Coordinates(0, 0);
-        var end_selection = new Coordinates(0, 0);
+        var mouse_pos = new Point(0, 0);
 
         function onMouseDown(target) {
             // TODO: if current cell is selected change to move mode
             selecting = true;
             clearSelection();
+
+            // FIXME: share some code with onMouseOver
             begin_selection.row = ascii_draw.utils.indexInParent(target.parentElement);
             begin_selection.col = ascii_draw.utils.indexInParent(target);
             end_selection = begin_selection;
@@ -174,13 +167,13 @@ var ascii_draw;
         }
         SelectMoveController.onMouseDown = onMouseDown;
 
-        function onMouseUp(target) {
+        function onMouseUp() {
             selecting = false;
         }
         SelectMoveController.onMouseUp = onMouseUp;
 
         function onMouseOver(target) {
-            var new_end_selection = new Coordinates(ascii_draw.utils.indexInParent(target.parentElement), ascii_draw.utils.indexInParent(target));
+            var new_end_selection = new Point(ascii_draw.utils.indexInParent(target.parentElement), ascii_draw.utils.indexInParent(target));
 
             var statusbar = document.getElementById('statusbar');
             statusbar.textContent = 'Position: ' + new_end_selection;
@@ -206,18 +199,12 @@ var ascii_draw;
             var clear = selection.subtract(keep);
             var paint = new_selection.subtract(keep);
 
-            console.log('clear:' + clear);
             for (var i = 0; i < clear.length; i++) {
-                clear[i].applyForEach(function (cell) {
-                    setSelected(cell, false);
-                });
+                applyToRectangle(clear[i], setSelected, false);
             }
 
-            console.log('paint:' + paint);
             for (var i = 0; i < paint.length; i++) {
-                paint[i].applyForEach(function (cell) {
-                    setSelected(cell, true);
-                });
+                applyToRectangle(paint[i], setSelected, true);
             }
 
             end_selection = new_end_selection;
@@ -227,16 +214,27 @@ var ascii_draw;
         function clearSelection() {
             var selection = new Rectangle(begin_selection, end_selection);
             selection.normalize();
-
-            selection.applyForEach(function (cell) {
-                setSelected(cell, false);
-            });
+            applyToRectangle(selection, setSelected, false);
         }
     })(SelectMoveController || (SelectMoveController = {}));
 
     ascii_draw.grid;
 
     var emptyCell = ' ';
+
+    function applyToRectangle(rect, functor) {
+        var params = [];
+        for (var _i = 0; _i < (arguments.length - 2); _i++) {
+            params[_i] = arguments[_i + 2];
+        }
+        for (var r = rect.top_left.row; r <= rect.bottom_right.row; r++) {
+            var row = ascii_draw.grid.rows[r];
+            for (var c = rect.top_left.col; c <= rect.bottom_right.col; c++) {
+                var cell = row.cells[c];
+                functor.bind(undefined, cell).apply(undefined, params);
+            }
+        }
+    }
 
     function resizeGrid(new_nrows, new_ncols) {
         var nrows = ascii_draw.grid.rows.length;
@@ -308,10 +306,7 @@ var ascii_draw;
     }
 
     function onMouseUp(event) {
-        var target = findCell(event.target);
-        if (target !== null) {
-            SelectMoveController.onMouseUp(target);
-        }
+        SelectMoveController.onMouseUp();
         event.preventDefault();
     }
 
@@ -334,7 +329,7 @@ var ascii_draw;
         setSelected(cell, true);
 
         ascii_draw.grid.addEventListener('mousedown', onMouseDown, false);
-        ascii_draw.grid.addEventListener('mouseup', onMouseUp, false);
+        window.addEventListener('mouseup', onMouseUp, false);
         ascii_draw.grid.addEventListener('mouseover', onMouseOver, false);
     }
     ascii_draw.init = init;

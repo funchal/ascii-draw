@@ -69,8 +69,84 @@ module ascii_draw {
             return -1;
         }
 
-        export function between(a: number, b: number, c: number): boolean {
-            return (a <= b && b <= c) || (c <= b && b <= a);
+        export class Point {
+            constructor(public row: number = 0, public col: number = 0) {}
+
+            toString(): string {
+                return this.row + 'x' + this.col;
+            }
+
+            isEqual(other: Point) {
+                return (this.row == other.row && this.col == other.col);
+            }
+        }
+
+        export class Rectangle {
+            constructor(public top_left: Point,
+                        public bottom_right: Point) {}
+
+            intersect(other: Rectangle): Rectangle {
+                var top_left = new Point(
+                    Math.max(this.top_left.row, other.top_left.row),
+                    Math.max(this.top_left.col, other.top_left.col));
+                var bottom_right = new Point(
+                    Math.min(this.bottom_right.row, other.bottom_right.row),
+                    Math.min(this.bottom_right.col, other.bottom_right.col));
+                return new Rectangle(top_left, bottom_right);
+            }
+
+            normalize(): void {
+                if (this.top_left.row > this.bottom_right.row) {
+                    var tmp = this.top_left.row;
+                    this.top_left = new Point(this.bottom_right.row,
+                                                    this.top_left.col);
+                    this.bottom_right = new Point(tmp, this.bottom_right.col);
+                }
+                if (this.top_left.col > this.bottom_right.col) {
+                    var tmp = this.top_left.col;
+                    this.top_left = new Point(this.top_left.row,
+                                                    this.bottom_right.col);
+                    this.bottom_right = new Point(this.bottom_right.row, tmp);
+                }
+            }
+
+            isNormalized(): boolean {
+                return (this.top_left.row <= this.bottom_right.row) &&
+                       (this.top_left.col <= this.bottom_right.col);
+            }
+
+            subtract(other: Rectangle): Array<Rectangle> {
+                var rect_array: Array<Rectangle> = [];
+                var top_rectangle = new Rectangle(
+                    this.top_left,
+                    new Point(other.top_left.row - 1, this.bottom_right.col));
+                if (top_rectangle.isNormalized()) {
+                    rect_array.push(top_rectangle);
+                }
+                var left_rectangle = new Rectangle(
+                    new Point(other.top_left.row, this.top_left.col),
+                    new Point(other.bottom_right.row, other.top_left.col - 1));
+                if (left_rectangle.isNormalized()) {
+                    rect_array.push(left_rectangle);
+                }
+                var right_rectangle = new Rectangle(
+                    new Point(other.top_left.row, other.bottom_right.col + 1),
+                    new Point(other.bottom_right.row, this.bottom_right.col));
+                if (right_rectangle.isNormalized()) {
+                    rect_array.push(right_rectangle);
+                }
+                var bottom_rectangle = new Rectangle(
+                    new Point(other.bottom_right.row + 1, this.top_left.col),
+                    this.bottom_right);
+                if (bottom_rectangle.isNormalized()) {
+                    rect_array.push(bottom_rectangle);
+                }
+                return rect_array;
+            }
+
+            toString(): string {
+                return this.top_left + "/" + this.bottom_right;
+            }
         }
     }
 }
