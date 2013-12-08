@@ -109,7 +109,7 @@ button img {
     background-color: #CCC;
 }
 
-.footer {
+#statusbar {
     text-shadow: rgb(255, 255, 255) 0px 1px 0px;
     font-size: 11px;
     position: fixed;

@@ -1,20 +1,108 @@
 module ascii_draw {
     class Coordinates {
         constructor(public row: number = 0, public col: number = 0) {}
+
+        toString(): string {
+            return this.row + 'x' + this.col;
+        }
+
+        isEqual(other: Coordinates) {
+            return (this.row == other.row && this.col == other.col);
+        }
+    }
+
+    class Rectangle {
+        constructor(public top_left: Coordinates,
+                    public bottom_right: Coordinates) {}
+
+        intersect(other: Rectangle): Rectangle {
+            var top_left = new Coordinates(
+                Math.max(this.top_left.row, other.top_left.row),
+                Math.max(this.top_left.col, other.top_left.col));
+            var bottom_right = new Coordinates(
+                Math.min(this.bottom_right.row, other.bottom_right.row),
+                Math.min(this.bottom_right.col, other.bottom_right.col));
+            return new Rectangle(top_left, bottom_right);
+        }
+
+        normalize(): void {
+            if (this.top_left.row > this.bottom_right.row) {
+                var tmp = this.top_left.row;
+                this.top_left = new Coordinates(this.bottom_right.row,
+                                                this.top_left.col);
+                this.bottom_right = new Coordinates(tmp, this.bottom_right.col);
+            }
+            if (this.top_left.col > this.bottom_right.col) {
+                var tmp = this.top_left.col;
+                this.top_left = new Coordinates(this.top_left.row,
+                                                this.bottom_right.col);
+                this.bottom_right = new Coordinates(this.bottom_right.row, tmp);
+            }
+        }
+
+        isNormalized(): boolean {
+            return (this.top_left.row <= this.bottom_right.row) &&
+                   (this.top_left.col <= this.bottom_right.col);
+        }
+
+        subtract(other: Rectangle): Array<Rectangle> {
+            var rect_array: Array<Rectangle> = [];
+            var top_rectangle = new Rectangle(
+                this.top_left,
+                new Coordinates(other.top_left.row - 1, this.bottom_right.col));
+            if (top_rectangle.isNormalized()) {
+                rect_array.push(top_rectangle);
+            }
+            var left_rectangle = new Rectangle(
+                new Coordinates(other.top_left.row, this.top_left.col),
+                new Coordinates(other.bottom_right.row, other.top_left.col - 1));
+            if (left_rectangle.isNormalized()) {
+                rect_array.push(left_rectangle);
+            }
+            var right_rectangle = new Rectangle(
+                new Coordinates(other.top_left.row, other.bottom_right.col + 1),
+                new Coordinates(other.bottom_right.row, this.bottom_right.col));
+            if (right_rectangle.isNormalized()) {
+                rect_array.push(right_rectangle);
+            }
+            var bottom_rectangle = new Rectangle(
+                new Coordinates(other.bottom_right.row + 1, this.top_left.col),
+                this.bottom_right);
+            if (bottom_rectangle.isNormalized()) {
+                rect_array.push(bottom_rectangle);
+            }
+            return rect_array;
+        }
+
+        toString(): string {
+            return this.top_left + "/" + this.bottom_right;
+        }
+
+        applyForEach(functor: (cell: HTMLTableCellElement) => void): void
+        {
+            for (var r = this.top_left.row; r <= this.bottom_right.row; r++) {
+                var row = <HTMLTableRowElement>grid.rows[r];
+                for (var c = this.top_left.col; c <= this.bottom_right.col; c++) {
+                    var cell = <HTMLTableCellElement>row.cells[c];
+                    functor(cell);
+                }
+            }
+        }
     }
 
     module SelectMoveController {
         var selecting = false;
-        var S = new Coordinates(0, 0);
-        var O = new Coordinates(0, 0);
+        var begin_selection: Coordinates = new Coordinates(0, 0);
+        var end_selection: Coordinates = new Coordinates(0, 0);
 
         export function onMouseDown(target: HTMLTableCellElement): void {
             // TODO: if current cell is selected change to move mode
             selecting = true;
             clearSelection();
-            S.col = utils.indexInParent(target);
-            S.row = utils.indexInParent(target.parentElement);
-            O = S;
+            // FIXME: share some code with onMouseOver
+            begin_selection.row = utils.indexInParent(target.parentElement);
+            begin_selection.col = utils.indexInParent(target);
+            end_selection = begin_selection;
             setSelected(target, true);
         }
 
@@ -23,66 +111,68 @@ module ascii_draw {
         }
 
         export function onMouseOver(target: HTMLTableCellElement): void {
-            if (selecting) {
-                var N = new Coordinates(
-                    utils.indexInParent(target.parentElement),
-                    utils.indexInParent(target));
-                applyToRectangle(S, O,
-                    function(cell) { setSelected(cell, false); });
-                applyToRectangle(S, N,
-                    function(cell) { setSelected(cell, true); });
-                O = N;
+            var new_end_selection = new Coordinates(
+                utils.indexInParent(target.parentElement),
+                utils.indexInParent(target));
+
+            var statusbar = document.getElementById('statusbar');
+            statusbar.textContent = 'Position: ' + new_end_selection;
+            statusbar.textContent += ' - Size: ' + grid.rows.length + 'x' +
+                (<HTMLTableRowElement>grid.rows[0]).cells.length;
+
+            if (!selecting) {
+                return;
             }
+
+            var selection = new Rectangle(begin_selection, end_selection);
+            selection.normalize();
+
+            var new_selection = new Rectangle(begin_selection, new_end_selection);
+            new_selection.normalize();
+
+            statusbar.textContent += ' - Selection: ' +
+                (new_selection.bottom_right.row - new_selection.top_left.row + 1) + 'x' +
+                (new_selection.bottom_right.col - new_selection.top_left.col + 1);
+
+            if (new_end_selection.isEqual(end_selection)) {
+                return;
+            }
+
+            var keep = selection.intersect(new_selection);
+            var clear = selection.subtract(keep);
+            var paint = new_selection.subtract(keep);
+
+            console.log('clear:' + clear);
+            for (var i = 0; i < clear.length; i++) {
+                clear[i].applyForEach(function(cell) {
+                    setSelected(cell, false);
+                });
+            }
+
+            console.log('paint:' + paint);
+            for (var i = 0; i < paint.length; i++) {
+                paint[i].applyForEach(function(cell) {
+                    setSelected(cell, true);
+                });
+            }
+
+            end_selection = new_end_selection;
         }
+
+        function clearSelection(): void {
+            var selection = new Rectangle(begin_selection, end_selection);
+            selection.normalize();
+
+            selection.applyForEach(function(cell) {
+                setSelected(cell, false);
+            });
+        }
+
     }
 
     export var grid: HTMLTableElement;
 
     var emptyCell: string = ' ';
-
-    function clearSelection(): void {
-        var nrows = grid.rows.length;
-        for (var r = 0; r < nrows; r++) {
-            var row = <HTMLTableRowElement>grid.rows[r];
-            var ncols = row.cells.length;
-            for (var c = 0; c < ncols; c++) {
-                var cell = <HTMLTableCellElement>row.cells[c];
-                setSelected(cell, false);
-            }
-        }
-    }
-
-    function applyToRectangle(coordA: Coordinates,
-                              coordB: Coordinates,
-                              functor: (cell: HTMLTableCellElement) => void): void
-    {
-        var min = new Coordinates();
-        var max = new Coordinates();
-
-        if (coordA.row < coordB.row) {
-            min.row = coordA.row;
-            max.row = coordB.row;
-        } else {
-            min.row = coordB.row;
-            max.row = coordA.row;
-        }
-
-        if (coordA.col < coordB.col) {
-            min.col = coordA.col;
-            max.col = coordB.col;
-        } else {
-            min.col = coordB.col;
-            max.col = coordA.col;
-        }
-
-        for (var r = min.row; r <= max.row; r++) {
-            var row = <HTMLTableRowElement>grid.rows[r];
-            for (var c = min.col; c <= max.col; c++) {
-                var cell = <HTMLTableCellElement>row.cells[c];
-                functor(cell);
-            }
-        }
-    };
 
     function resizeGrid(new_nrows: number, new_ncols: number): void {
         var nrows = grid.rows.length;
@@ -122,13 +212,15 @@ module ascii_draw {
     }
 
     function setSelected(cell: HTMLTableCellElement, selected: boolean): void {
-        if (cell['data-selected'] != selected) {
+        if (cell['data-selected'] !== selected) {
             cell['data-selected'] == selected;
             if (selected) {
                 utils.addClass(cell, 'selected');
             } else {
                 utils.removeClass(cell, 'selected');
             }
+        } else {
+            console.log("bla");
         }
     }
 
