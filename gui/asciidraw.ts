@@ -1,20 +1,19 @@
 module ascii_draw {
     import Rectangle = ascii_draw.utils.Rectangle;
-    import Point = ascii_draw.utils.Point;
+    import CellPosition = ascii_draw.utils.Point;
 
     module SelectMoveController {
-        var begin_selection: Point = new Point(0, 0);
-        var end_selection: Point = new Point(0, 0);
+        var begin_selection: CellPosition = new CellPosition(0, 0);
+        var end_selection: CellPosition = new CellPosition(0, 0);
         var selecting = false;
-        var mouse_pos: Point = new Point(0, 0);
+        var mouse_pos: CellPosition = null;
 
         export function onMouseDown(target: HTMLTableCellElement): void {
             // TODO: if current cell is selected change to move mode
             selecting = true;
             clearSelection();
             // FIXME: share some code with onMouseOver
-            begin_selection.row = utils.indexInParent(target.parentElement);
-            begin_selection.col = utils.indexInParent(target);
+            begin_selection = getCellCellPosition(target);
             end_selection = begin_selection;
             setSelected(target, true);
         }
@@ -24,12 +23,17 @@ module ascii_draw {
         }
 
         export function onMouseOver(target: HTMLTableCellElement): void {
-            var new_end_selection = new Point(
-                utils.indexInParent(target.parentElement),
-                utils.indexInParent(target));
+            if (mouse_pos !== null) {
+                utils.removeClass(<HTMLTableCellElement>(<HTMLTableRowElement>grid.rows[mouse_pos.row]).cells[mouse_pos.col], 'mouse');
+            }
+            utils.addClass(target, 'mouse');
+
+            mouse_pos = getCellCellPosition(target);
+
+            var new_end_selection = getCellCellPosition(target);
 
             var statusbar = document.getElementById('statusbar');
-            statusbar.textContent = 'Position: ' + new_end_selection;
+            statusbar.textContent = 'CellPosition: ' + new_end_selection;
             statusbar.textContent += ' - Size: ' + grid.rows.length + 'x' +
                 (<HTMLTableRowElement>grid.rows[0]).cells.length;
 
@@ -55,17 +59,22 @@ module ascii_draw {
             var clear = selection.subtract(keep);
             var paint = new_selection.subtract(keep);
 
-            //console.log('clear:' + clear);
             for (var i = 0; i < clear.length; i++) {
                 applyToRectangle(clear[i], setSelected, false);
             }
 
-            //console.log('paint:' + paint);
             for (var i = 0; i < paint.length; i++) {
                 applyToRectangle(paint[i], setSelected, true);
             }
 
             end_selection = new_end_selection;
+        }
+
+        export function onMouseLeave(): void {
+            if (mouse_pos !== null) {
+                utils.removeClass(<HTMLTableCellElement>(<HTMLTableRowElement>grid.rows[mouse_pos.row]).cells[mouse_pos.col], 'mouse');
+            }
+            mouse_pos = null;
         }
 
         function clearSelection(): void {
@@ -78,6 +87,11 @@ module ascii_draw {
     export var grid: HTMLTableElement;
 
     var emptyCell: string = ' ';
+
+    function getCellCellPosition(cell: HTMLTableCellElement): CellPosition {
+        return new CellPosition(utils.indexInParent(cell.parentElement),
+                         utils.indexInParent(cell));
+    }
 
     function applyToRectangle(rect: Rectangle,
                               functor: (cell: HTMLTableCellElement, ...params: any[]) => void,
@@ -142,7 +156,7 @@ module ascii_draw {
         }
     }
 
-    function findCell(target: EventTarget): HTMLTableCellElement {
+    function getTargetCell(target: EventTarget): HTMLTableCellElement {
         if (target instanceof HTMLDivElement) {
             target = (<HTMLDivElement>target).parentElement;
         }
@@ -154,7 +168,7 @@ module ascii_draw {
     }
 
     function onMouseDown(event: MouseEvent): void {
-        var target = findCell(event.target);
+        var target = getTargetCell(event.target);
         if (target !== null) {
             SelectMoveController.onMouseDown(target);
         }
@@ -167,10 +181,15 @@ module ascii_draw {
     }
 
     function onMouseOver(event: MouseEvent): void {
-        var target = findCell(event.target);
+        var target = getTargetCell(event.target);
         if (target !== null) {
             SelectMoveController.onMouseOver(target);
         }
+        event.preventDefault();
+    }
+
+    function onMouseLeave(event: MouseEvent): void {
+        SelectMoveController.onMouseLeave();
         event.preventDefault();
     }
 
@@ -187,6 +206,7 @@ module ascii_draw {
         grid.addEventListener('mousedown', onMouseDown, false);
         window.addEventListener('mouseup', onMouseUp, false);
         grid.addEventListener('mouseover', onMouseOver, false);
+        grid.addEventListener('mouseleave', onMouseLeave, false);
     }
 }
 

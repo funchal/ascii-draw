@@ -145,14 +145,14 @@ var ascii_draw;
 var ascii_draw;
 (function (ascii_draw) {
     var Rectangle = ascii_draw.utils.Rectangle;
-    var Point = ascii_draw.utils.Point;
+    var CellPosition = ascii_draw.utils.Point;
 
     var SelectMoveController;
     (function (SelectMoveController) {
-        var begin_selection = new Point(0, 0);
-        var end_selection = new Point(0, 0);
+        var begin_selection = new CellPosition(0, 0);
+        var end_selection = new CellPosition(0, 0);
         var selecting = false;
-        var mouse_pos = new Point(0, 0);
+        var mouse_pos = null;
 
         function onMouseDown(target) {
             // TODO: if current cell is selected change to move mode
@@ -160,8 +160,7 @@ var ascii_draw;
             clearSelection();
 
             // FIXME: share some code with onMouseOver
-            begin_selection.row = ascii_draw.utils.indexInParent(target.parentElement);
-            begin_selection.col = ascii_draw.utils.indexInParent(target);
+            begin_selection = getCellCellPosition(target);
             end_selection = begin_selection;
             setSelected(target, true);
         }
@@ -173,10 +172,17 @@ var ascii_draw;
         SelectMoveController.onMouseUp = onMouseUp;
 
         function onMouseOver(target) {
-            var new_end_selection = new Point(ascii_draw.utils.indexInParent(target.parentElement), ascii_draw.utils.indexInParent(target));
+            if (mouse_pos !== null) {
+                ascii_draw.utils.removeClass((ascii_draw.grid.rows[mouse_pos.row]).cells[mouse_pos.col], 'mouse');
+            }
+            ascii_draw.utils.addClass(target, 'mouse');
+
+            mouse_pos = getCellCellPosition(target);
+
+            var new_end_selection = getCellCellPosition(target);
 
             var statusbar = document.getElementById('statusbar');
-            statusbar.textContent = 'Position: ' + new_end_selection;
+            statusbar.textContent = 'CellPosition: ' + new_end_selection;
             statusbar.textContent += ' - Size: ' + ascii_draw.grid.rows.length + 'x' + (ascii_draw.grid.rows[0]).cells.length;
 
             if (!selecting) {
@@ -211,6 +217,14 @@ var ascii_draw;
         }
         SelectMoveController.onMouseOver = onMouseOver;
 
+        function onMouseLeave() {
+            if (mouse_pos !== null) {
+                ascii_draw.utils.removeClass((ascii_draw.grid.rows[mouse_pos.row]).cells[mouse_pos.col], 'mouse');
+            }
+            mouse_pos = null;
+        }
+        SelectMoveController.onMouseLeave = onMouseLeave;
+
         function clearSelection() {
             var selection = new Rectangle(begin_selection, end_selection);
             selection.normalize();
@@ -221,6 +235,10 @@ var ascii_draw;
     ascii_draw.grid;
 
     var emptyCell = ' ';
+
+    function getCellCellPosition(cell) {
+        return new CellPosition(ascii_draw.utils.indexInParent(cell.parentElement), ascii_draw.utils.indexInParent(cell));
+    }
 
     function applyToRectangle(rect, functor) {
         var params = [];
@@ -286,7 +304,7 @@ var ascii_draw;
         }
     }
 
-    function findCell(target) {
+    function getTargetCell(target) {
         if (target instanceof HTMLDivElement) {
             target = (target).parentElement;
         }
@@ -298,7 +316,7 @@ var ascii_draw;
     }
 
     function onMouseDown(event) {
-        var target = findCell(event.target);
+        var target = getTargetCell(event.target);
         if (target !== null) {
             SelectMoveController.onMouseDown(target);
         }
@@ -311,10 +329,15 @@ var ascii_draw;
     }
 
     function onMouseOver(event) {
-        var target = findCell(event.target);
+        var target = getTargetCell(event.target);
         if (target !== null) {
             SelectMoveController.onMouseOver(target);
         }
+        event.preventDefault();
+    }
+
+    function onMouseLeave(event) {
+        SelectMoveController.onMouseLeave();
         event.preventDefault();
     }
 
@@ -331,6 +354,7 @@ var ascii_draw;
         ascii_draw.grid.addEventListener('mousedown', onMouseDown, false);
         window.addEventListener('mouseup', onMouseUp, false);
         ascii_draw.grid.addEventListener('mouseover', onMouseOver, false);
+        ascii_draw.grid.addEventListener('mouseleave', onMouseLeave, false);
     }
     ascii_draw.init = init;
 })(ascii_draw || (ascii_draw = {}));
