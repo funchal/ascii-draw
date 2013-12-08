@@ -3,8 +3,8 @@ module ascii_draw {
     import CellPosition = ascii_draw.utils.Point;
 
     module SelectMoveController {
-        var begin_selection: CellPosition = new CellPosition(0, 0);
-        var end_selection: CellPosition = new CellPosition(0, 0);
+        var begin_selection = new CellPosition(0, 0);
+        var end_selection = new CellPosition(0, 0);
         var selecting = false;
         var mouse_pos: CellPosition = null;
 
@@ -24,7 +24,7 @@ module ascii_draw {
 
         export function onMouseOver(target: HTMLTableCellElement): void {
             if (mouse_pos !== null) {
-                utils.removeClass(<HTMLTableCellElement>(<HTMLTableRowElement>grid.rows[mouse_pos.row]).cells[mouse_pos.col], 'mouse');
+                utils.removeClass(getCellAt(mouse_pos), 'mouse');
             }
             utils.addClass(target, 'mouse');
 
@@ -72,7 +72,7 @@ module ascii_draw {
 
         export function onMouseLeave(): void {
             if (mouse_pos !== null) {
-                utils.removeClass(<HTMLTableCellElement>(<HTMLTableRowElement>grid.rows[mouse_pos.row]).cells[mouse_pos.col], 'mouse');
+                utils.removeClass(getCellAt(mouse_pos), 'mouse');
             }
             mouse_pos = null;
         }
@@ -90,7 +90,13 @@ module ascii_draw {
 
     function getCellPosition(cell: HTMLTableCellElement): CellPosition {
         return new CellPosition(utils.indexInParent(cell.parentElement),
-                         utils.indexInParent(cell));
+                                utils.indexInParent(cell));
+    }
+
+    function getCellAt(pos: CellPosition): HTMLTableCellElement {
+        var row = <HTMLTableRowElement>grid.rows[pos.row];
+        var cell = <HTMLTableCellElement>row.cells[pos.col];
+        return cell;
     }
 
     function applyToRectangle(rect: Rectangle,
@@ -198,10 +204,7 @@ module ascii_draw {
 
         changeFont();
         resizeGrid(25, 80);
-
-        var row = <HTMLTableRowElement>grid.rows[0];
-        var cell = <HTMLTableCellElement>row.cells[0];
-        setSelected(cell, true);
+        setSelected(getCellAt(new CellPosition(0, 0)), true);
 
         grid.addEventListener('mousedown', onMouseDown, false);
         window.addEventListener('mouseup', onMouseUp, false);

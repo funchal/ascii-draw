@@ -173,7 +173,7 @@ var ascii_draw;
 
         function onMouseOver(target) {
             if (mouse_pos !== null) {
-                ascii_draw.utils.removeClass(ascii_draw.grid.rows[mouse_pos.row].cells[mouse_pos.col], 'mouse');
+                ascii_draw.utils.removeClass(getCellAt(mouse_pos), 'mouse');
             }
             ascii_draw.utils.addClass(target, 'mouse');
 
@@ -219,7 +219,7 @@ var ascii_draw;
 
         function onMouseLeave() {
             if (mouse_pos !== null) {
-                ascii_draw.utils.removeClass(ascii_draw.grid.rows[mouse_pos.row].cells[mouse_pos.col], 'mouse');
+                ascii_draw.utils.removeClass(getCellAt(mouse_pos), 'mouse');
             }
             mouse_pos = null;
         }
@@ -238,6 +238,12 @@ var ascii_draw;
 
     function getCellPosition(cell) {
         return new CellPosition(ascii_draw.utils.indexInParent(cell.parentElement), ascii_draw.utils.indexInParent(cell));
+    }
+
+    function getCellAt(pos) {
+        var row = ascii_draw.grid.rows[pos.row];
+        var cell = row.cells[pos.col];
+        return cell;
     }
 
     function applyToRectangle(rect, functor) {
@@ -346,10 +352,7 @@ var ascii_draw;
 
         changeFont();
         resizeGrid(25, 80);
-
-        var row = ascii_draw.grid.rows[0];
-        var cell = row.cells[0];
-        setSelected(cell, true);
+        setSelected(getCellAt(new CellPosition(0, 0)), true);
 
         ascii_draw.grid.addEventListener('mousedown', onMouseDown, false);
         window.addEventListener('mouseup', onMouseUp, false);
