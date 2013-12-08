@@ -12,11 +12,6 @@
     cursor: default;
     font-family: monospace;
     color: #252525;
-    text-shadow: rgb(255, 255, 255) 0px 1px 0px;
-}
-
-img {
-    vertical-align: middle;
 }
 
 table, td {
@@ -30,18 +25,19 @@ table, td {
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none; /* disable table selection */
-    overflow: hidden;
-    table-layout: fixed; /* override the browser's automatic column resizing */
 }
 
-td div {
-    min-width: 7px;
-    max-width: 7px;
-    width: 7px;
-    min-height: 15px;
-    max-height: 15px;
-    height: 15px;
+table {
+    table-layout: fixed; /* override the browser's automatic column resizing */
+    background-color: #FFF;
+}
+
+td {
     overflow: hidden;
+}
+
+img {
+    vertical-align: middle;
 }
 
 button {
@@ -50,17 +46,17 @@ button {
     outline: none;
     display: inline-block;
     vertical-align: middle;
-    padding: 5px 5px;
+    padding: 4px 4px;
     border-radius: 8px;
-    width: 42px;
-    height: 42px;
+    width: 40px;
+    height: 40px;
     background-color: #DDD;
 }
 
 button:active, button.pressed {
     background-color: #AAA;
-    box-shadow: 0px 3px 7px rgba(0, 0, 0, 0.25) inset;
-    padding: 6px 4px 4px 6px;
+    box-shadow: 0px 3px 3px rgba(0, 0, 0, 0.25) inset;
+    padding: 5px 3px 3px 5px;
 }
 
 button.left {
@@ -86,28 +82,35 @@ button img {
     height: 32px;
 }
 
+.selected {
+    background-color: #FF0;
+}
+
 .toolbar {
     position: fixed;
     background-color: #DDD;
     top: 0px;
     left: 0px;
     right: 0px;
-    height: 50px; /* button.height + 2*button.margin */
+    height: 48px; /* button.height + 2*button.margin */
     white-space: nowrap;
     border-bottom: 1px solid #BBB;
+    text-shadow: rgb(255, 255, 255) 0px 1px 0px;
 }
 
 .apparea {
     overflow: auto;
     position: fixed;
-    top: 51px;
+    top: 49px;
     left: 0;
     right: 0;
     bottom: 21px;
     white-space: nowrap;
+    background-color: #CCC;
 }
 
 .footer {
+    text-shadow: rgb(255, 255, 255) 0px 1px 0px;
     font-size: 11px;
     position: fixed;
     line-height: 16px;

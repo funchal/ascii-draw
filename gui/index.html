@@ -3,25 +3,34 @@
     <head>
         <meta charset='UTF-8'/>
         <link rel='stylesheet' href='style.css' type='text/css'/>
+        <link rel='icon' type='image/png' href='img/favicon.png'/>
         <title>ascii-draw</title>
-        <script type='text/javascript'>
-        function loadd() {
-            t = document.getElementById('drawingarea');
-            for (i = 0; i != 50; i++) {
-                var row = t.insertRow();
-                for (j = 0; j != 160; j++) {
-                    var cell = row.insertCell();
-                    var div = document.createElement('div');
-                    div.textContent = 'M';
-                    cell.appendChild(div);
+        <script src='script.js' type='text/javascript'></script>
+        <!--<script type='text/javascript'>
+        var w = 0;
+        var h = 0;
+        window.setInterval(function() {
+            var e = document.getElementsByClassName('wrapper')[0];
+            if (w < e.clientWidth || h < e.clientHeight) {
+                w = e.clientWidth;
+                h = e.clientHeight;
+                t = document.getElementById('grid');
+                for (i = 0; i != 25; i++) {
+                    var row = t.insertRow();
+                    for (j = 0; j != 80; j++) {
+                        var cell = row.insertCell();
+                        var div = document.createElement('div');
+                        div.textContent = '';
+                        cell.appendChild(div);
+                    }
                 }
             }
-        }
-        </script>
+        }, 1000);
+        </script>-->
     </head>
-    <body onload="loadd()">
+    <body>
         <div class='toolbar'>
-            <button class='left pressed'>
+            <button title="bla" class='tooltip left pressed'>
                 <img src='img/select.png' alt='Select/Move'/>
             </button><button class='middle'>
                 <img src='img/rectangle.png' alt='Rectangle'/>
@@ -34,10 +43,9 @@
             </button><button class='right'>
                 <img src='img/redo.png' alt='Redo'/>
             </button>
-            ascii-draw (alpha)
         </div>
         <div class='apparea'>
-            <table id='drawingarea'></table>
+            <table id='grid'></table>
         </div>
         <div class='footer'>Position xx x yy - Selection ww x hh - Size ww x hh</div>
     </body>

@@ -493,17 +493,26 @@ var ascii_draw = (function() {
     me.changeFontAction = function() {
         changeStyleRule('td', 'width', 'auto');
         changeStyleRule('td', 'height', 'auto');
+        changeStyleRule('td', 'max-width', 'auto');
+        changeStyleRule('td', 'max-height', 'auto');
+        changeStyleRule('td', 'min-width', 'auto');
+        changeStyleRule('td', 'min-height', 'auto');
 
         var t = document.createElement('table');
         var row = t.insertRow();
         var cell = row.insertCell();
         cell.appendChild(document.createTextNode('M'));
         document.body.appendChild(t);
-
-        changeStyleRule('td', 'width', cell.clientWidth + 'px');
-        changeStyleRule('td', 'height', cell.clientHeight + 'px');
-
+        var w = cell.clientWidth;
+        var h = cell.clientHeight;
         document.body.removeChild(t);
+
+        changeStyleRule('td', 'width', w + 'px');
+        changeStyleRule('td', 'height', h + 'px');
+        changeStyleRule('td', 'max-width', w + 'px');
+        changeStyleRule('td', 'max-height', h + 'px');
+        changeStyleRule('td', 'min-width', w + 'px');
+        changeStyleRule('td', 'min-height', h + 'px');
     };
 
     window.addEventListener('load', init, false);

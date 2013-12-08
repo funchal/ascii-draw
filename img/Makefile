@@ -7,7 +7,8 @@ IMG = \
 	pencil.png \
 	undo.png \
 	redo.png \
-	gears.png
+	gears.png \
+	favicon.png
 
 SIZE = 128
 
