@@ -77,7 +77,7 @@ module utils {
             return this.row + 'x' + this.col;
         }
 
-        isEqual(other: Point) {
+        isEqual(other: Point): boolean {
             return (this.row == other.row && this.col == other.col);
         }
     }
@@ -124,7 +124,7 @@ module utils {
                    (this.top_left.col > this.bottom_right.col);
         }
 
-        isEqual(other: Rectangle) {
+        isEqual(other: Rectangle): boolean {
             return (this.top_left.isEqual(other.top_left) &&
                     this.bottom_right.isEqual(other.bottom_right));
         }
@@ -174,7 +174,7 @@ module utils {
 
     export module commands {
         var history: Array<Command> = [];
-        var limit = 3;
+        var limit = 100;
         var current = 0;
 
         export interface Command {
@@ -182,7 +182,7 @@ module utils {
             unexecute(): void;
         }
 
-        export function invoke(cmd: Command) {
+        export function invoke(cmd: Command): void {
             history.splice(current, history.length - current, cmd);
             if (history.length > limit) {
                 history.shift();
@@ -191,18 +191,26 @@ module utils {
             redo();
         }
 
-        export function undo() {
-            if (current > 0) {
+        export function undo(): void {
+            if (canUndo()) {
                 current--;
                 history[current].unexecute();
             }
         }
 
-        export function redo() {
-            if (current < history.length) {
+        export function redo(): void {
+            if (canRedo()) {
                 history[current].execute();
                 current++;
             }
+        }
+
+        export function canUndo(): boolean {
+            return (current > 0);
+        }
+
+        export function canRedo(): boolean {
+            return (current < history.length);
         }
     }
 }

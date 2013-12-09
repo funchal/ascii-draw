@@ -44,7 +44,7 @@ module ascii_draw {
             export function onArrowDown(displacement: Array<number>): void {
                 console.log('arrowdown');
             }
-            export function onKeyPress(character: string) {
+            export function onKeyPress(character: string): void {
                 console.log('keypress');
             }
             export function exit(): void {
@@ -53,7 +53,7 @@ module ascii_draw {
                 utils.removeClass(selection_button, 'pressed');
             }
 
-            function drawRectangle():void {
+            function drawRectangle(): void {
                 // TODO
             }
         }
@@ -102,7 +102,7 @@ module ascii_draw {
                 setSelection(pos, pos);
 
             }
-            export function onKeyPress(character: string) {
+            export function onKeyPress(character: string): void {
                 applyToRectangle(new Rectangle(begin_selection, end_selection, true /*normalize*/),
                                  function(cell: HTMLTableCellElement) {
                                     cell.children[0].textContent = character;

@@ -162,7 +162,7 @@ var utils;
 
     (function (commands) {
         var history = [];
-        var limit = 3;
+        var limit = 100;
         var current = 0;
 
         function invoke(cmd) {
@@ -176,7 +176,7 @@ var utils;
         commands.invoke = invoke;
 
         function undo() {
-            if (current > 0) {
+            if (canUndo()) {
                 current--;
                 history[current].unexecute();
             }
@@ -184,12 +184,22 @@ var utils;
         commands.undo = undo;
 
         function redo() {
-            if (current < history.length) {
+            if (canRedo()) {
                 history[current].execute();
                 current++;
             }
         }
         commands.redo = redo;
+
+        function canUndo() {
+            return (current > 0);
+        }
+        commands.canUndo = canUndo;
+
+        function canRedo() {
+            return (current < history.length);
+        }
+        commands.canRedo = canRedo;
     })(utils.commands || (utils.commands = {}));
     var commands = utils.commands;
 })(utils || (utils = {}));
@@ -449,10 +459,29 @@ var ascii_draw;
 
     function onUndo() {
         commands.undo();
+        updateUndoRedo();
     }
 
     function onRedo() {
         commands.redo();
+        updateUndoRedo();
+    }
+
+    function updateUndoRedo() {
+        var undo_button = document.getElementById('undo-button');
+        if (commands.canUndo()) {
+            undo_button.disabled = false;
+        } else {
+            undo_button.disabled = true;
+        }
+
+        var redo_button = document.getElementById('redo-button');
+        redo_button.addEventListener('click', onRedo, false);
+        if (commands.canRedo()) {
+            redo_button.disabled = false;
+        } else {
+            redo_button.disabled = true;
+        }
     }
 
     function onKeyUp(event) {
@@ -614,7 +643,7 @@ var ascii_draw;
 
     function setSelected(cell, selected) {
         if (cell['data-selected'] !== selected) {
-            cell['data-selected'] == selected;
+            cell['data-selected'] = selected;
             if (selected) {
                 utils.addClass(cell, 'selected');
             } else {
@@ -715,6 +744,8 @@ var ascii_draw;
 
         var redo_button = document.getElementById('redo-button');
         redo_button.addEventListener('click', onRedo, false);
+
+        updateUndoRedo();
     }
     ascii_draw.init = init;
 })(ascii_draw || (ascii_draw = {}));

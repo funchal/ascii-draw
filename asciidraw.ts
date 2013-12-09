@@ -76,10 +76,29 @@ module ascii_draw {
 
     function onUndo(): void {
         commands.undo();
+        updateUndoRedo();
     }
 
     function onRedo(): void {
         commands.redo();
+        updateUndoRedo();
+    }
+
+    function updateUndoRedo(): void {
+        var undo_button = document.getElementById('undo-button');
+        if (commands.canUndo()) {
+            undo_button.disabled = false;
+        } else {
+            undo_button.disabled = true;
+        }
+
+        var redo_button = document.getElementById('redo-button');
+        redo_button.addEventListener('click', onRedo, false);
+        if (commands.canRedo()) {
+            redo_button.disabled = false;
+        } else {
+            redo_button.disabled = true;
+        }
     }
 
     function onKeyUp(event: KeyboardEvent): void {
@@ -296,7 +315,7 @@ module ascii_draw {
         event.preventDefault();
     }
 
-    function controllerSwitcher(new_controller: Controller) {
+    function controllerSwitcher(new_controller: Controller): () => void {
         return function(): void {
             controller.exit();
             controller = new_controller;
@@ -341,6 +360,8 @@ module ascii_draw {
 
         var redo_button = document.getElementById('redo-button');
         redo_button.addEventListener('click', onRedo, false);
+
+        updateUndoRedo();
     }
 }
 

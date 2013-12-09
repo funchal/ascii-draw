@@ -50,15 +50,18 @@ button {
     background-color: #DDD;
 }
 
+button.pressed {
+    background-color: #BBB;
+}
+
 button:active {
     background-color: #AAA;
     box-shadow: 0 3px 3px rgba(0, 0, 0, 0.25) inset;
-    padding: 5px 3px 3px 5px;
+    padding: 5px 4px 3px 4px;
 }
 
-button.pressed {
-    background-color: #AAA;
-    box-shadow: 0 3px 3px rgba(0, 0, 0, 0.25) inset;
+button:disabled {
+    visibility: hidden;
 }
 
 button.left {
