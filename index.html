@@ -3,61 +3,33 @@
     <head>
         <meta charset='UTF-8'/>
         <link rel='stylesheet' href='style.css' type='text/css'/>
-        <script src='script.js' type='text/javascript'></script>
-        <script type='text/javascript'>
-            function fontChange() {
-                var font_select = document.getElementById('font-select');
-                switch (font_select.selectedIndex) {
-                    case 0:
-                        document.body.style.fontFamily = 'Inconsolata-g';
-                        document.body.style.fontSize = '12px';
-                        break;
-                    case 1:
-                        document.body.style.fontFamily = 'Classic Console';
-                        document.body.style.fontSize = '20px';
-                        break;
-                    case 2:
-                        document.body.style.fontFamily = 'monospace';
-                        document.body.style.fontSize = '12px';
-                        break;
-                }
-                ascii_draw.changeFontAction();
-            }
-        </script>
+        <link rel='icon' type='image/png' href='img/favicon.png'/>
         <title>ascii-draw</title>
+        <script src='script.js' type='text/javascript'></script>
     </head>
     <body>
-        <div class='toolbar'>
+        <div id='toolbar'>
             <button class='left pressed' id='selection-button'>
                 <img src='img/select.png' alt='Select/Move'/>
             </button><button class='middle' id='rectangle-button'>
                 <img src='img/rectangle.png' alt='Rectangle'/>
             </button><button class='middle'>
                 <img src='img/connector.png' alt='Pencil'/>
-            </button><button class='middle'>
-                <img src='img/fill.png' alt='Fill'/>
             </button><button class='right'>
                 <img src='img/pencil.png' alt='Fill'/>
-            </button>
-
-            <button class='left'>
+            </button><button class='left'>
                 <img src='img/undo.png' alt='Undo'/>
             </button><button class='right'>
                 <img src='img/redo.png' alt='Redo'/>
             </button>
-
-            <button>
-                <img src='img/gears.png' alt='Gears'/>
-            </button>
         </div>
-        <div class='apparea' style='overflow:scroll'>
-            <table id='drawingarea'></table>
-            <select onchange='fontChange()' id='font-select'>
-                <option>Inconsolata-g</option>
-                <option>Classic Console</option>
-                <option>Default monospace</option>
-            </select>
+        <div id='apparea'>
+            <table id='grid'></table>
         </div>
-        <textarea id='copypastearea'></textarea>
+        <div id='statusbar'><div id='mousestatus'>
+            </div><div id='selectionstatus'>
+            </div><div id='gridstatus'>
+        </div></div>
+        <textarea id='copypastearea' tabindex='-1'></textarea>
     </body>
 </html>

@@ -1,154 +1,77 @@
-@font-face {
-    font-family: 'Inconsolata-g';
-    src: url('font/Inconsolata-g.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-}
-
-@font-face {
-    font-family: 'Classic Console';
-    src: url('font/Classic-Console.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-}
-
 * {
-    font-family: inherit;
-    font-size: inherit;
-}
-
-html, body, div, ul, li, p, table, td, button, div, textarea {
     margin: 0;
     padding: 0;
-}
-
-body {
-    font-family: 'Inconsolata-g';
-    font-size: 12px;
-}
-
-/* make the body stretch to the bottom */
-html {
-    height: 100%;
-}
-
-table, td {
-    text-align: center;
-    border-color: #DDD;
-    border-style: solid;
-    border-spacing: 0;
-    border-collapse: collapse;
-    background-color: #FFF;
-    /* disable table selection */
+    border: 0;
+    white-space: nowrap;
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     -khtml-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
-    user-select: none;
+    user-select: none; /* disable table selection */
+    cursor: inherit;
+    font-family: inherit;
+    color: inherit;
 }
 
-.toolbar {
-    overflow: hidden;
-    position: absolute;
-    height: 38px;
-    padding: 8px;
-    top: 0px;
-    left: 0px;
-    right: 0px;
-    background-color: #383838;
-    //background-image: -webkit-linear-gradient(to top, #202020, #313131);
-    //background-image: -moz-linear-gradient(to top, #202020, #313131);
-    //background-image: linear-gradient(to top, #202020, #313131);
-}
-
-.apparea {
-    overflow: scroll;
-    position: absolute;
-    padding: 8px;
-    top: 54px;
-    left: 0;
-    right: 0;
-    bottom: 0;
+html {
+    cursor: default;
+    font-family: monospace;
+    color: #252525;
 }
 
 table {
-    table-layout: fixed;  /* override the browser's automatic column resizing */
-    border-width: 0 0 1px 1px;
+    background-color: #FFF;
+    cursor: none;
+    table-layout: fixed; /* override the browser's automatic column resizing */
+    border-spacing: 0;
+    border-collapse: collapse;
 }
 
 td {
-    overflow: hidden;
-    border-width: 1px 1px 0 0;
-}
-
-td.highlight {
-    background: #FF0;
+    text-align: center;
+    border: 1px solid #DDD;
 }
 
 img {
-    border: 0;
     vertical-align: middle;
 }
 
 button {
-    color: #999;
-    font-weight: bold;
+    margin: 4px 8px;
     cursor: pointer;
     outline: none;
     display: inline-block;
     vertical-align: middle;
-    padding: 1px 4px;
-    border: 1px double #000;
-    border-radius: 10px;
+    padding: 4px 4px;
+    border-radius: 8px;
+    width: 40px;
     height: 40px;
-    background-color: #999;
-    box-shadow: 1px 1px 1px 0px #303030, 1px 1px 1px 0px #AAA inset;
-    //background-image: -webkit-linear-gradient(to top, #383838, #444444);
-    background-image: -moz-linear-gradient(to top, #888, #AAA);
-    //background-image: linear-gradient(to top, #383838, #444444);
+    background-color: #DDD;
 }
 
-button:hover {
-    background-color: #888;
-    box-shadow: 1px 1px 1px 0px #303030, 1px 1px 1px 0px #999 inset;
-    //background-image: -webkit-linear-gradient(to top, #343434, #3D3D3D);
-    background-image: -moz-linear-gradient(to top, #777, #999);
-    //background-image: linear-gradient(to top, #343434, #3D3D3D);
+button:active {
+    background-color: #AAA;
+    box-shadow: 0 3px 3px rgba(0, 0, 0, 0.25) inset;
+    padding: 5px 3px 3px 5px;
 }
 
-button:active, button.pressed {
-    background-color: #666;
-    padding: 2px 3px 0 5px;
-    box-shadow: 1px 1px 1px 0px #303030, 1px 1px 3px 0px #222 inset;
-    //background-image: -webkit-linear-gradient(to top, #1A1A1A, #121212);
-    background-image: -moz-linear-gradient(to top, #666, #444);
-    //background-image: linear-gradient(to top, #1A1A1A, #121212);
-}
-
-button.disabled {
-    color: #DDD;
-    background-color: #CCC;
+button.pressed {
+    background-color: #AAA;
+    box-shadow: 0 3px 3px rgba(0, 0, 0, 0.25) inset;
 }
 
 button.left {
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-    margin-right: 0;
-    border-right-width: 0;
+    margin-right: 2px;
 }
 
 button.middle {
-    border-radius: 0;
-    margin-left: 0;
-    margin-right: 0;
-    border-right-width: 0;
+    margin-left: 2px;
+    margin-right: 2px;
 }
 
 button.right {
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-    margin-left: 0;
+    margin-left: 2px;
 }
 
 /* remove ugly border in firefox */
@@ -161,9 +84,64 @@ button img {
     height: 32px;
 }
 
+.selected {
+    background-color: #FF0;
+}
+
+.mouse div {
+    margin: -1px;
+    border: 1px solid #000;
+}
+
+#toolbar {
+    position: fixed;
+    background-color: #DDD;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    height: 48px; /* button.height + 2*button.margin */
+    white-space: nowrap;
+    border-bottom: 1px solid #BBB;
+    text-shadow: rgb(255, 255, 255) 0px 1px 0px;
+}
+
+#apparea {
+    overflow: auto;
+    position: fixed;
+    top: 49px;
+    left: 0;
+    right: 0;
+    bottom: 21px;
+    white-space: nowrap;
+    background-color: #CCC;
+}
+
+#statusbar {
+    position: fixed;
+    background-color: #DDD;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-top: 1px solid #BBB;
+}
+
+#statusbar div {
+    vertical-align: middle;
+    text-shadow: rgb(255, 255, 255) 0px 1px 0px;
+    font-size: 11px;
+    line-height: 16px;
+    padding: 2px 8px;
+    height: 16px;
+    display: inline-block;
+    border-right: 1px solid #BBB;
+    min-width: 13%;
+    max-width: 33%;
+    overflow: hidden;
+}
+
 #copypastearea {
     opacity: 0;
     position: absolute;
     top: -10000px;
-    right: 0;
+    right: 0px;
 }
