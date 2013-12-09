@@ -239,7 +239,7 @@ module ascii_draw {
 
     export function setSelected(cell: HTMLTableCellElement, selected: boolean): void {
         if (cell['data-selected'] !== selected) {
-            cell['data-selected'] == selected;
+            cell['data-selected'] = selected;
             if (selected) {
                 utils.addClass(cell, 'selected');
             } else {
