@@ -1,9 +1,10 @@
 'use strict';
 
 module ascii_draw {
-    import Rectangle = utils.Rectangle;
-
     export module selection {
+        import Rectangle = utils.Rectangle;
+        import Cell = grid.Cell;
+
         var contents: Array<Rectangle> = [];
 
         export function clear(): void {
@@ -25,6 +26,19 @@ module ascii_draw {
 
         export function getContents(): string {
             return 'content\ncontent\ncontent\ncontent\ncontent\ncontent\n';
+        }
+
+        export function setSelected(cell: Cell, selected: boolean): void {
+            if (cell['data-selected'] !== selected) {
+                cell['data-selected'] = selected;
+                if (selected) {
+                    utils.addClass(cell, 'selected');
+                } else {
+                    utils.removeClass(cell, 'selected');
+                }
+            } else {
+                console.log('selected');
+            }
         }
     }
 }

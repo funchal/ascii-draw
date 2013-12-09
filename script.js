@@ -245,19 +245,149 @@ var utils;
     })(utils.commands || (utils.commands = {}));
     var commands = utils.commands;
 })(utils || (utils = {}));
+'use strict';
+var ascii_draw;
+(function (ascii_draw) {
+    (function (grid) {
+        var CellPosition = utils.Point;
+
+        grid.container;
+        var nrows = 0;
+        var ncols = 0;
+
+        ;
+        ;
+
+        function init() {
+            grid.container = document.getElementById('grid');
+            changeFont();
+            setSize(50, 120);
+        }
+        grid.init = init;
+
+        function getRow(index) {
+            return grid.container.children[index];
+        }
+        grid.getRow = getRow;
+
+        function getCell(index, row) {
+            return row.children[index];
+        }
+        grid.getCell = getCell;
+
+        function getCellPosition(cell) {
+            return new CellPosition(utils.indexInParent(cell.parentElement), utils.indexInParent(cell));
+        }
+        grid.getCellPosition = getCellPosition;
+
+        function getTargetCell(target) {
+            if (target instanceof HTMLSpanElement) {
+                return target;
+            } else {
+                return null;
+            }
+        }
+        grid.getTargetCell = getTargetCell;
+
+        function setSize(new_nrows, new_ncols) {
+            for (var r = nrows; r < new_nrows; r++) {
+                grid.container.appendChild(document.createElement('div'));
+            }
+
+            for (var r = nrows; r > new_nrows; r--) {
+                grid.container.removeChild(grid.container.children[r]);
+            }
+
+            for (var r = 0; r < new_nrows; r++) {
+                var row = getRow(r);
+                for (var c = ncols; c < new_ncols; c++) {
+                    var cell = row.appendChild(document.createElement('span'));
+                    cell.textContent = ascii_draw.emptyCell;
+                }
+
+                for (var c = ncols; c > new_ncols; c--) {
+                    row.removeChild(row.children[r]);
+                }
+            }
+
+            nrows = new_nrows;
+            ncols = new_ncols;
+
+            ascii_draw.gridstatus.textContent = 'Grid size: ' + nrows + 'x' + ncols + ' (' + nrows * ncols + ')';
+        }
+
+        function changeFont() {
+            utils.changeStyleRule('#grid span', 'width', 'auto');
+            utils.changeStyleRule('#grid span', 'height', 'auto');
+            utils.changeStyleRule('#grid div', 'height', 'auto');
+
+            var font_size = utils.computeFontSize();
+
+            utils.changeStyleRule('#grid span', 'width', font_size.width + 'px');
+            utils.changeStyleRule('#grid span', 'height', font_size.height + 'px');
+            utils.changeStyleRule('#grid div', 'height', font_size.height + 'px');
+        }
+    })(ascii_draw.grid || (ascii_draw.grid = {}));
+    var grid = ascii_draw.grid;
+})(ascii_draw || (ascii_draw = {}));
+'use strict';
+var ascii_draw;
+(function (ascii_draw) {
+    (function (selection) {
+        var Rectangle = utils.Rectangle;
+
+        var contents = [];
+
+        function clear() {
+            for (var i = contents.length; i > 0; i--) {
+                remove(i - 1);
+            }
+        }
+        selection.clear = clear;
+
+        /* must not overlap any existing selection */
+        function add(sel) {
+            ascii_draw.applyToRectangle(sel, setSelected, true);
+            contents.push(sel);
+        }
+        selection.add = add;
+
+        function remove(index) {
+            ascii_draw.applyToRectangle(contents[index], setSelected, false);
+            contents.splice(index, 1);
+        }
+        selection.remove = remove;
+
+        function getContents() {
+            return 'content\ncontent\ncontent\ncontent\ncontent\ncontent\n';
+        }
+        selection.getContents = getContents;
+
+        function setSelected(cell, selected) {
+            if (cell['data-selected'] !== selected) {
+                cell['data-selected'] = selected;
+                if (selected) {
+                    utils.addClass(cell, 'selected');
+                } else {
+                    utils.removeClass(cell, 'selected');
+                }
+            } else {
+                console.log('selected');
+            }
+        }
+        selection.setSelected = setSelected;
+    })(ascii_draw.selection || (ascii_draw.selection = {}));
+    var selection = ascii_draw.selection;
+})(ascii_draw || (ascii_draw = {}));
 ///<reference path='utils.ts'/>
+///<reference path='grid.ts'/>
+///<reference path='selection.ts'/>
 'use strict';
 var ascii_draw;
 (function (ascii_draw) {
     (function (controllers) {
         var Rectangle = utils.Rectangle;
         var CellPosition = utils.Point;
-
-        controllers.begin_highlight;
-        controllers.end_highlight;
-
-        var highlighting = false;
-        var mouse_pos = null;
 
         (function (RectangleController) {
             function init() {
@@ -275,7 +405,7 @@ var ascii_draw;
             function onMouseDown(target) {
                 // TODO: if current cell is highlighted change to move mode
                 highlighting = true;
-                setHollowHighlight(ascii_draw.getCellPosition(target), ascii_draw.getCellPosition(target));
+                setHollowHighlight(ascii_draw.grid.getCellPosition(target), ascii_draw.grid.getCellPosition(target));
                 drawRectangle(new Rectangle(controllers.begin_highlight, controllers.end_highlight, true));
             }
             RectangleController.onMouseDown = onMouseDown;
@@ -286,7 +416,7 @@ var ascii_draw;
             RectangleController.onMouseUp = onMouseUp;
 
             function onMouseOver(target) {
-                var pos = ascii_draw.getCellPosition(target);
+                var pos = ascii_draw.grid.getCellPosition(target);
                 setMousePosition(pos);
                 if (highlighting) {
                     setHollowHighlight(controllers.begin_highlight, pos);
@@ -332,26 +462,26 @@ var ascii_draw;
                 var right = rect.bottom_right.col;
 
                 // print first row: +---+
-                var first_row = ascii_draw.getRow(top);
-                writeToCell(ascii_draw.getCell(left, first_row), '+');
+                var first_row = ascii_draw.grid.getRow(top);
+                writeToCell(ascii_draw.grid.getCell(left, first_row), '+');
                 for (var col = left + 1; col <= right - 1; col++) {
-                    writeToCell(ascii_draw.getCell(col, first_row), '-');
+                    writeToCell(ascii_draw.grid.getCell(col, first_row), '-');
                 }
-                writeToCell(ascii_draw.getCell(right, first_row), '+');
+                writeToCell(ascii_draw.grid.getCell(right, first_row), '+');
 
                 for (var row = top + 1; row <= bottom - 1; row++) {
-                    var current_row = ascii_draw.getRow(row);
-                    writeToCell(ascii_draw.getCell(left, current_row), '|');
-                    writeToCell(ascii_draw.getCell(right, current_row), '|');
+                    var current_row = ascii_draw.grid.getRow(row);
+                    writeToCell(ascii_draw.grid.getCell(left, current_row), '|');
+                    writeToCell(ascii_draw.grid.getCell(right, current_row), '|');
                 }
 
                 // print last row
-                var last_row = ascii_draw.getRow(bottom);
-                writeToCell(ascii_draw.getCell(left, last_row), '+');
+                var last_row = ascii_draw.grid.getRow(bottom);
+                writeToCell(ascii_draw.grid.getCell(left, last_row), '+');
                 for (var col = left + 1; col <= right - 1; col++) {
-                    writeToCell(ascii_draw.getCell(col, last_row), '-');
+                    writeToCell(ascii_draw.grid.getCell(col, last_row), '-');
                 }
-                writeToCell(ascii_draw.getCell(right, last_row), '+');
+                writeToCell(ascii_draw.grid.getCell(right, last_row), '+');
             }
         })(controllers.RectangleController || (controllers.RectangleController = {}));
         var RectangleController = controllers.RectangleController;
@@ -361,7 +491,6 @@ var ascii_draw;
                 reset();
                 controllers.begin_highlight = new CellPosition(0, 0);
                 controllers.end_highlight = controllers.begin_highlight;
-                ascii_draw.setSelected(ascii_draw.getCell(controllers.begin_highlight.col, ascii_draw.getRow(controllers.begin_highlight.row)), true);
                 ascii_draw.selection.clear();
                 ascii_draw.selection.add(new Rectangle(controllers.begin_highlight, controllers.end_highlight, true));
             }
@@ -375,7 +504,7 @@ var ascii_draw;
             function onMouseDown(target) {
                 // TODO: if current cell is highlighted change to move mode
                 highlighting = true;
-                controllers.setHighlight(ascii_draw.getCellPosition(target), ascii_draw.getCellPosition(target));
+                controllers.setHighlight(ascii_draw.grid.getCellPosition(target), ascii_draw.grid.getCellPosition(target));
             }
             SelectMoveController.onMouseDown = onMouseDown;
 
@@ -393,7 +522,7 @@ var ascii_draw;
             SelectMoveController.onMouseUp = onMouseUp;
 
             function onMouseOver(target) {
-                var pos = ascii_draw.getCellPosition(target);
+                var pos = ascii_draw.grid.getCellPosition(target);
                 setMousePosition(pos);
                 if (highlighting) {
                     controllers.setHighlight(controllers.begin_highlight, pos);
@@ -429,16 +558,38 @@ var ascii_draw;
         })(controllers.SelectMoveController || (controllers.SelectMoveController = {}));
         var SelectMoveController = controllers.SelectMoveController;
 
+        controllers.begin_highlight;
+        controllers.end_highlight;
+
+        var highlighting = false;
+        var mouse_pos = null;
+
+        controllers.current = SelectMoveController;
+
+        function swap(new_controller) {
+            return function () {
+                controllers.current.exit();
+                controllers.current = new_controller;
+                controllers.current.reset();
+            };
+        }
+        controllers.swap = swap;
+
+        function init() {
+            controllers.current.init();
+        }
+        controllers.init = init;
+
         function setMousePosition(new_pos) {
             if (mouse_pos !== null) {
-                var cell = ascii_draw.getCell(mouse_pos.col, ascii_draw.getRow(mouse_pos.row));
+                var cell = ascii_draw.grid.getCell(mouse_pos.col, ascii_draw.grid.getRow(mouse_pos.row));
                 utils.removeClass(cell, 'mouse');
             }
             mouse_pos = new_pos;
 
             var mousestatus = document.getElementById('mousestatus');
             if (mouse_pos !== null) {
-                var cell = ascii_draw.getCell(mouse_pos.col, ascii_draw.getRow(mouse_pos.row));
+                var cell = ascii_draw.grid.getCell(mouse_pos.col, ascii_draw.grid.getRow(mouse_pos.row));
                 utils.addClass(cell, 'mouse');
                 mousestatus.textContent = 'Cursor: ' + mouse_pos;
             } else {
@@ -462,11 +613,11 @@ var ascii_draw;
             var paint = new_highlight.subtract(keep);
 
             for (var i = 0; i < paint.length; i++) {
-                ascii_draw.applyToRectangle(paint[i], ascii_draw.setHighlighted, true);
+                ascii_draw.applyToRectangle(paint[i], setHighlighted, true);
             }
 
             for (var i = 0; i < clear.length; i++) {
-                ascii_draw.applyToRectangle(clear[i], ascii_draw.setHighlighted, false);
+                ascii_draw.applyToRectangle(clear[i], setHighlighted, false);
             }
 
             if (new_highlight.getHeight() > 1 || new_highlight.getWidth() > 1) {
@@ -496,11 +647,11 @@ var ascii_draw;
 
             var rect_pieces = getHollowRectangle(old_highlight);
             for (var piece = 0; piece < rect_pieces.length; piece++) {
-                ascii_draw.applyToRectangle(rect_pieces[piece], ascii_draw.setHighlighted, false);
+                ascii_draw.applyToRectangle(rect_pieces[piece], setHighlighted, false);
             }
             rect_pieces = getHollowRectangle(new_highlight);
             for (var piece = 0; piece < rect_pieces.length; piece++) {
-                ascii_draw.applyToRectangle(rect_pieces[piece], ascii_draw.setHighlighted, true);
+                ascii_draw.applyToRectangle(rect_pieces[piece], setHighlighted, true);
             }
             var selectionstatus = document.getElementById('selectionstatus');
             if (new_highlight.getHeight() > 1 || new_highlight.getWidth() > 1) {
@@ -513,6 +664,19 @@ var ascii_draw;
         function writeToCell(cell, character) {
             cell.textContent = character;
         }
+
+        function setHighlighted(cell, highlighted) {
+            if (cell['data-highlighted'] !== highlighted) {
+                cell['data-highlighted'] = highlighted;
+                if (highlighted) {
+                    utils.addClass(cell, 'highlighted');
+                } else {
+                    utils.removeClass(cell, 'highlighted');
+                }
+            } else {
+                console.log('highlighted');
+            }
+        }
     })(ascii_draw.controllers || (ascii_draw.controllers = {}));
     var controllers = ascii_draw.controllers;
 })(ascii_draw || (ascii_draw = {}));
@@ -523,27 +687,22 @@ var ascii_draw;
 (function (ascii_draw) {
     var Rectangle = utils.Rectangle;
     var CellPosition = utils.Point;
-
     var SelectMoveController = ascii_draw.controllers.SelectMoveController;
     var RectangleController = ascii_draw.controllers.RectangleController;
     var commands = utils.commands;
 
-    ascii_draw.grid;
-    var nrows = 0;
-    var ncols = 0;
     var copypastearea;
+
     ascii_draw.selection_button;
     ascii_draw.rectangle_button;
-    var gridstatus;
-    ascii_draw.mousestatus;
-    ascii_draw.selectionstatus;
     var redo_button;
     var undo_button;
-    var emptyCell = ' ';
-    var controller = SelectMoveController;
 
-    ;
-    ;
+    ascii_draw.gridstatus;
+    ascii_draw.mousestatus;
+    ascii_draw.selectionstatus;
+
+    ascii_draw.emptyCell = ' ';
 
     function initiateCopyAction() {
         if (window.getSelection && document.createRange) {
@@ -616,7 +775,7 @@ var ascii_draw;
 
     function onKeyPress(event) {
         if (!event.ctrlKey && !event.altKey && !event.metaKey && event.charCode > 0) {
-            controller.onKeyPress(String.fromCharCode(event.charCode));
+            ascii_draw.controllers.current.onKeyPress(String.fromCharCode(event.charCode));
             event.preventDefault();
         }
         event.stopPropagation();
@@ -661,7 +820,7 @@ var ascii_draw;
             }
 
             if (displacement && ascii_draw.controllers.begin_highlight.isEqual(ascii_draw.controllers.end_highlight)) {
-                controller.onArrowDown(displacement);
+                ascii_draw.controllers.current.onArrowDown(displacement);
             }
         }
 
@@ -687,133 +846,43 @@ var ascii_draw;
         event.stopPropagation();
     }
 
-    function getCellPosition(cell) {
-        return new CellPosition(utils.indexInParent(cell.parentElement), utils.indexInParent(cell));
-    }
-    ascii_draw.getCellPosition = getCellPosition;
-
-    function getRow(index) {
-        return ascii_draw.grid.children[index];
-    }
-    ascii_draw.getRow = getRow;
-
-    function getCell(index, row) {
-        return row.children[index];
-    }
-    ascii_draw.getCell = getCell;
-
     function applyToRectangle(rect, functor, param) {
         for (var r = rect.top_left.row; r <= rect.bottom_right.row; r++) {
-            var row = getRow(r);
+            var row = ascii_draw.grid.getRow(r);
             for (var c = rect.top_left.col; c <= rect.bottom_right.col; c++) {
-                var cell = getCell(c, row);
+                var cell = ascii_draw.grid.getCell(c, row);
                 functor(cell, param);
             }
         }
     }
     ascii_draw.applyToRectangle = applyToRectangle;
 
-    function setGridSize(new_nrows, new_ncols) {
-        for (var r = nrows; r < new_nrows; r++) {
-            ascii_draw.grid.appendChild(document.createElement('div'));
-        }
-
-        for (var r = nrows; r > new_nrows; r--) {
-            ascii_draw.grid.removeChild(ascii_draw.grid.children[r]);
-        }
-
-        for (var r = 0; r < new_nrows; r++) {
-            var row = getRow(r);
-            for (var c = ncols; c < new_ncols; c++) {
-                var cell = row.appendChild(document.createElement('span'));
-                cell.textContent = emptyCell;
-            }
-
-            for (var c = ncols; c > new_ncols; c--) {
-                row.removeChild(row.children[r]);
-            }
-        }
-
-        nrows = new_nrows;
-        ncols = new_ncols;
-
-        gridstatus.textContent = 'Grid size: ' + nrows + 'x' + ncols;
-    }
-
-    function changeFont() {
-        utils.changeStyleRule('#grid span', 'width', 'auto');
-        utils.changeStyleRule('#grid span', 'height', 'auto');
-        utils.changeStyleRule('#grid div', 'height', 'auto');
-
-        var font_size = utils.computeFontSize();
-
-        utils.changeStyleRule('#grid span', 'width', font_size.width + 'px');
-        utils.changeStyleRule('#grid span', 'height', font_size.height + 'px');
-        utils.changeStyleRule('#grid div', 'height', font_size.height + 'px');
-    }
-
-    function setSelected(cell, selected) {
-        if (cell['data-selected'] !== selected) {
-            cell['data-selected'] = selected;
-            if (selected) {
-                utils.addClass(cell, 'selected');
-            } else {
-                utils.removeClass(cell, 'selected');
-            }
-        } else {
-            console.log('selected');
-        }
-    }
-    ascii_draw.setSelected = setSelected;
-
-    function setHighlighted(cell, highlighted) {
-        if (cell['data-highlighted'] !== highlighted) {
-            cell['data-highlighted'] = highlighted;
-            if (highlighted) {
-                utils.addClass(cell, 'highlighted');
-            } else {
-                utils.removeClass(cell, 'highlighted');
-            }
-        } else {
-            console.log('highlighted');
-        }
-    }
-    ascii_draw.setHighlighted = setHighlighted;
-
-    function getTargetCell(target) {
-        if (target instanceof HTMLSpanElement) {
-            return target;
-        } else {
-            return null;
-        }
-    }
-
     function onMouseDown(event) {
-        var target = getTargetCell(event.target);
+        var target = ascii_draw.grid.getTargetCell(event.target);
         if (target !== null) {
-            controller.onMouseDown(target);
+            ascii_draw.controllers.current.onMouseDown(target);
         }
         event.stopPropagation();
         event.preventDefault();
     }
 
     function onMouseUp(event) {
-        controller.onMouseUp();
+        ascii_draw.controllers.current.onMouseUp();
         event.stopPropagation();
         event.preventDefault();
     }
 
     function onMouseOver(event) {
-        var target = getTargetCell(event.target);
+        var target = ascii_draw.grid.getTargetCell(event.target);
         if (target !== null) {
-            controller.onMouseOver(target);
+            ascii_draw.controllers.current.onMouseOver(target);
         }
         event.stopPropagation();
         event.preventDefault();
     }
 
     function onMouseLeave(event) {
-        controller.onMouseLeave();
+        ascii_draw.controllers.current.onMouseLeave();
         event.stopPropagation();
         event.preventDefault();
     }
@@ -823,43 +892,33 @@ var ascii_draw;
         event.preventDefault();
     }
 
-    function controllerSwitcher(new_controller) {
-        return function () {
-            controller.exit();
-            controller = new_controller;
-            controller.reset();
-        };
-    }
-
     function init() {
-        ascii_draw.grid = document.getElementById('grid');
         copypastearea = document.getElementById('copypastearea');
         ascii_draw.rectangle_button = document.getElementById('rectangle-button');
         ascii_draw.selection_button = document.getElementById('selection-button');
         undo_button = document.getElementById('undo-button');
         redo_button = document.getElementById('redo-button');
-        gridstatus = document.getElementById('gridstatus');
+        ascii_draw.gridstatus = document.getElementById('gridstatus');
         ascii_draw.selectionstatus = document.getElementById('selectionstatus');
         ascii_draw.mousestatus = document.getElementById('mousestatus');
 
-        changeFont();
-        setGridSize(50, 120);
+        ascii_draw.grid.init();
+        ascii_draw.controllers.init();
+
         updateUndoRedo();
 
-        controller.init();
-
-        ascii_draw.grid.addEventListener('mousedown', onMouseDown, false);
+        ascii_draw.grid.container.addEventListener('mousedown', onMouseDown, false);
         window.addEventListener('mouseup', onMouseUp, false);
-        ascii_draw.grid.addEventListener('mouseover', onMouseOver, false);
-        ascii_draw.grid.addEventListener('mouseleave', onMouseLeave, false);
+        ascii_draw.grid.container.addEventListener('mouseover', onMouseOver, false);
+        ascii_draw.grid.container.addEventListener('mouseleave', onMouseLeave, false);
         window.addEventListener('contextmenu', onContextMenu, false);
         window.addEventListener('keydown', onKeyDown, false);
         window.addEventListener('keyup', onKeyUp, false);
         window.addEventListener('keypress', onKeyPress, false);
 
-        ascii_draw.rectangle_button.addEventListener('click', controllerSwitcher(RectangleController), false);
+        ascii_draw.rectangle_button.addEventListener('click', ascii_draw.controllers.swap(RectangleController), false);
 
-        ascii_draw.selection_button.addEventListener('click', controllerSwitcher(SelectMoveController), false);
+        ascii_draw.selection_button.addEventListener('click', ascii_draw.controllers.swap(SelectMoveController), false);
 
         undo_button.addEventListener('click', onUndo, false);
         redo_button.addEventListener('click', onRedo, false);
@@ -868,38 +927,3 @@ var ascii_draw;
 })(ascii_draw || (ascii_draw = {}));
 
 window.addEventListener('load', ascii_draw.init, false);
-'use strict';
-var ascii_draw;
-(function (ascii_draw) {
-    var Rectangle = utils.Rectangle;
-
-    (function (selection) {
-        var contents = [];
-
-        function clear() {
-            for (var i = contents.length; i > 0; i--) {
-                remove(i - 1);
-            }
-        }
-        selection.clear = clear;
-
-        /* must not overlap any existing selection */
-        function add(sel) {
-            ascii_draw.applyToRectangle(sel, ascii_draw.setSelected, true);
-            contents.push(sel);
-        }
-        selection.add = add;
-
-        function remove(index) {
-            ascii_draw.applyToRectangle(contents[index], ascii_draw.setSelected, false);
-            contents.splice(index, 1);
-        }
-        selection.remove = remove;
-
-        function getContents() {
-            return 'content\ncontent\ncontent\ncontent\ncontent\ncontent\n';
-        }
-        selection.getContents = getContents;
-    })(ascii_draw.selection || (ascii_draw.selection = {}));
-    var selection = ascii_draw.selection;
-})(ascii_draw || (ascii_draw = {}));

@@ -21,7 +21,7 @@ clean:
 check:
 	jshint -c jshint.json script.js
 
-script.js: controllers.ts utils.ts asciidraw.ts selection.ts
+script.js: controllers.ts utils.ts asciidraw.ts selection.ts grid.ts
 	tsc $^ --out $@ --noImplicitAny
 
 img/%.png: img/icons.svg $(MAKEFILE_LIST)

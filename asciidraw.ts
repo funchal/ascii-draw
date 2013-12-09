@@ -6,28 +6,23 @@
 module ascii_draw {
     import Rectangle = utils.Rectangle;
     import CellPosition = utils.Point;
-    import Controller = controllers.Controller;
     import SelectMoveController = controllers.SelectMoveController;
     import RectangleController = controllers.RectangleController;
     import commands = utils.commands;
     import Command = commands.Command;
 
-    export var grid: HTMLDivElement;
-    var nrows: number = 0;
-    var ncols: number = 0;
     var copypastearea: HTMLTextAreaElement;
+
     export var selection_button: HTMLButtonElement;
     export var rectangle_button: HTMLButtonElement;
-    var gridstatus: HTMLDivElement;
-    export var mousestatus: HTMLDivElement;
-    export var selectionstatus: HTMLDivElement;
     var redo_button: HTMLButtonElement;
     var undo_button: HTMLButtonElement;
-    var emptyCell: string = ' ';
-    var controller: Controller = SelectMoveController;
 
-    export interface Row extends HTMLDivElement {};
-    export interface Cell extends HTMLSpanElement {};
+    export var gridstatus: HTMLDivElement;
+    export var mousestatus: HTMLDivElement;
+    export var selectionstatus: HTMLDivElement;
+
+    export var emptyCell: string = ' ';
 
     function initiateCopyAction(): void {
         if (window.getSelection && document.createRange) {
@@ -101,7 +96,7 @@ module ascii_draw {
     function onKeyPress(event: KeyboardEvent): void {
         if (!event.ctrlKey && !event.altKey &&
             !event.metaKey && event.charCode > 0) {
-            controller.onKeyPress(String.fromCharCode(event.charCode));
+            controllers.current.onKeyPress(String.fromCharCode(event.charCode));
             event.preventDefault();
         }
         event.stopPropagation();
@@ -148,7 +143,7 @@ module ascii_draw {
 
             if (displacement &&
                 controllers.begin_highlight.isEqual(controllers.end_highlight)) {
-                controller.onArrowDown(displacement);
+                controllers.current.onArrowDown(displacement);
             }
         }
 
@@ -175,131 +170,45 @@ module ascii_draw {
         event.stopPropagation();
     }
 
-    export function getCellPosition(cell: Cell): CellPosition {
-        return new CellPosition(utils.indexInParent(cell.parentElement),
-                                utils.indexInParent(cell));
-    }
-
-    export function getRow(index: number): Row {
-        return <Row>grid.children[index];
-    }
-
-    export function getCell(index: number, row: Row): Cell {
-        return <Cell>row.children[index];
-    }
-
     export function applyToRectangle(rect: Rectangle,
                                      functor: Function,
                                      param: any): void
     {
         for (var r = rect.top_left.row; r <= rect.bottom_right.row; r++) {
-            var row = getRow(r);
+            var row = grid.getRow(r);
             for (var c = rect.top_left.col; c <= rect.bottom_right.col; c++) {
-                var cell = getCell(c, row);
+                var cell = grid.getCell(c, row);
                 functor(cell, param);
             }
         }
     }
 
-    function setGridSize(new_nrows: number, new_ncols: number): void {
-        for (var r = nrows; r < new_nrows; r++) {
-            grid.appendChild(document.createElement('div'));
-        }
-
-        for (var r = nrows; r > new_nrows; r--) {
-            grid.removeChild(grid.children[r]);
-        }
-
-        for (var r = 0; r < new_nrows; r++) {
-            var row = getRow(r);
-            for (var c = ncols; c < new_ncols; c++) {
-                var cell = row.appendChild(document.createElement('span'));
-                cell.textContent = emptyCell;
-            }
-
-            for (var c = ncols; c > new_ncols; c--) {
-                row.removeChild(row.children[r]);
-            }
-        }
-
-        nrows = new_nrows;
-        ncols = new_ncols;
-
-        gridstatus.textContent = 'Grid size: ' + nrows + 'x' + ncols;
-    }
-
-    function changeFont(): void {
-        utils.changeStyleRule('#grid span', 'width', 'auto');
-        utils.changeStyleRule('#grid span', 'height', 'auto');
-        utils.changeStyleRule('#grid div', 'height', 'auto');
-
-        var font_size = utils.computeFontSize();
-
-        utils.changeStyleRule('#grid span', 'width', font_size.width + 'px');
-        utils.changeStyleRule('#grid span', 'height', font_size.height + 'px');
-        utils.changeStyleRule('#grid div', 'height', font_size.height + 'px');
-    }
-
-    export function setSelected(cell: Cell, selected: boolean): void {
-        if (cell['data-selected'] !== selected) {
-            cell['data-selected'] = selected;
-            if (selected) {
-                utils.addClass(cell, 'selected');
-            } else {
-                utils.removeClass(cell, 'selected');
-            }
-        } else {
-            console.log('selected');
-        }
-    }
-
-    export function setHighlighted(cell: Cell, highlighted: boolean): void {
-        if (cell['data-highlighted'] !== highlighted) {
-            cell['data-highlighted'] = highlighted;
-            if (highlighted) {
-                utils.addClass(cell, 'highlighted');
-            } else {
-                utils.removeClass(cell, 'highlighted');
-            }
-        } else {
-            console.log('highlighted');
-        }
-    }
-
-    function getTargetCell(target: EventTarget): Cell {
-        if (target instanceof HTMLSpanElement) {
-            return <Cell>target;
-        } else {
-            return null;
-        }
-    }
-
     function onMouseDown(event: MouseEvent): void {
-        var target = getTargetCell(event.target);
+        var target = grid.getTargetCell(event.target);
         if (target !== null) {
-            controller.onMouseDown(target);
+            controllers.current.onMouseDown(target);
         }
         event.stopPropagation();
         event.preventDefault();
     }
 
     function onMouseUp(event: MouseEvent): void {
-        controller.onMouseUp();
+        controllers.current.onMouseUp();
         event.stopPropagation();
         event.preventDefault();
     }
 
     function onMouseOver(event: MouseEvent): void {
-        var target = getTargetCell(event.target);
+        var target = grid.getTargetCell(event.target);
         if (target !== null) {
-            controller.onMouseOver(target);
+            controllers.current.onMouseOver(target);
         }
         event.stopPropagation();
         event.preventDefault();
     }
 
     function onMouseLeave(event: MouseEvent): void {
-        controller.onMouseLeave();
+        controllers.current.onMouseLeave();
         event.stopPropagation();
         event.preventDefault();
     }
@@ -309,16 +218,7 @@ module ascii_draw {
         event.preventDefault();
     }
 
-    function controllerSwitcher(new_controller: Controller): () => void {
-        return function(): void {
-            controller.exit();
-            controller = new_controller;
-            controller.reset();
-        }
-    }
-
     export function init(): void {
-        grid = <HTMLDivElement>document.getElementById('grid');
         copypastearea = <HTMLTextAreaElement>document.getElementById('copypastearea');
         rectangle_button = <HTMLButtonElement>document.getElementById('rectangle-button');
         selection_button = <HTMLButtonElement>document.getElementById('selection-button');
@@ -328,26 +228,25 @@ module ascii_draw {
         selectionstatus = <HTMLDivElement>document.getElementById('selectionstatus');
         mousestatus = <HTMLDivElement>document.getElementById('mousestatus');
 
-        changeFont();
-        setGridSize(50, 120);
+        grid.init();
+        controllers.init();
+
         updateUndoRedo();
 
-        controller.init();
-
-        grid.addEventListener('mousedown', onMouseDown, false);
+        grid.container.addEventListener('mousedown', onMouseDown, false);
         window.addEventListener('mouseup', onMouseUp, false);
-        grid.addEventListener('mouseover', onMouseOver, false);
-        grid.addEventListener('mouseleave', onMouseLeave, false);
+        grid.container.addEventListener('mouseover', onMouseOver, false);
+        grid.container.addEventListener('mouseleave', onMouseLeave, false);
         window.addEventListener('contextmenu', onContextMenu, false);
         window.addEventListener('keydown', onKeyDown, false);
         window.addEventListener('keyup', onKeyUp, false);
         window.addEventListener('keypress', onKeyPress, false);
 
         rectangle_button.addEventListener(
-            'click', controllerSwitcher(RectangleController), false);
+            'click', controllers.swap(RectangleController), false);
 
         selection_button.addEventListener(
-            'click', controllerSwitcher(SelectMoveController), false);
+            'click', controllers.swap(SelectMoveController), false);
 
         undo_button.addEventListener('click', onUndo, false);
         redo_button.addEventListener('click', onRedo, false);

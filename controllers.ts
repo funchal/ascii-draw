@@ -1,18 +1,14 @@
 ///<reference path='utils.ts'/>
+///<reference path='grid.ts'/>
+///<reference path='selection.ts'/>
 
 'use strict';
 
 module ascii_draw {
     export module controllers {
-
         import Rectangle = utils.Rectangle;
         import CellPosition = utils.Point;
-
-        export var begin_highlight: CellPosition;
-        export var end_highlight: CellPosition;
-
-        var highlighting = false;
-        var mouse_pos: CellPosition = null;
+        import Cell = grid.Cell;
 
         export interface Controller {
             init(): void;
@@ -40,7 +36,7 @@ module ascii_draw {
             export function onMouseDown(target: Cell): void {
                 // TODO: if current cell is highlighted change to move mode
                 highlighting = true;
-                setHollowHighlight(getCellPosition(target), getCellPosition(target));
+                setHollowHighlight(grid.getCellPosition(target), grid.getCellPosition(target));
                 drawRectangle(new Rectangle(begin_highlight, end_highlight, true /*normalize*/));
             }
 
@@ -49,7 +45,7 @@ module ascii_draw {
             }
 
             export function onMouseOver(target: Cell): void {
-                var pos = getCellPosition(target);
+                var pos = grid.getCellPosition(target);
                 setMousePosition(pos);
                 if (highlighting) {
                     setHollowHighlight(begin_highlight, pos);
@@ -91,27 +87,27 @@ module ascii_draw {
                 var right = rect.bottom_right.col;
 
                 // print first row: +---+
-                var first_row = getRow(top);
-                writeToCell(getCell(left, first_row), '+');
+                var first_row = grid.getRow(top);
+                writeToCell(grid.getCell(left, first_row), '+');
                 for (var col = left + 1; col <= right - 1; col++) {
-                    writeToCell(getCell(col, first_row), '-');
+                    writeToCell(grid.getCell(col, first_row), '-');
                 }
-                writeToCell(getCell(right, first_row), '+');
+                writeToCell(grid.getCell(right, first_row), '+');
 
                 // print intermediate rows: |   |
                 for (var row = top + 1; row <= bottom - 1; row++) {
-                    var current_row = getRow(row);
-                    writeToCell(getCell(left, current_row), '|');
-                    writeToCell(getCell(right, current_row), '|');
+                    var current_row = grid.getRow(row);
+                    writeToCell(grid.getCell(left, current_row), '|');
+                    writeToCell(grid.getCell(right, current_row), '|');
                 }
 
                 // print last row
-                var last_row = getRow(bottom);
-                writeToCell(getCell(left, last_row), '+');
+                var last_row = grid.getRow(bottom);
+                writeToCell(grid.getCell(left, last_row), '+');
                 for (var col = left + 1; col <= right - 1; col++) {
-                    writeToCell(getCell(col, last_row), '-');
+                    writeToCell(grid.getCell(col, last_row), '-');
                 }
-                writeToCell(getCell(right, last_row), '+');
+                writeToCell(grid.getCell(right, last_row), '+');
             }
         }
 
@@ -120,7 +116,6 @@ module ascii_draw {
                 reset();
                 begin_highlight = new CellPosition(0, 0);
                 end_highlight = begin_highlight;
-                setSelected(getCell(begin_highlight.col, getRow(begin_highlight.row)), true);
                 selection.clear();
                 selection.add(new Rectangle(begin_highlight, end_highlight, true /*normalize*/));
             }
@@ -132,7 +127,7 @@ module ascii_draw {
             export function onMouseDown(target: Cell): void {
                 // TODO: if current cell is highlighted change to move mode
                 highlighting = true;
-                setHighlight(getCellPosition(target), getCellPosition(target));
+                setHighlight(grid.getCellPosition(target), grid.getCellPosition(target));
             }
 
             export function onMouseUp(): void {
@@ -148,7 +143,7 @@ module ascii_draw {
             }
 
             export function onMouseOver(target: Cell): void {
-                var pos = getCellPosition(target);
+                var pos = grid.getCellPosition(target);
                 setMousePosition(pos);
                 if (highlighting) {
                     setHighlight(begin_highlight, pos);
@@ -182,16 +177,36 @@ module ascii_draw {
             }
         }
 
+        export var begin_highlight: CellPosition;
+        export var end_highlight: CellPosition;
+
+        var highlighting = false;
+        var mouse_pos: CellPosition = null;
+
+        export var current: Controller = SelectMoveController;
+
+        export function swap(new_controller: Controller): () => void {
+            return function(): void {
+                current.exit();
+                current = new_controller;
+                current.reset();
+            }
+        }
+
+        export function init() : void {
+            current.init();
+        }
+
         function setMousePosition(new_pos: CellPosition): void {
             if (mouse_pos !== null) {
-                var cell = getCell(mouse_pos.col, getRow(mouse_pos.row));
+                var cell = grid.getCell(mouse_pos.col, grid.getRow(mouse_pos.row));
                 utils.removeClass(cell, 'mouse');
             }
             mouse_pos = new_pos;
 
             var mousestatus = document.getElementById('mousestatus');
             if (mouse_pos !== null) {
-                var cell = getCell(mouse_pos.col, getRow(mouse_pos.row));
+                var cell = grid.getCell(mouse_pos.col, grid.getRow(mouse_pos.row));
                 utils.addClass(cell, 'mouse');
                 mousestatus.textContent = 'Cursor: ' + mouse_pos;
             } else {
@@ -280,6 +295,19 @@ module ascii_draw {
 
         function writeToCell(cell: Cell, character: string): void {
             cell.textContent = character;
+        }
+
+        function setHighlighted(cell: Cell, highlighted: boolean): void {
+            if (cell['data-highlighted'] !== highlighted) {
+                cell['data-highlighted'] = highlighted;
+                if (highlighted) {
+                    utils.addClass(cell, 'highlighted');
+                } else {
+                    utils.removeClass(cell, 'highlighted');
+                }
+            } else {
+                console.log('highlighted');
+            }
         }
     }
 }
