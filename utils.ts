@@ -7,20 +7,22 @@ module utils {
     {
         var stylesheet = <CSSStyleSheet>document.styleSheets[0];
         var rules = stylesheet.cssRules || stylesheet.rules;
-
         var match: any = null;
-        for (var i = 0; i != rules.length; i++) {
-            if (rules[i].type === CSSRule.STYLE_RULE) {
-                var style_rule = <CSSStyleRule>rules[i];
-                if (style_rule.selectorText == selector) {
-                    match = style_rule.style;
-                    break;
+
+        if (rules !== null) {
+            for (var i = 0; i != rules.length; i++) {
+                if (rules[i].type === CSSRule.STYLE_RULE) {
+                    var style_rule = <CSSStyleRule>rules[i];
+                    if (style_rule.selectorText == selector) {
+                        match = style_rule.style;
+                        break;
+                    }
                 }
             }
         }
 
         if (match === null) {
-            if (stylesheet.insertRule) {
+            if (stylesheet.insertRule && rules !== null) {
                 stylesheet.insertRule(
                         selector + ' {' + style + ':' + value + '}',
                         rules.length);

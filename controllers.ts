@@ -17,9 +17,9 @@ module ascii_draw {
         export interface Controller {
             init(): void;
             reset(): void;
-            onMouseDown(target: HTMLTableCellElement): void;
+            onMouseDown(target: Cell): void;
             onMouseUp(): void;
-            onMouseOver(target: HTMLTableCellElement): void;
+            onMouseOver(target: Cell): void;
             onMouseLeave(): void;
             onArrowDown(displacement: Array<number>): void;
             onKeyPress(character: string): void;
@@ -37,7 +37,7 @@ module ascii_draw {
                 utils.addClass(rectangle_button, 'pressed');
             }
 
-            export function onMouseDown(target: HTMLTableCellElement): void {
+            export function onMouseDown(target: Cell): void {
                 // TODO: if current cell is selected change to move mode
                 selecting = true;
                 setHollowSelection(getCellPosition(target), getCellPosition(target));
@@ -48,7 +48,7 @@ module ascii_draw {
                 selecting = false;
             }
 
-            export function onMouseOver(target: HTMLTableCellElement): void {
+            export function onMouseOver(target: Cell): void {
                 var pos = getCellPosition(target);
                 setMousePosition(pos);
                 if (selecting) {
@@ -68,10 +68,7 @@ module ascii_draw {
             export function onKeyPress(character: string): void {
                 var rect_pieces = getHollowRectangle(new Rectangle(begin_selection, end_selection, true /*normalize*/));
                 for (var piece = 0; piece < rect_pieces.length; piece++) {
-                    applyToRectangle(rect_pieces[piece],
-                                     function(cell: HTMLTableCellElement) {
-                                        writeToCell(cell, character);
-                                     });
+                    applyToRectangle(rect_pieces[piece], writeToCell, character);
                 }
                 if (begin_selection.isEqual(end_selection)) {
                     var displacement = [0, 1];
@@ -130,7 +127,7 @@ module ascii_draw {
                 utils.addClass(selection_button, 'pressed');
             }
 
-            export function onMouseDown(target: HTMLTableCellElement): void {
+            export function onMouseDown(target: Cell): void {
                 // TODO: if current cell is selected change to move mode
                 selecting = true;
                 setSelection(getCellPosition(target), getCellPosition(target));
@@ -143,7 +140,7 @@ module ascii_draw {
                 }
             }
 
-            export function onMouseOver(target: HTMLTableCellElement): void {
+            export function onMouseOver(target: Cell): void {
                 var pos = getCellPosition(target);
                 setMousePosition(pos);
                 if (selecting) {
@@ -163,9 +160,7 @@ module ascii_draw {
             }
             export function onKeyPress(character: string): void {
                 applyToRectangle(new Rectangle(begin_selection, end_selection, true /*normalize*/),
-                                 function(cell: HTMLTableCellElement) {
-                                    writeToCell(cell, character);
-                                 });
+                                 writeToCell, character);
                 if (begin_selection.isEqual(end_selection)) {
                     var displacement = [0, 1];
                     var pos = new CellPosition(begin_selection.row + displacement[0],
@@ -276,7 +271,7 @@ module ascii_draw {
             }
         }
 
-        function writeToCell(cell: HTMLTableCellElement, character: string): void {
+        function writeToCell(cell: Cell, character: string): void {
             cell.textContent = character;
         }
     }

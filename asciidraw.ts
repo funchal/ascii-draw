@@ -12,7 +12,7 @@ module ascii_draw {
     import commands = utils.commands;
     import Command = commands.Command;
 
-    export var grid: HTMLTableElement;
+    export var grid: HTMLDivElement;
     var nrows: number = 0;
     var ncols: number = 0;
     var copypastearea: HTMLTextAreaElement;
@@ -25,6 +25,9 @@ module ascii_draw {
     var undo_button: HTMLButtonElement;
     var emptyCell: string = ' ';
     var controller: Controller = SelectMoveController;
+
+    export interface Row extends HTMLDivElement {};
+    export interface Cell extends HTMLSpanElement {};
 
     class ChangeSelection implements Command {
         constructor(public save_selection: Array<Rectangle>) {}
@@ -205,69 +208,72 @@ module ascii_draw {
         event.stopPropagation();
     }
 
-    export function getCellPosition(cell: HTMLTableCellElement): CellPosition {
+    export function getCellPosition(cell: Cell): CellPosition {
         return new CellPosition(utils.indexInParent(cell.parentElement),
                                 utils.indexInParent(cell));
     }
 
-    export function getRow(index: number): HTMLTableRowElement {
-        return <HTMLTableRowElement>grid.rows[index];
+    export function getRow(index: number): Row {
+        return <Row>grid.children[index];
     }
 
-    export function getCell(index: number, row: HTMLTableRowElement): HTMLTableCellElement {
-        return <HTMLTableCellElement>row.cells[index];
+    export function getCell(index: number, row: Row): Cell {
+        return <Cell>row.children[index];
     }
 
     export function applyToRectangle(rect: Rectangle,
-                              functor: Function,
-                              ...params: any[]): void
+                                     functor: Function,
+                                     param: any): void
     {
         for (var r = rect.top_left.row; r <= rect.bottom_right.row; r++) {
             var row = getRow(r);
             for (var c = rect.top_left.col; c <= rect.bottom_right.col; c++) {
                 var cell = getCell(c, row);
-                functor.apply(undefined, [cell].concat(params));
+                functor(cell, param);
             }
         }
     }
 
     function setGridSize(new_nrows: number, new_ncols: number): void {
         for (var r = nrows; r < new_nrows; r++) {
-            grid.insertRow();
+            grid.appendChild(document.createElement('div'));
         }
 
         for (var r = nrows; r > new_nrows; r--) {
-            grid.deleteRow(r - 1);
+            grid.removeChild(grid.children[r]);
         }
 
         for (var r = 0; r < new_nrows; r++) {
-            var row: HTMLTableRowElement = getRow(r);
+            var row = getRow(r);
             for (var c = ncols; c < new_ncols; c++) {
-                var cell = row.insertCell();
+                var cell = row.appendChild(document.createElement('span'));
                 cell.textContent = emptyCell;
             }
 
             for (var c = ncols; c > new_ncols; c--) {
-                row.deleteCell(c - 1);
+                row.removeChild(row.children[r]);
             }
         }
 
-        gridstatus.textContent = 'Grid size: ' + new_nrows + 'x' + new_ncols;
+        nrows = new_nrows;
+        ncols = new_ncols;
+
+        gridstatus.textContent = 'Grid size: ' + nrows + 'x' + ncols;
     }
 
     function changeFont(): void {
-        utils.changeStyleRule('td', 'width', 'auto');
-        utils.changeStyleRule('td', 'height', 'auto');
-        utils.changeStyleRule('tr', 'height', 'auto');
+        utils.changeStyleRule('#grid span', 'width', 'auto');
+        utils.changeStyleRule('#grid span', 'height', 'auto');
+        utils.changeStyleRule('#grid div', 'height', 'auto');
 
         var font_size = utils.computeFontSize();
 
-        utils.changeStyleRule('td', 'width', font_size.width + 'px');
-        utils.changeStyleRule('td', 'height', font_size.height + 'px');
-        utils.changeStyleRule('tr', 'height', font_size.height + 'px');
+        utils.changeStyleRule('#grid span', 'width', font_size.width + 'px');
+        utils.changeStyleRule('#grid span', 'height', font_size.height + 'px');
+        utils.changeStyleRule('#grid div', 'height', font_size.height + 'px');
     }
 
-    export function setSelected(cell: HTMLTableCellElement,
+    export function setSelected(cell: Cell,
                                 selected: boolean): void {
         if (cell['data-selected'] !== selected) {
             cell['data-selected'] = selected;
@@ -281,9 +287,9 @@ module ascii_draw {
         }
     }
 
-    function getTargetCell(target: EventTarget): HTMLTableCellElement {
-        if (target instanceof HTMLTableCellElement) {
-            return <HTMLTableCellElement>target;
+    function getTargetCell(target: EventTarget): Cell {
+        if (target instanceof HTMLSpanElement) {
+            return <Cell>target;
         } else {
             return null;
         }
@@ -333,7 +339,7 @@ module ascii_draw {
     }
 
     export function init(): void {
-        grid = <HTMLTableElement>document.getElementById('grid');
+        grid = <HTMLDivElement>document.getElementById('grid');
         copypastearea = <HTMLTextAreaElement>document.getElementById('copypastearea');
         rectangle_button = <HTMLButtonElement>document.getElementById('rectangle-button');
         selection_button = <HTMLButtonElement>document.getElementById('selection-button');

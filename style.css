@@ -20,29 +20,6 @@ html {
     color: #252525;
 }
 
-table {
-    cursor: none;
-    table-layout: fixed; /* override the browser's automatic column resizing */
-    border: none;
-    display: inline-block;
-    padding: 0;
-    margin: 0;
-    border-spacing: 0;
-}
-
-tr {
-    display: block;
-}
-
-td {
-    display: inline-block;
-    text-align: center;
-    border-top: 1px solid #DDD;
-    border-right: 1px solid #DDD;
-    overflow: hidden;
-    background-color: #FFF;
-}
-
 img {
     vertical-align: middle;
 }
@@ -107,11 +84,38 @@ button img {
     height: 32px;
 }
 
-.selected {
+#grid {
+    overflow: auto;
+    position: fixed;
+    top: 49px;
+    left: 0;
+    right: 0;
+    bottom: 21px;
+    white-space: nowrap;
+    background-color: #CCC;
+}
+
+#grid div {
+    display: block;
+}
+
+#grid span {
+    cursor: none;
+    background-color: #FFF;
+    width: 7px;
+    height: 15px;
+    border-top: 1px solid #DDD;
+    border-right: 1px solid #DDD;
+    display: inline-block;
+    overflow: hidden;
+    text-align: center;
+}
+
+#grid span.selected {
     background-color: #FF0;
 }
 
-.mouse {
+#grid span.mouse {
     background-color: #F80;
 }
 
@@ -125,17 +129,6 @@ button img {
     white-space: nowrap;
     border-bottom: 1px solid #BBB;
     text-shadow: rgb(255, 255, 255) 0px 1px 0px;
-}
-
-#apparea {
-    overflow: auto;
-    position: fixed;
-    top: 49px;
-    left: 0;
-    right: 0;
-    bottom: 21px;
-    white-space: nowrap;
-    background-color: #CCC;
 }
 
 #statusbar {

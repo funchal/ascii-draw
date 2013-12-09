@@ -4,20 +4,22 @@ var utils;
     function changeStyleRule(selector, style, value) {
         var stylesheet = document.styleSheets[0];
         var rules = stylesheet.cssRules || stylesheet.rules;
-
         var match = null;
-        for (var i = 0; i != rules.length; i++) {
-            if (rules[i].type === CSSRule.STYLE_RULE) {
-                var style_rule = rules[i];
-                if (style_rule.selectorText == selector) {
-                    match = style_rule.style;
-                    break;
+
+        if (rules !== null) {
+            for (var i = 0; i != rules.length; i++) {
+                if (rules[i].type === CSSRule.STYLE_RULE) {
+                    var style_rule = rules[i];
+                    if (style_rule.selectorText == selector) {
+                        match = style_rule.style;
+                        break;
+                    }
                 }
             }
         }
 
         if (match === null) {
-            if (stylesheet.insertRule) {
+            if (stylesheet.insertRule && rules !== null) {
                 stylesheet.insertRule(selector + ' {' + style + ':' + value + '}', rules.length);
             } else {
                 stylesheet.addRule(selector, style + ':' + value);
@@ -301,9 +303,7 @@ var ascii_draw;
             function onKeyPress(character) {
                 var rect_pieces = getHollowRectangle(new Rectangle(controllers.begin_selection, controllers.end_selection, true));
                 for (var piece = 0; piece < rect_pieces.length; piece++) {
-                    ascii_draw.applyToRectangle(rect_pieces[piece], function (cell) {
-                        writeToCell(cell, character);
-                    });
+                    ascii_draw.applyToRectangle(rect_pieces[piece], writeToCell, character);
                 }
                 if (controllers.begin_selection.isEqual(controllers.end_selection)) {
                     var displacement = [0, 1];
@@ -400,9 +400,7 @@ var ascii_draw;
             }
             SelectMoveController.onArrowDown = onArrowDown;
             function onKeyPress(character) {
-                ascii_draw.applyToRectangle(new Rectangle(controllers.begin_selection, controllers.end_selection, true), function (cell) {
-                    writeToCell(cell, character);
-                });
+                ascii_draw.applyToRectangle(new Rectangle(controllers.begin_selection, controllers.end_selection, true), writeToCell, character);
                 if (controllers.begin_selection.isEqual(controllers.end_selection)) {
                     var displacement = [0, 1];
                     var pos = new CellPosition(controllers.begin_selection.row + displacement[0], controllers.begin_selection.col + displacement[1]);
@@ -531,6 +529,9 @@ var ascii_draw;
     var undo_button;
     var emptyCell = ' ';
     var controller = SelectMoveController;
+
+    ;
+    ;
 
     var ChangeSelection = (function () {
         function ChangeSelection(save_selection) {
@@ -718,25 +719,21 @@ var ascii_draw;
     ascii_draw.getCellPosition = getCellPosition;
 
     function getRow(index) {
-        return ascii_draw.grid.rows[index];
+        return ascii_draw.grid.children[index];
     }
     ascii_draw.getRow = getRow;
 
     function getCell(index, row) {
-        return row.cells[index];
+        return row.children[index];
     }
     ascii_draw.getCell = getCell;
 
-    function applyToRectangle(rect, functor) {
-        var params = [];
-        for (var _i = 0; _i < (arguments.length - 2); _i++) {
-            params[_i] = arguments[_i + 2];
-        }
+    function applyToRectangle(rect, functor, param) {
         for (var r = rect.top_left.row; r <= rect.bottom_right.row; r++) {
             var row = getRow(r);
             for (var c = rect.top_left.col; c <= rect.bottom_right.col; c++) {
                 var cell = getCell(c, row);
-                functor.apply(undefined, [cell].concat(params));
+                functor(cell, param);
             }
         }
     }
@@ -744,38 +741,41 @@ var ascii_draw;
 
     function setGridSize(new_nrows, new_ncols) {
         for (var r = nrows; r < new_nrows; r++) {
-            ascii_draw.grid.insertRow();
+            ascii_draw.grid.appendChild(document.createElement('div'));
         }
 
         for (var r = nrows; r > new_nrows; r--) {
-            ascii_draw.grid.deleteRow(r - 1);
+            ascii_draw.grid.removeChild(ascii_draw.grid.children[r]);
         }
 
         for (var r = 0; r < new_nrows; r++) {
             var row = getRow(r);
             for (var c = ncols; c < new_ncols; c++) {
-                var cell = row.insertCell();
+                var cell = row.appendChild(document.createElement('span'));
                 cell.textContent = emptyCell;
             }
 
             for (var c = ncols; c > new_ncols; c--) {
-                row.deleteCell(c - 1);
+                row.removeChild(row.children[r]);
             }
         }
 
-        gridstatus.textContent = 'Grid size: ' + new_nrows + 'x' + new_ncols;
+        nrows = new_nrows;
+        ncols = new_ncols;
+
+        gridstatus.textContent = 'Grid size: ' + nrows + 'x' + ncols;
     }
 
     function changeFont() {
-        utils.changeStyleRule('td', 'width', 'auto');
-        utils.changeStyleRule('td', 'height', 'auto');
-        utils.changeStyleRule('tr', 'height', 'auto');
+        utils.changeStyleRule('#grid span', 'width', 'auto');
+        utils.changeStyleRule('#grid span', 'height', 'auto');
+        utils.changeStyleRule('#grid div', 'height', 'auto');
 
         var font_size = utils.computeFontSize();
 
-        utils.changeStyleRule('td', 'width', font_size.width + 'px');
-        utils.changeStyleRule('td', 'height', font_size.height + 'px');
-        utils.changeStyleRule('tr', 'height', font_size.height + 'px');
+        utils.changeStyleRule('#grid span', 'width', font_size.width + 'px');
+        utils.changeStyleRule('#grid span', 'height', font_size.height + 'px');
+        utils.changeStyleRule('#grid div', 'height', font_size.height + 'px');
     }
 
     function setSelected(cell, selected) {
@@ -793,7 +793,7 @@ var ascii_draw;
     ascii_draw.setSelected = setSelected;
 
     function getTargetCell(target) {
-        if (target instanceof HTMLTableCellElement) {
+        if (target instanceof HTMLSpanElement) {
             return target;
         } else {
             return null;
