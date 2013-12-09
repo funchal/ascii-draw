@@ -161,10 +161,17 @@ var ascii_draw;
 
     var SelectMoveController;
     (function (SelectMoveController) {
-        var begin_selection = new CellPosition(0, 0);
-        var end_selection = new CellPosition(0, 0);
+        var begin_selection;
+        var end_selection;
         var selecting = false;
         var mouse_pos = null;
+
+        function init() {
+            begin_selection = new CellPosition(0, 0);
+            end_selection = begin_selection;
+            setSelected(getCellAt(begin_selection), true);
+        }
+        SelectMoveController.init = init;
 
         function onMouseDown(target) {
             // TODO: if current cell is selected change to move mode
@@ -352,7 +359,8 @@ var ascii_draw;
 
         changeFont();
         resizeGrid(25, 80);
-        setSelected(getCellAt(new CellPosition(0, 0)), true);
+
+        SelectMoveController.init();
 
         ascii_draw.grid.addEventListener('mousedown', onMouseDown, false);
         window.addEventListener('mouseup', onMouseUp, false);

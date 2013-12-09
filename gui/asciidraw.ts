@@ -3,10 +3,16 @@ module ascii_draw {
     import CellPosition = ascii_draw.utils.Point;
 
     module SelectMoveController {
-        var begin_selection = new CellPosition(0, 0);
-        var end_selection = new CellPosition(0, 0);
+        var begin_selection: CellPosition;
+        var end_selection: CellPosition;
         var selecting = false;
         var mouse_pos: CellPosition = null;
+
+        export function init(): void {
+            begin_selection = new CellPosition(0, 0);
+            end_selection = begin_selection;
+            setSelected(getCellAt(begin_selection), true);
+        }
 
         export function onMouseDown(target: HTMLTableCellElement): void {
             // TODO: if current cell is selected change to move mode
@@ -195,7 +201,8 @@ module ascii_draw {
 
         changeFont();
         resizeGrid(25, 80);
-        setSelected(getCellAt(new CellPosition(0, 0)), true);
+
+        SelectMoveController.init();
 
         grid.addEventListener('mousedown', onMouseDown, false);
         window.addEventListener('mouseup', onMouseUp, false);
