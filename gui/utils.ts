@@ -83,7 +83,22 @@ module ascii_draw {
 
         export class Rectangle {
             constructor(public top_left: Point,
-                        public bottom_right: Point) {}
+                        public bottom_right: Point, normalize?: boolean) {
+                if (normalize) {
+                    if (this.top_left.row > this.bottom_right.row) {
+                        var tmp = this.top_left.row;
+                        this.top_left = new Point(this.bottom_right.row,
+                                                        this.top_left.col);
+                        this.bottom_right = new Point(tmp, this.bottom_right.col);
+                    }
+                    if (this.top_left.col > this.bottom_right.col) {
+                        var tmp = this.top_left.col;
+                        this.top_left = new Point(this.top_left.row,
+                                                        this.bottom_right.col);
+                        this.bottom_right = new Point(this.bottom_right.row, tmp);
+                    }
+                }
+            }
 
             intersect(other: Rectangle): Rectangle {
                 var top_left = new Point(
@@ -95,50 +110,49 @@ module ascii_draw {
                 return new Rectangle(top_left, bottom_right);
             }
 
-            normalize(): void {
-                if (this.top_left.row > this.bottom_right.row) {
-                    var tmp = this.top_left.row;
-                    this.top_left = new Point(this.bottom_right.row,
-                                                    this.top_left.col);
-                    this.bottom_right = new Point(tmp, this.bottom_right.col);
-                }
-                if (this.top_left.col > this.bottom_right.col) {
-                    var tmp = this.top_left.col;
-                    this.top_left = new Point(this.top_left.row,
-                                                    this.bottom_right.col);
-                    this.bottom_right = new Point(this.bottom_right.row, tmp);
-                }
+            isEmpty(): boolean {
+                return (this.top_left.row > this.bottom_right.row) ||
+                       (this.top_left.col > this.bottom_right.col);
             }
 
-            isNormalized(): boolean {
-                return (this.top_left.row <= this.bottom_right.row) &&
-                       (this.top_left.col <= this.bottom_right.col);
+            isEqual(other: Rectangle) {
+                return (this.top_left.isEqual(other.top_left) &&
+                        this.bottom_right.isEqual(other.bottom_right));
             }
 
             subtract(other: Rectangle): Array<Rectangle> {
                 var rect_array: Array<Rectangle> = [];
+                if (this.isEmpty()) {
+                    return rect_array;
+                }
+
+                if (other.isEmpty()) {
+                    rect_array.push(this);
+                    return rect_array;
+                }
+
                 var top_rectangle = new Rectangle(
                     this.top_left,
                     new Point(other.top_left.row - 1, this.bottom_right.col));
-                if (top_rectangle.isNormalized()) {
+                if (!top_rectangle.isEmpty()) {
                     rect_array.push(top_rectangle);
                 }
                 var left_rectangle = new Rectangle(
                     new Point(other.top_left.row, this.top_left.col),
                     new Point(other.bottom_right.row, other.top_left.col - 1));
-                if (left_rectangle.isNormalized()) {
+                if (!left_rectangle.isEmpty()) {
                     rect_array.push(left_rectangle);
                 }
                 var right_rectangle = new Rectangle(
                     new Point(other.top_left.row, other.bottom_right.col + 1),
                     new Point(other.bottom_right.row, this.bottom_right.col));
-                if (right_rectangle.isNormalized()) {
+                if (!right_rectangle.isEmpty()) {
                     rect_array.push(right_rectangle);
                 }
                 var bottom_rectangle = new Rectangle(
                     new Point(other.bottom_right.row + 1, this.top_left.col),
                     this.bottom_right);
-                if (bottom_rectangle.isNormalized()) {
+                if (!bottom_rectangle.isEmpty()) {
                     rect_array.push(bottom_rectangle);
                 }
                 return rect_array;

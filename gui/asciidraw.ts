@@ -11,11 +11,7 @@ module ascii_draw {
         export function onMouseDown(target: HTMLTableCellElement): void {
             // TODO: if current cell is selected change to move mode
             selecting = true;
-            clearSelection();
-            // FIXME: share some code with onMouseOver
-            begin_selection = getCellPosition(target);
-            end_selection = begin_selection;
-            setSelected(target, true);
+            setSelection(getCellPosition(target), getCellPosition(target));
         }
 
         export function onMouseUp(): void {
@@ -23,40 +19,50 @@ module ascii_draw {
         }
 
         export function onMouseOver(target: HTMLTableCellElement): void {
+            var pos = getCellPosition(target);
+            setMousePosition(pos);
+            if (selecting) {
+                setSelection(begin_selection, pos);
+            }
+        }
+
+        export function onMouseLeave(): void {
+            setMousePosition(null);
+        }
+
+        function setMousePosition(new_pos: CellPosition): void {
             if (mouse_pos !== null) {
                 utils.removeClass(getCellAt(mouse_pos), 'mouse');
             }
-            utils.addClass(target, 'mouse');
+            mouse_pos = new_pos;
 
-            mouse_pos = getCellPosition(target);
+            var mouseposition = document.getElementById('mouseposition');
+            if (mouse_pos !== null) {
+                utils.addClass(getCellAt(mouse_pos), 'mouse');
+                mouseposition.textContent = 'Cursor: ' + mouse_pos;
+            } else {
+                mouseposition.textContent = '';
+            }
+        }
 
-            var new_end_selection = getCellPosition(target);
+        function setSelection(new_begin_selection: CellPosition,
+                              new_end_selection: CellPosition): void {
+            var new_selection = new Rectangle(new_begin_selection,
+                                              new_end_selection,
+                                              true /*normalize*/);
+            var old_selection = new Rectangle(begin_selection,
+                                              end_selection,
+                                              true /*normalize*/);
 
-            var statusbar = document.getElementById('statusbar');
-            statusbar.textContent = 'Position: ' + new_end_selection;
-            statusbar.textContent += ' - Size: ' + grid.rows.length + 'x' +
-                (<HTMLTableRowElement>grid.rows[0]).cells.length;
-
-            if (!selecting) {
+            if (old_selection.isEqual(new_selection)) {
                 return;
             }
 
-            var selection = new Rectangle(begin_selection, end_selection);
-            selection.normalize();
+            begin_selection = new_begin_selection;
+            end_selection = new_end_selection;
 
-            var new_selection = new Rectangle(begin_selection, new_end_selection);
-            new_selection.normalize();
-
-            statusbar.textContent += ' - Selection: ' +
-                (new_selection.bottom_right.row - new_selection.top_left.row + 1) + 'x' +
-                (new_selection.bottom_right.col - new_selection.top_left.col + 1);
-
-            if (new_end_selection.isEqual(end_selection)) {
-                return;
-            }
-
-            var keep = selection.intersect(new_selection);
-            var clear = selection.subtract(keep);
+            var keep = old_selection.intersect(new_selection);
+            var clear = old_selection.subtract(keep);
             var paint = new_selection.subtract(keep);
 
             for (var i = 0; i < clear.length; i++) {
@@ -66,21 +72,6 @@ module ascii_draw {
             for (var i = 0; i < paint.length; i++) {
                 applyToRectangle(paint[i], setSelected, true);
             }
-
-            end_selection = new_end_selection;
-        }
-
-        export function onMouseLeave(): void {
-            if (mouse_pos !== null) {
-                utils.removeClass(getCellAt(mouse_pos), 'mouse');
-            }
-            mouse_pos = null;
-        }
-
-        function clearSelection(): void {
-            var selection = new Rectangle(begin_selection, end_selection);
-            selection.normalize();
-            applyToRectangle(selection, setSelected, false);
         }
     }
 

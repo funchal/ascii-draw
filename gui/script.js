@@ -85,9 +85,21 @@ var ascii_draw;
         utils.Point = Point;
 
         var Rectangle = (function () {
-            function Rectangle(top_left, bottom_right) {
+            function Rectangle(top_left, bottom_right, normalize) {
                 this.top_left = top_left;
                 this.bottom_right = bottom_right;
+                if (normalize) {
+                    if (this.top_left.row > this.bottom_right.row) {
+                        var tmp = this.top_left.row;
+                        this.top_left = new Point(this.bottom_right.row, this.top_left.col);
+                        this.bottom_right = new Point(tmp, this.bottom_right.col);
+                    }
+                    if (this.top_left.col > this.bottom_right.col) {
+                        var tmp = this.top_left.col;
+                        this.top_left = new Point(this.top_left.row, this.bottom_right.col);
+                        this.bottom_right = new Point(this.bottom_right.row, tmp);
+                    }
+                }
             }
             Rectangle.prototype.intersect = function (other) {
                 var top_left = new Point(Math.max(this.top_left.row, other.top_left.row), Math.max(this.top_left.col, other.top_left.col));
@@ -95,39 +107,39 @@ var ascii_draw;
                 return new Rectangle(top_left, bottom_right);
             };
 
-            Rectangle.prototype.normalize = function () {
-                if (this.top_left.row > this.bottom_right.row) {
-                    var tmp = this.top_left.row;
-                    this.top_left = new Point(this.bottom_right.row, this.top_left.col);
-                    this.bottom_right = new Point(tmp, this.bottom_right.col);
-                }
-                if (this.top_left.col > this.bottom_right.col) {
-                    var tmp = this.top_left.col;
-                    this.top_left = new Point(this.top_left.row, this.bottom_right.col);
-                    this.bottom_right = new Point(this.bottom_right.row, tmp);
-                }
+            Rectangle.prototype.isEmpty = function () {
+                return (this.top_left.row > this.bottom_right.row) || (this.top_left.col > this.bottom_right.col);
             };
 
-            Rectangle.prototype.isNormalized = function () {
-                return (this.top_left.row <= this.bottom_right.row) && (this.top_left.col <= this.bottom_right.col);
+            Rectangle.prototype.isEqual = function (other) {
+                return (this.top_left.isEqual(other.top_left) && this.bottom_right.isEqual(other.bottom_right));
             };
 
             Rectangle.prototype.subtract = function (other) {
                 var rect_array = [];
+                if (this.isEmpty()) {
+                    return rect_array;
+                }
+
+                if (other.isEmpty()) {
+                    rect_array.push(this);
+                    return rect_array;
+                }
+
                 var top_rectangle = new Rectangle(this.top_left, new Point(other.top_left.row - 1, this.bottom_right.col));
-                if (top_rectangle.isNormalized()) {
+                if (!top_rectangle.isEmpty()) {
                     rect_array.push(top_rectangle);
                 }
                 var left_rectangle = new Rectangle(new Point(other.top_left.row, this.top_left.col), new Point(other.bottom_right.row, other.top_left.col - 1));
-                if (left_rectangle.isNormalized()) {
+                if (!left_rectangle.isEmpty()) {
                     rect_array.push(left_rectangle);
                 }
                 var right_rectangle = new Rectangle(new Point(other.top_left.row, other.bottom_right.col + 1), new Point(other.bottom_right.row, this.bottom_right.col));
-                if (right_rectangle.isNormalized()) {
+                if (!right_rectangle.isEmpty()) {
                     rect_array.push(right_rectangle);
                 }
                 var bottom_rectangle = new Rectangle(new Point(other.bottom_right.row + 1, this.top_left.col), this.bottom_right);
-                if (bottom_rectangle.isNormalized()) {
+                if (!bottom_rectangle.isEmpty()) {
                     rect_array.push(bottom_rectangle);
                 }
                 return rect_array;
@@ -157,12 +169,7 @@ var ascii_draw;
         function onMouseDown(target) {
             // TODO: if current cell is selected change to move mode
             selecting = true;
-            clearSelection();
-
-            // FIXME: share some code with onMouseOver
-            begin_selection = getCellPosition(target);
-            end_selection = begin_selection;
-            setSelected(target, true);
+            setSelection(getCellPosition(target), getCellPosition(target));
         }
         SelectMoveController.onMouseDown = onMouseDown;
 
@@ -172,37 +179,47 @@ var ascii_draw;
         SelectMoveController.onMouseUp = onMouseUp;
 
         function onMouseOver(target) {
+            var pos = getCellPosition(target);
+            setMousePosition(pos);
+            if (selecting) {
+                setSelection(begin_selection, pos);
+            }
+        }
+        SelectMoveController.onMouseOver = onMouseOver;
+
+        function onMouseLeave() {
+            setMousePosition(null);
+        }
+        SelectMoveController.onMouseLeave = onMouseLeave;
+
+        function setMousePosition(new_pos) {
             if (mouse_pos !== null) {
                 ascii_draw.utils.removeClass(getCellAt(mouse_pos), 'mouse');
             }
-            ascii_draw.utils.addClass(target, 'mouse');
+            mouse_pos = new_pos;
 
-            mouse_pos = getCellPosition(target);
+            var mouseposition = document.getElementById('mouseposition');
+            if (mouse_pos !== null) {
+                ascii_draw.utils.addClass(getCellAt(mouse_pos), 'mouse');
+                mouseposition.textContent = 'Cursor: ' + mouse_pos;
+            } else {
+                mouseposition.textContent = '';
+            }
+        }
 
-            var new_end_selection = getCellPosition(target);
+        function setSelection(new_begin_selection, new_end_selection) {
+            var new_selection = new Rectangle(new_begin_selection, new_end_selection, true);
+            var old_selection = new Rectangle(begin_selection, end_selection, true);
 
-            var statusbar = document.getElementById('statusbar');
-            statusbar.textContent = 'Position: ' + new_end_selection;
-            statusbar.textContent += ' - Size: ' + ascii_draw.grid.rows.length + 'x' + ascii_draw.grid.rows[0].cells.length;
-
-            if (!selecting) {
+            if (old_selection.isEqual(new_selection)) {
                 return;
             }
 
-            var selection = new Rectangle(begin_selection, end_selection);
-            selection.normalize();
+            begin_selection = new_begin_selection;
+            end_selection = new_end_selection;
 
-            var new_selection = new Rectangle(begin_selection, new_end_selection);
-            new_selection.normalize();
-
-            statusbar.textContent += ' - Selection: ' + (new_selection.bottom_right.row - new_selection.top_left.row + 1) + 'x' + (new_selection.bottom_right.col - new_selection.top_left.col + 1);
-
-            if (new_end_selection.isEqual(end_selection)) {
-                return;
-            }
-
-            var keep = selection.intersect(new_selection);
-            var clear = selection.subtract(keep);
+            var keep = old_selection.intersect(new_selection);
+            var clear = old_selection.subtract(keep);
             var paint = new_selection.subtract(keep);
 
             for (var i = 0; i < clear.length; i++) {
@@ -212,23 +229,6 @@ var ascii_draw;
             for (var i = 0; i < paint.length; i++) {
                 applyToRectangle(paint[i], setSelected, true);
             }
-
-            end_selection = new_end_selection;
-        }
-        SelectMoveController.onMouseOver = onMouseOver;
-
-        function onMouseLeave() {
-            if (mouse_pos !== null) {
-                ascii_draw.utils.removeClass(getCellAt(mouse_pos), 'mouse');
-            }
-            mouse_pos = null;
-        }
-        SelectMoveController.onMouseLeave = onMouseLeave;
-
-        function clearSelection() {
-            var selection = new Rectangle(begin_selection, end_selection);
-            selection.normalize();
-            applyToRectangle(selection, setSelected, false);
         }
     })(SelectMoveController || (SelectMoveController = {}));
 
