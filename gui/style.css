@@ -134,7 +134,14 @@ button img {
     height: 16px;
     display: inline-block;
     border-right: 1px solid #BBB;
-    min-width: 10%;
+    min-width: 13%;
     max-width: 33%;
     overflow: hidden;
+}
+
+#copypastearea {
+    opacity: 0;
+    position: absolute;
+    top: -10000px;
+    right: 0px;
 }

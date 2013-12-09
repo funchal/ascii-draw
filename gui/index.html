@@ -6,27 +6,6 @@
         <link rel='icon' type='image/png' href='img/favicon.png'/>
         <title>ascii-draw</title>
         <script src='script.js' type='text/javascript'></script>
-        <!--<script type='text/javascript'>
-        var w = 0;
-        var h = 0;
-        window.setInterval(function() {
-            var e = document.getElementsByClassName('wrapper')[0];
-            if (w < e.clientWidth || h < e.clientHeight) {
-                w = e.clientWidth;
-                h = e.clientHeight;
-                t = document.getElementById('grid');
-                for (i = 0; i != 25; i++) {
-                    var row = t.insertRow();
-                    for (j = 0; j != 80; j++) {
-                        var cell = row.insertCell();
-                        var div = document.createElement('div');
-                        div.textContent = '';
-                        cell.appendChild(div);
-                    }
-                }
-            }
-        }, 1000);
-        </script>-->
     </head>
     <body>
         <div id='toolbar'>
@@ -51,5 +30,6 @@
             </div><div id='selectionstatus'>
             </div><div id='gridstatus'>
         </div></div>
+        <textarea id='copypastearea' tabindex='-1'></textarea>
     </body>
 </html>

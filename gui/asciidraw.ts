@@ -137,6 +137,70 @@ module ascii_draw {
 
     var controller: Controller = SelectMoveController;
 
+    function getSelectionContent(): string {
+        return 'content\ncontent\ncontent\ncontent\ncontent\ncontent\n';
+    }
+
+    function initiateCopyAction(): void {
+        if (window.getSelection && document.createRange) {
+            var copypastearea = document.getElementById('copypastearea');
+            copypastearea.textContent = getSelectionContent();
+            var sel = window.getSelection();
+            var range = document.createRange();
+            range.selectNodeContents(copypastearea);
+            sel.removeAllRanges();
+            sel.addRange(range);
+        } else {
+            console.log('fail to copy');
+        }
+    }
+
+    function completeCopyAction(): void {
+        var copypastearea = <HTMLTextAreaElement>document.getElementById('copypastearea');
+        copypastearea.value = '';
+        console.log('copy');
+    }
+
+    function initiatePasteAction(): void {
+        var copypastearea = <HTMLTextAreaElement>document.getElementById('copypastearea');
+        copypastearea.value = '';
+        copypastearea.focus();
+    }
+
+    function completePasteAction(): void {
+        var copypastearea = <HTMLTextAreaElement>document.getElementById('copypastearea');
+        console.log('paste: ' + copypastearea.value);
+        copypastearea.value = '';
+    }
+
+    function onKeyUp(event: KeyboardEvent): void {
+        if (event.ctrlKey && !event.altKey && !event.shiftKey) {
+            switch (event.keyCode) {
+                case 67: /* ctrl+c */
+                    completeCopyAction();
+                    break;
+                case 86: /* ctrl+v */
+                    completePasteAction();
+                    break;
+            }
+        }
+        event.stopPropagation();
+    }
+
+    function onKeyDown(event: KeyboardEvent): void {
+        if (event.ctrlKey && !event.altKey && !event.shiftKey) {
+            switch (event.keyCode) {
+                case 67: /* ctrl+c */
+                    initiateCopyAction();
+                    break;
+                case 86: /* ctrl+v */
+                    initiatePasteAction();
+                    break;
+            }
+        }
+        event.stopPropagation();
+    }
+
     function getCellPosition(cell: HTMLTableCellElement): CellPosition {
         return new CellPosition(utils.indexInParent(cell.parentElement),
                                 utils.indexInParent(cell));
@@ -230,12 +294,14 @@ module ascii_draw {
         if (target !== null) {
             controller.onMouseDown(target);
         }
-        //event.preventDefault();
+        event.stopPropagation();
+        event.preventDefault();
     }
 
     function onMouseUp(event: MouseEvent): void {
         controller.onMouseUp();
-        //event.preventDefault();
+        event.stopPropagation();
+        event.preventDefault();
     }
 
     function onMouseOver(event: MouseEvent): void {
@@ -243,12 +309,19 @@ module ascii_draw {
         if (target !== null) {
             controller.onMouseOver(target);
         }
-        //event.preventDefault();
+        event.stopPropagation();
+        event.preventDefault();
     }
 
     function onMouseLeave(event: MouseEvent): void {
         controller.onMouseLeave();
-        //event.preventDefault();
+        event.stopPropagation();
+        event.preventDefault();
+    }
+
+    function onContextMenu(event: MouseEvent): void {
+        event.stopPropagation();
+        event.preventDefault();
     }
 
     function controllerSwitcher(new_controller: Controller) {
@@ -271,6 +344,9 @@ module ascii_draw {
         window.addEventListener('mouseup', onMouseUp, false);
         grid.addEventListener('mouseover', onMouseOver, false);
         grid.addEventListener('mouseleave', onMouseLeave, false);
+        window.addEventListener('contextmenu', onContextMenu, false);
+        window.addEventListener('keydown', onKeyDown, false);
+        window.addEventListener('keyup', onKeyUp, false);
 
         var rectangle_button = document.getElementById('rectangle-button');
         rectangle_button.addEventListener(

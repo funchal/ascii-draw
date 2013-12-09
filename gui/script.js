@@ -298,6 +298,70 @@ var ascii_draw;
 
     var controller = SelectMoveController;
 
+    function getSelectionContent() {
+        return 'content\ncontent\ncontent\ncontent\ncontent\ncontent\n';
+    }
+
+    function initiateCopyAction() {
+        if (window.getSelection && document.createRange) {
+            var copypastearea = document.getElementById('copypastearea');
+            copypastearea.textContent = getSelectionContent();
+            var sel = window.getSelection();
+            var range = document.createRange();
+            range.selectNodeContents(copypastearea);
+            sel.removeAllRanges();
+            sel.addRange(range);
+        } else {
+            console.log('fail to copy');
+        }
+    }
+
+    function completeCopyAction() {
+        var copypastearea = document.getElementById('copypastearea');
+        copypastearea.value = '';
+        console.log('copy');
+    }
+
+    function initiatePasteAction() {
+        var copypastearea = document.getElementById('copypastearea');
+        copypastearea.value = '';
+        copypastearea.focus();
+    }
+
+    function completePasteAction() {
+        var copypastearea = document.getElementById('copypastearea');
+        console.log('paste: ' + copypastearea.value);
+        copypastearea.value = '';
+    }
+
+    function onKeyUp(event) {
+        if (event.ctrlKey && !event.altKey && !event.shiftKey) {
+            switch (event.keyCode) {
+                case 67:
+                    completeCopyAction();
+                    break;
+                case 86:
+                    completePasteAction();
+                    break;
+            }
+        }
+        event.stopPropagation();
+    }
+
+    function onKeyDown(event) {
+        if (event.ctrlKey && !event.altKey && !event.shiftKey) {
+            switch (event.keyCode) {
+                case 67:
+                    initiateCopyAction();
+                    break;
+                case 86:
+                    initiatePasteAction();
+                    break;
+            }
+        }
+        event.stopPropagation();
+    }
+
     function getCellPosition(cell) {
         return new CellPosition(utils.indexInParent(cell.parentElement), utils.indexInParent(cell));
     }
@@ -391,12 +455,14 @@ var ascii_draw;
         if (target !== null) {
             controller.onMouseDown(target);
         }
-        //event.preventDefault();
+        event.stopPropagation();
+        event.preventDefault();
     }
 
     function onMouseUp(event) {
         controller.onMouseUp();
-        //event.preventDefault();
+        event.stopPropagation();
+        event.preventDefault();
     }
 
     function onMouseOver(event) {
@@ -404,12 +470,19 @@ var ascii_draw;
         if (target !== null) {
             controller.onMouseOver(target);
         }
-        //event.preventDefault();
+        event.stopPropagation();
+        event.preventDefault();
     }
 
     function onMouseLeave(event) {
         controller.onMouseLeave();
-        //event.preventDefault();
+        event.stopPropagation();
+        event.preventDefault();
+    }
+
+    function onContextMenu(event) {
+        event.stopPropagation();
+        event.preventDefault();
     }
 
     function controllerSwitcher(new_controller) {
@@ -432,6 +505,9 @@ var ascii_draw;
         window.addEventListener('mouseup', onMouseUp, false);
         ascii_draw.grid.addEventListener('mouseover', onMouseOver, false);
         ascii_draw.grid.addEventListener('mouseleave', onMouseLeave, false);
+        window.addEventListener('contextmenu', onContextMenu, false);
+        window.addEventListener('keydown', onKeyDown, false);
+        window.addEventListener('keyup', onKeyUp, false);
 
         var rectangle_button = document.getElementById('rectangle-button');
         rectangle_button.addEventListener('click', controllerSwitcher(RectangleController), false);
