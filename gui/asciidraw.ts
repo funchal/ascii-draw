@@ -36,9 +36,10 @@ module ascii_draw {
         }
     }
 
+    var begin_selection: CellPosition;
+    var end_selection: CellPosition;
+
     module SelectMoveController {
-        var begin_selection: CellPosition;
-        var end_selection: CellPosition;
         var selecting = false;
         var mouse_pos: CellPosition = null;
 
@@ -93,7 +94,7 @@ module ascii_draw {
             }
         }
 
-        function setSelection(new_begin_selection: CellPosition,
+        export function setSelection(new_begin_selection: CellPosition,
                               new_end_selection: CellPosition): void {
             var new_selection = new Rectangle(new_begin_selection,
                                               new_end_selection,
@@ -176,25 +177,93 @@ module ascii_draw {
     function onKeyUp(event: KeyboardEvent): void {
         if (event.ctrlKey && !event.altKey && !event.shiftKey) {
             switch (event.keyCode) {
-                case 67: /* ctrl+c */
+                case 67: /* ctrl+c: copy */
                     completeCopyAction();
                     break;
-                case 86: /* ctrl+v */
+                case 86: /* ctrl+v: paste */
                     completePasteAction();
+                    break;
+                case 88: /* ctrl+x: cut */
+                    completeCopyAction();
                     break;
             }
         }
         event.stopPropagation();
     }
 
+    function onKeyPress(event: KeyboardEvent): void {
+        if (!event.ctrlKey && !event.altKey && !event.metaKey && event.charCode > 0) {
+            applyToRectangle(new Rectangle(begin_selection, end_selection, true /*normalize*/),
+                             function(cell: HTMLTableCellElement) {
+                                cell.children[0].textContent = String.fromCharCode(event.charCode);
+                             });
+            var displacement = [0, 1];
+            if (displacement && begin_selection.isEqual(end_selection) &&
+                                begin_selection.isEqual(end_selection)) {
+                var pos = new CellPosition(begin_selection.row + displacement[0],
+                                           begin_selection.col + displacement[1]);
+                SelectMoveController.setSelection(pos, pos);
+            }
+            event.preventDefault();
+        }
+        event.stopPropagation();
+    }
+
     function onKeyDown(event: KeyboardEvent): void {
-        if (event.ctrlKey && !event.altKey && !event.shiftKey) {
+        if (!event.ctrlKey && !event.altKey && !event.shiftKey && !event.metaKey) {
+            var displacement: any = null;
             switch (event.keyCode) {
-                case 67: /* ctrl+c */
+                case 37: /* left arrow */
+                    displacement = [0, -1];
+                    event.preventDefault();
+                    break;
+                case 38: /* up arrow */
+                    displacement = [-1, 0];
+                    event.preventDefault();
+                    break;
+                case 39: /* right arrow */
+                    displacement = [0, 1];
+                    event.preventDefault();
+                    break;
+                case 40: /* down arrow */
+                    displacement = [1, 0];
+                    event.preventDefault();
+                    break;
+                case 9: /* tab */
+                    event.preventDefault();
+                    break;
+                case 13: /* enter */
+                    event.preventDefault();
+                    break;
+                case 8: /* backspace */
+                    event.preventDefault();
+                    break;
+                case 27: /* escape */
+                    event.preventDefault();
+                    break;
+                case 46: /* delete */
+                    event.preventDefault();
+                    break;
+            }
+
+            if (displacement && begin_selection.isEqual(end_selection) &&
+                                begin_selection.isEqual(end_selection)) {
+                var pos = new CellPosition(begin_selection.row + displacement[0],
+                                           begin_selection.col + displacement[1]);
+                SelectMoveController.setSelection(pos, pos);
+            }
+        }
+
+        if (event.ctrlKey && !event.altKey && !event.shiftKey && !event.metaKey) {
+            switch (event.keyCode) {
+                case 67: /* ctrl+c: copy */
                     initiateCopyAction();
                     break;
-                case 86: /* ctrl+v */
+                case 86: /* ctrl+v: paste */
                     initiatePasteAction();
+                    break;
+                case 88: /* ctrl+x: cut */
+                    initiateCopyAction();
                     break;
             }
         }
@@ -347,6 +416,7 @@ module ascii_draw {
         window.addEventListener('contextmenu', onContextMenu, false);
         window.addEventListener('keydown', onKeyDown, false);
         window.addEventListener('keyup', onKeyUp, false);
+        window.addEventListener('keypress', onKeyPress, false);
 
         var rectangle_button = document.getElementById('rectangle-button');
         rectangle_button.addEventListener(

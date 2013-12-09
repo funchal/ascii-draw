@@ -196,10 +196,11 @@ var ascii_draw;
         RectangleController.exit = exit;
     })(RectangleController || (RectangleController = {}));
 
+    var begin_selection;
+    var end_selection;
+
     var SelectMoveController;
     (function (SelectMoveController) {
-        var begin_selection;
-        var end_selection;
         var selecting = false;
         var mouse_pos = null;
 
@@ -290,6 +291,7 @@ var ascii_draw;
                 selectionstatus.textContent = '';
             }
         }
+        SelectMoveController.setSelection = setSelection;
     })(SelectMoveController || (SelectMoveController = {}));
 
     ascii_draw.grid;
@@ -343,19 +345,82 @@ var ascii_draw;
                 case 86:
                     completePasteAction();
                     break;
+                case 88:
+                    completeCopyAction();
+                    break;
             }
         }
         event.stopPropagation();
     }
 
+    function onKeyPress(event) {
+        if (!event.ctrlKey && !event.altKey && !event.metaKey && event.charCode > 0) {
+            applyToRectangle(new Rectangle(begin_selection, end_selection, true), function (cell) {
+                cell.children[0].textContent = String.fromCharCode(event.charCode);
+            });
+            var displacement = [0, 1];
+            if (displacement && begin_selection.isEqual(end_selection) && begin_selection.isEqual(end_selection)) {
+                var pos = new CellPosition(begin_selection.row + displacement[0], begin_selection.col + displacement[1]);
+                SelectMoveController.setSelection(pos, pos);
+            }
+            event.preventDefault();
+        }
+        event.stopPropagation();
+    }
+
     function onKeyDown(event) {
-        if (event.ctrlKey && !event.altKey && !event.shiftKey) {
+        if (!event.ctrlKey && !event.altKey && !event.shiftKey && !event.metaKey) {
+            var displacement = null;
+            switch (event.keyCode) {
+                case 37:
+                    displacement = [0, -1];
+                    event.preventDefault();
+                    break;
+                case 38:
+                    displacement = [-1, 0];
+                    event.preventDefault();
+                    break;
+                case 39:
+                    displacement = [0, 1];
+                    event.preventDefault();
+                    break;
+                case 40:
+                    displacement = [1, 0];
+                    event.preventDefault();
+                    break;
+                case 9:
+                    event.preventDefault();
+                    break;
+                case 13:
+                    event.preventDefault();
+                    break;
+                case 8:
+                    event.preventDefault();
+                    break;
+                case 27:
+                    event.preventDefault();
+                    break;
+                case 46:
+                    event.preventDefault();
+                    break;
+            }
+
+            if (displacement && begin_selection.isEqual(end_selection) && begin_selection.isEqual(end_selection)) {
+                var pos = new CellPosition(begin_selection.row + displacement[0], begin_selection.col + displacement[1]);
+                SelectMoveController.setSelection(pos, pos);
+            }
+        }
+
+        if (event.ctrlKey && !event.altKey && !event.shiftKey && !event.metaKey) {
             switch (event.keyCode) {
                 case 67:
                     initiateCopyAction();
                     break;
                 case 86:
                     initiatePasteAction();
+                    break;
+                case 88:
+                    initiateCopyAction();
                     break;
             }
         }
@@ -508,6 +573,7 @@ var ascii_draw;
         window.addEventListener('contextmenu', onContextMenu, false);
         window.addEventListener('keydown', onKeyDown, false);
         window.addEventListener('keyup', onKeyUp, false);
+        window.addEventListener('keypress', onKeyPress, false);
 
         var rectangle_button = document.getElementById('rectangle-button');
         rectangle_button.addEventListener('click', controllerSwitcher(RectangleController), false);
