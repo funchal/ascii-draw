@@ -13,6 +13,8 @@ module ascii_draw {
     import Command = commands.Command;
 
     export var grid: HTMLTableElement;
+    var nrows: number = 0;
+    var ncols: number = 0;
     var copypastearea: HTMLTextAreaElement;
     export var selection_button: HTMLButtonElement;
     export var rectangle_button: HTMLButtonElement;
@@ -208,10 +210,12 @@ module ascii_draw {
                                 utils.indexInParent(cell));
     }
 
-    export function getCellAt(pos: CellPosition): HTMLTableCellElement {
-        var row = <HTMLTableRowElement>grid.rows[pos.row];
-        var cell = <HTMLTableCellElement>row.cells[pos.col];
-        return cell;
+    export function getRow(index: number): HTMLTableRowElement {
+        return <HTMLTableRowElement>grid.rows[index];
+    }
+
+    export function getCell(index: number, row: HTMLTableRowElement): HTMLTableCellElement {
+        return <HTMLTableCellElement>row.cells[index];
     }
 
     export function applyToRectangle(rect: Rectangle,
@@ -219,17 +223,15 @@ module ascii_draw {
                               ...params: any[]): void
     {
         for (var r = rect.top_left.row; r <= rect.bottom_right.row; r++) {
-            var row = <HTMLTableRowElement>grid.rows[r];
+            var row = getRow(r);
             for (var c = rect.top_left.col; c <= rect.bottom_right.col; c++) {
-                var cell = <HTMLTableCellElement>row.cells[c];
+                var cell = getCell(c, row);
                 functor.apply(undefined, [cell].concat(params));
             }
         }
     }
 
     function setGridSize(new_nrows: number, new_ncols: number): void {
-        var nrows = grid.rows.length;
-
         for (var r = nrows; r < new_nrows; r++) {
             grid.insertRow();
         }
@@ -239,8 +241,7 @@ module ascii_draw {
         }
 
         for (var r = 0; r < new_nrows; r++) {
-            var row: HTMLTableRowElement = <HTMLTableRowElement>grid.rows[r];
-            var ncols = row.cells.length;
+            var row: HTMLTableRowElement = getRow(r);
             for (var c = ncols; c < new_ncols; c++) {
                 var cell = row.insertCell();
                 cell.textContent = emptyCell;

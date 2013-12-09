@@ -64,6 +64,7 @@ module ascii_draw {
             export function onArrowDown(displacement: Array<number>): void {
                 // Do nothing
             }
+
             export function onKeyPress(character: string): void {
                 var rect_pieces = getHollowRectangle(new Rectangle(begin_selection, end_selection, true /*normalize*/));
                 for (var piece = 0; piece < rect_pieces.length; piece++) {
@@ -93,27 +94,27 @@ module ascii_draw {
                 var right = rect.bottom_right.col;
 
                 // print first row: +---+
-                var first_row = <HTMLTableRowElement>grid.rows[top];
-                writeToCell(<HTMLTableCellElement>first_row.cells[left], '+');
+                var first_row = getRow(top);
+                writeToCell(getCell(left, first_row), '+');
                 for (var col = left + 1; col <= right - 1; col++) {
-                    writeToCell(<HTMLTableCellElement>first_row.cells[col], '-');
+                    writeToCell(getCell(col, first_row), '-');
                 }
-                writeToCell(<HTMLTableCellElement>first_row.cells[right], '+');
+                writeToCell(getCell(right, first_row), '+');
 
                 // print intermediate rows: |   |
                 for (var row = top + 1; row <= bottom - 1; row++) {
-                    var current_row = <HTMLTableRowElement>grid.rows[row];
-                    writeToCell(<HTMLTableCellElement>current_row.cells[left], '|');
-                    writeToCell(<HTMLTableCellElement>current_row.cells[right], '|');
+                    var current_row = getRow(row);
+                    writeToCell(getCell(left, current_row), '|');
+                    writeToCell(getCell(right, current_row), '|');
                 }
 
                 // print last row
-                var last_row = <HTMLTableRowElement>grid.rows[bottom];
-                writeToCell(<HTMLTableCellElement>last_row.cells[left], '+');
+                var last_row = getRow(bottom);
+                writeToCell(getCell(left, last_row), '+');
                 for (var col = left + 1; col <= right - 1; col++) {
-                    writeToCell(<HTMLTableCellElement>last_row.cells[col], '-');
+                    writeToCell(getCell(col, last_row), '-');
                 }
-                writeToCell(<HTMLTableCellElement>last_row.cells[right], '+');
+                writeToCell(getCell(right, last_row), '+');
             }
         }
 
@@ -122,7 +123,7 @@ module ascii_draw {
                 reset();
                 begin_selection = new CellPosition(0, 0);
                 end_selection = begin_selection;
-                setSelected(getCellAt(begin_selection), true);
+                setSelected(getCell(begin_selection.col, getRow(begin_selection.row)), true);
             }
 
             export function reset(): void {
@@ -181,13 +182,15 @@ module ascii_draw {
 
         function setMousePosition(new_pos: CellPosition): void {
             if (mouse_pos !== null) {
-                utils.removeClass(getCellAt(mouse_pos), 'mouse');
+                var cell = getCell(mouse_pos.col, getRow(mouse_pos.row));
+                utils.removeClass(cell, 'mouse');
             }
             mouse_pos = new_pos;
 
             var mousestatus = document.getElementById('mousestatus');
             if (mouse_pos !== null) {
-                utils.addClass(getCellAt(mouse_pos), 'mouse');
+                var cell = getCell(mouse_pos.col, getRow(mouse_pos.row));
+                utils.addClass(cell, 'mouse');
                 mousestatus.textContent = 'Cursor: ' + mouse_pos;
             } else {
                 mousestatus.textContent = '';

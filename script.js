@@ -297,6 +297,7 @@ var ascii_draw;
                 // Do nothing
             }
             RectangleController.onArrowDown = onArrowDown;
+
             function onKeyPress(character) {
                 var rect_pieces = getHollowRectangle(new Rectangle(controllers.begin_selection, controllers.end_selection, true));
                 for (var piece = 0; piece < rect_pieces.length; piece++) {
@@ -326,26 +327,26 @@ var ascii_draw;
                 var right = rect.bottom_right.col;
 
                 // print first row: +---+
-                var first_row = ascii_draw.grid.rows[top];
-                writeToCell(first_row.cells[left], '+');
+                var first_row = ascii_draw.getRow(top);
+                writeToCell(ascii_draw.getCell(left, first_row), '+');
                 for (var col = left + 1; col <= right - 1; col++) {
-                    writeToCell(first_row.cells[col], '-');
+                    writeToCell(ascii_draw.getCell(col, first_row), '-');
                 }
-                writeToCell(first_row.cells[right], '+');
+                writeToCell(ascii_draw.getCell(right, first_row), '+');
 
                 for (var row = top + 1; row <= bottom - 1; row++) {
-                    var current_row = ascii_draw.grid.rows[row];
-                    writeToCell(current_row.cells[left], '|');
-                    writeToCell(current_row.cells[right], '|');
+                    var current_row = ascii_draw.getRow(row);
+                    writeToCell(ascii_draw.getCell(left, current_row), '|');
+                    writeToCell(ascii_draw.getCell(right, current_row), '|');
                 }
 
                 // print last row
-                var last_row = ascii_draw.grid.rows[bottom];
-                writeToCell(last_row.cells[left], '+');
+                var last_row = ascii_draw.getRow(bottom);
+                writeToCell(ascii_draw.getCell(left, last_row), '+');
                 for (var col = left + 1; col <= right - 1; col++) {
-                    writeToCell(last_row.cells[col], '-');
+                    writeToCell(ascii_draw.getCell(col, last_row), '-');
                 }
-                writeToCell(last_row.cells[right], '+');
+                writeToCell(ascii_draw.getCell(right, last_row), '+');
             }
         })(controllers.RectangleController || (controllers.RectangleController = {}));
         var RectangleController = controllers.RectangleController;
@@ -355,7 +356,7 @@ var ascii_draw;
                 reset();
                 controllers.begin_selection = new CellPosition(0, 0);
                 controllers.end_selection = controllers.begin_selection;
-                ascii_draw.setSelected(ascii_draw.getCellAt(controllers.begin_selection), true);
+                ascii_draw.setSelected(ascii_draw.getCell(controllers.begin_selection.col, ascii_draw.getRow(controllers.begin_selection.row)), true);
             }
             SelectMoveController.init = init;
 
@@ -420,13 +421,15 @@ var ascii_draw;
 
         function setMousePosition(new_pos) {
             if (mouse_pos !== null) {
-                utils.removeClass(ascii_draw.getCellAt(mouse_pos), 'mouse');
+                var cell = ascii_draw.getCell(mouse_pos.col, ascii_draw.getRow(mouse_pos.row));
+                utils.removeClass(cell, 'mouse');
             }
             mouse_pos = new_pos;
 
             var mousestatus = document.getElementById('mousestatus');
             if (mouse_pos !== null) {
-                utils.addClass(ascii_draw.getCellAt(mouse_pos), 'mouse');
+                var cell = ascii_draw.getCell(mouse_pos.col, ascii_draw.getRow(mouse_pos.row));
+                utils.addClass(cell, 'mouse');
                 mousestatus.textContent = 'Cursor: ' + mouse_pos;
             } else {
                 mousestatus.textContent = '';
@@ -516,6 +519,8 @@ var ascii_draw;
     var commands = utils.commands;
 
     ascii_draw.grid;
+    var nrows = 0;
+    var ncols = 0;
     var copypastearea;
     ascii_draw.selection_button;
     ascii_draw.rectangle_button;
@@ -712,12 +717,15 @@ var ascii_draw;
     }
     ascii_draw.getCellPosition = getCellPosition;
 
-    function getCellAt(pos) {
-        var row = ascii_draw.grid.rows[pos.row];
-        var cell = row.cells[pos.col];
-        return cell;
+    function getRow(index) {
+        return ascii_draw.grid.rows[index];
     }
-    ascii_draw.getCellAt = getCellAt;
+    ascii_draw.getRow = getRow;
+
+    function getCell(index, row) {
+        return row.cells[index];
+    }
+    ascii_draw.getCell = getCell;
 
     function applyToRectangle(rect, functor) {
         var params = [];
@@ -725,9 +733,9 @@ var ascii_draw;
             params[_i] = arguments[_i + 2];
         }
         for (var r = rect.top_left.row; r <= rect.bottom_right.row; r++) {
-            var row = ascii_draw.grid.rows[r];
+            var row = getRow(r);
             for (var c = rect.top_left.col; c <= rect.bottom_right.col; c++) {
-                var cell = row.cells[c];
+                var cell = getCell(c, row);
                 functor.apply(undefined, [cell].concat(params));
             }
         }
@@ -735,8 +743,6 @@ var ascii_draw;
     ascii_draw.applyToRectangle = applyToRectangle;
 
     function setGridSize(new_nrows, new_ncols) {
-        var nrows = ascii_draw.grid.rows.length;
-
         for (var r = nrows; r < new_nrows; r++) {
             ascii_draw.grid.insertRow();
         }
@@ -746,8 +752,7 @@ var ascii_draw;
         }
 
         for (var r = 0; r < new_nrows; r++) {
-            var row = ascii_draw.grid.rows[r];
-            var ncols = row.cells.length;
+            var row = getRow(r);
             for (var c = ncols; c < new_ncols; c++) {
                 var cell = row.insertCell();
                 cell.textContent = emptyCell;
