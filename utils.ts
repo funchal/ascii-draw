@@ -34,6 +34,10 @@ module utils {
         }
     }
 
+    export function stacktrace() {
+        console.log((<any>new Error()).stack);
+    }
+
     export function computeFontSize(): { width: number; height: number; } {
         var tmp = document.createElement('table');
         var row = <HTMLTableRowElement>tmp.insertRow();

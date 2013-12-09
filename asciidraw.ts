@@ -29,42 +29,9 @@ module ascii_draw {
     export interface Row extends HTMLDivElement {};
     export interface Cell extends HTMLSpanElement {};
 
-    class ChangeSelection implements Command {
-        constructor(public save_selection: Array<Rectangle>) {}
-
-        execute(): void {
-            console.log('execute ChangeSelection');
-            // var old_selection = selection;
-            // clear selection
-            // for each in array, setSelection(this.save_selection);
-            // this.save_selection = old_selection;
-        }
-
-        unexecute(): void {
-            console.log('unexecute ChangeSelection');
-            // var new_selection = selection;
-            // clear selection
-            // for each in array, setSelection(this.save_selection);
-            // this.save_selection = new_selection;
-        }
-    }
-
-    class CommandB implements Command {
-        execute(): void {
-            console.log('CommandB execute');
-        }
-        unexecute(): void {
-            console.log('CommandB unexecute');
-        }
-    }
-
-    function getSelectionContent(): string {
-        return 'content\ncontent\ncontent\ncontent\ncontent\ncontent\n';
-    }
-
     function initiateCopyAction(): void {
         if (window.getSelection && document.createRange) {
-            copypastearea.textContent = getSelectionContent();
+            copypastearea.textContent = selection.getContents();
             var sel = window.getSelection();
             var range = document.createRange();
             range.selectNodeContents(copypastearea);
@@ -180,7 +147,7 @@ module ascii_draw {
             }
 
             if (displacement &&
-                controllers.begin_selection.isEqual(controllers.end_selection)) {
+                controllers.begin_highlight.isEqual(controllers.end_highlight)) {
                 controller.onArrowDown(displacement);
             }
         }
@@ -273,8 +240,7 @@ module ascii_draw {
         utils.changeStyleRule('#grid div', 'height', font_size.height + 'px');
     }
 
-    export function setSelected(cell: Cell,
-                                selected: boolean): void {
+    export function setSelected(cell: Cell, selected: boolean): void {
         if (cell['data-selected'] !== selected) {
             cell['data-selected'] = selected;
             if (selected) {
@@ -283,7 +249,20 @@ module ascii_draw {
                 utils.removeClass(cell, 'selected');
             }
         } else {
-            console.log('bla');
+            console.log('selected');
+        }
+    }
+
+    export function setHighlighted(cell: Cell, highlighted: boolean): void {
+        if (cell['data-highlighted'] !== highlighted) {
+            cell['data-highlighted'] = highlighted;
+            if (highlighted) {
+                utils.addClass(cell, 'highlighted');
+            } else {
+                utils.removeClass(cell, 'highlighted');
+            }
+        } else {
+            console.log('highlighted');
         }
     }
 

@@ -112,11 +112,15 @@ button img {
 }
 
 #grid span.selected {
+    background-color: #FFB;
+}
+
+#grid span.highlighted {
     background-color: #FF0;
 }
 
 #grid span.mouse {
-    background-color: #F80;
+    background-color: #FA0;
 }
 
 #toolbar {
