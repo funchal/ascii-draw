@@ -17,14 +17,13 @@ module ascii_draw {
             setSize(50, 120);
         }
 
-        export function getRow(index: number): Row {
-            return <Row>container.children[index];
+        export function getRow(row: number): Row {
+            return <Row>container.children[row];
         }
 
-        export function getCell(index: number, row: Row): Cell {
-            return <Cell>row.children[index];
+        export function getCell(row: Row, col: number): Cell {
+            return <Cell>row.children[col];
         }
-
 
         export function getCellPosition(cell: Cell): CellPosition {
             return new CellPosition(utils.indexInParent(cell.parentElement),

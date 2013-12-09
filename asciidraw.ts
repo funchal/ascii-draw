@@ -177,7 +177,7 @@ module ascii_draw {
         for (var r = rect.top_left.row; r <= rect.bottom_right.row; r++) {
             var row = grid.getRow(r);
             for (var c = rect.top_left.col; c <= rect.bottom_right.col; c++) {
-                var cell = grid.getCell(c, row);
+                var cell = grid.getCell(row, c);
                 functor(cell, param);
             }
         }

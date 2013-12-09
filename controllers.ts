@@ -88,26 +88,26 @@ module ascii_draw {
 
                 // print first row: +---+
                 var first_row = grid.getRow(top);
-                writeToCell(grid.getCell(left, first_row), '+');
+                writeToCell(grid.getCell(first_row, left), '+');
                 for (var col = left + 1; col <= right - 1; col++) {
-                    writeToCell(grid.getCell(col, first_row), '-');
+                    writeToCell(grid.getCell(first_row, col), '-');
                 }
-                writeToCell(grid.getCell(right, first_row), '+');
+                writeToCell(grid.getCell(first_row, right), '+');
 
                 // print intermediate rows: |   |
                 for (var row = top + 1; row <= bottom - 1; row++) {
                     var current_row = grid.getRow(row);
-                    writeToCell(grid.getCell(left, current_row), '|');
-                    writeToCell(grid.getCell(right, current_row), '|');
+                    writeToCell(grid.getCell(current_row, left), '|');
+                    writeToCell(grid.getCell(current_row, right), '|');
                 }
 
                 // print last row
                 var last_row = grid.getRow(bottom);
-                writeToCell(grid.getCell(left, last_row), '+');
+                writeToCell(grid.getCell(last_row, left), '+');
                 for (var col = left + 1; col <= right - 1; col++) {
-                    writeToCell(grid.getCell(col, last_row), '-');
+                    writeToCell(grid.getCell(last_row, col), '-');
                 }
-                writeToCell(grid.getCell(right, last_row), '+');
+                writeToCell(grid.getCell(last_row, right), '+');
             }
         }
 
@@ -199,14 +199,14 @@ module ascii_draw {
 
         function setMousePosition(new_pos: CellPosition): void {
             if (mouse_pos !== null) {
-                var cell = grid.getCell(mouse_pos.col, grid.getRow(mouse_pos.row));
+                var cell = grid.getCell(grid.getRow(mouse_pos.row), mouse_pos.col);
                 utils.removeClass(cell, 'mouse');
             }
             mouse_pos = new_pos;
 
             var mousestatus = document.getElementById('mousestatus');
             if (mouse_pos !== null) {
-                var cell = grid.getCell(mouse_pos.col, grid.getRow(mouse_pos.row));
+                var cell = grid.getCell(grid.getRow(mouse_pos.row), mouse_pos.col);
                 utils.addClass(cell, 'mouse');
                 mousestatus.textContent = 'Cursor: ' + mouse_pos;
             } else {

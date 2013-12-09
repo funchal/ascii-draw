@@ -28,7 +28,7 @@ module ascii_draw {
             return 'content\ncontent\ncontent\ncontent\ncontent\ncontent\n';
         }
 
-        export function setSelected(cell: Cell, selected: boolean): void {
+        function setSelected(cell: Cell, selected: boolean): void {
             if (cell['data-selected'] !== selected) {
                 cell['data-selected'] = selected;
                 if (selected) {

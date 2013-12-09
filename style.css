@@ -95,17 +95,19 @@ button img {
     background-color: #CCC;
 }
 
+/* rows */
 #grid div {
     display: block;
 }
 
+/* cells */
 #grid span {
     cursor: none;
     background-color: #FFF;
     width: 7px;
     height: 15px;
     border-top: 1px solid #DDD;
-    border-right: 1px solid #DDD;
+    border-left: 1px solid #DDD;
     display: inline-block;
     overflow: hidden;
     text-align: center;

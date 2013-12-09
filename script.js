@@ -265,13 +265,13 @@ var ascii_draw;
         }
         grid.init = init;
 
-        function getRow(index) {
-            return grid.container.children[index];
+        function getRow(row) {
+            return grid.container.children[row];
         }
         grid.getRow = getRow;
 
-        function getCell(index, row) {
-            return row.children[index];
+        function getCell(row, col) {
+            return row.children[col];
         }
         grid.getCell = getCell;
 
@@ -375,7 +375,6 @@ var ascii_draw;
                 console.log('selected');
             }
         }
-        selection.setSelected = setSelected;
     })(ascii_draw.selection || (ascii_draw.selection = {}));
     var selection = ascii_draw.selection;
 })(ascii_draw || (ascii_draw = {}));
@@ -463,25 +462,25 @@ var ascii_draw;
 
                 // print first row: +---+
                 var first_row = ascii_draw.grid.getRow(top);
-                writeToCell(ascii_draw.grid.getCell(left, first_row), '+');
+                writeToCell(ascii_draw.grid.getCell(first_row, left), '+');
                 for (var col = left + 1; col <= right - 1; col++) {
-                    writeToCell(ascii_draw.grid.getCell(col, first_row), '-');
+                    writeToCell(ascii_draw.grid.getCell(first_row, col), '-');
                 }
-                writeToCell(ascii_draw.grid.getCell(right, first_row), '+');
+                writeToCell(ascii_draw.grid.getCell(first_row, right), '+');
 
                 for (var row = top + 1; row <= bottom - 1; row++) {
                     var current_row = ascii_draw.grid.getRow(row);
-                    writeToCell(ascii_draw.grid.getCell(left, current_row), '|');
-                    writeToCell(ascii_draw.grid.getCell(right, current_row), '|');
+                    writeToCell(ascii_draw.grid.getCell(current_row, left), '|');
+                    writeToCell(ascii_draw.grid.getCell(current_row, right), '|');
                 }
 
                 // print last row
                 var last_row = ascii_draw.grid.getRow(bottom);
-                writeToCell(ascii_draw.grid.getCell(left, last_row), '+');
+                writeToCell(ascii_draw.grid.getCell(last_row, left), '+');
                 for (var col = left + 1; col <= right - 1; col++) {
-                    writeToCell(ascii_draw.grid.getCell(col, last_row), '-');
+                    writeToCell(ascii_draw.grid.getCell(last_row, col), '-');
                 }
-                writeToCell(ascii_draw.grid.getCell(right, last_row), '+');
+                writeToCell(ascii_draw.grid.getCell(last_row, right), '+');
             }
         })(controllers.RectangleController || (controllers.RectangleController = {}));
         var RectangleController = controllers.RectangleController;
@@ -582,14 +581,14 @@ var ascii_draw;
 
         function setMousePosition(new_pos) {
             if (mouse_pos !== null) {
-                var cell = ascii_draw.grid.getCell(mouse_pos.col, ascii_draw.grid.getRow(mouse_pos.row));
+                var cell = ascii_draw.grid.getCell(ascii_draw.grid.getRow(mouse_pos.row), mouse_pos.col);
                 utils.removeClass(cell, 'mouse');
             }
             mouse_pos = new_pos;
 
             var mousestatus = document.getElementById('mousestatus');
             if (mouse_pos !== null) {
-                var cell = ascii_draw.grid.getCell(mouse_pos.col, ascii_draw.grid.getRow(mouse_pos.row));
+                var cell = ascii_draw.grid.getCell(ascii_draw.grid.getRow(mouse_pos.row), mouse_pos.col);
                 utils.addClass(cell, 'mouse');
                 mousestatus.textContent = 'Cursor: ' + mouse_pos;
             } else {
@@ -850,7 +849,7 @@ var ascii_draw;
         for (var r = rect.top_left.row; r <= rect.bottom_right.row; r++) {
             var row = ascii_draw.grid.getRow(r);
             for (var c = rect.top_left.col; c <= rect.bottom_right.col; c++) {
-                var cell = ascii_draw.grid.getCell(c, row);
+                var cell = ascii_draw.grid.getCell(row, c);
                 functor(cell, param);
             }
         }
