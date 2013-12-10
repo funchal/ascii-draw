@@ -163,6 +163,8 @@ var ascii_draw;
     (function (RectangleController) {
         function init() {
             console.log('init');
+            var selection_button = document.getElementById('rectangle-button');
+            ascii_draw.utils.addClass(selection_button, 'pressed');
         }
         RectangleController.init = init;
         function onMouseDown(target) {
@@ -181,6 +183,12 @@ var ascii_draw;
             console.log('leave');
         }
         RectangleController.onMouseLeave = onMouseLeave;
+        function exit() {
+            console.log('exit');
+            var selection_button = document.getElementById('rectangle-button');
+            ascii_draw.utils.removeClass(selection_button, 'pressed');
+        }
+        RectangleController.exit = exit;
     })(RectangleController || (RectangleController = {}));
 
     var SelectMoveController;
@@ -191,6 +199,8 @@ var ascii_draw;
         var mouse_pos = null;
 
         function init() {
+            var selection_button = document.getElementById('selection-button');
+            ascii_draw.utils.addClass(selection_button, 'pressed');
             begin_selection = new CellPosition(0, 0);
             end_selection = begin_selection;
             setSelected(getCellAt(begin_selection), true);
@@ -261,6 +271,13 @@ var ascii_draw;
                 applyToRectangle(paint[i], setSelected, true);
             }
         }
+
+        function exit() {
+            console.log('exit');
+            var selection_button = document.getElementById('selection-button');
+            ascii_draw.utils.removeClass(selection_button, 'pressed');
+        }
+        SelectMoveController.exit = exit;
     })(SelectMoveController || (SelectMoveController = {}));
 
     ascii_draw.grid;
@@ -380,17 +397,13 @@ var ascii_draw;
         event.preventDefault();
     }
 
-    var switchToRectangleController = function () {
-        console.log('rect');
-        controller = RectangleController;
-        controller.init();
-    };
-
-    var switchToSelectionController = function () {
-        console.log('sel');
-        controller = SelectMoveController;
-        controller.init();
-    };
+    function controllerSwitcher(new_controller) {
+        return function () {
+            controller.exit();
+            controller = new_controller;
+            controller.init();
+        };
+    }
 
     function init() {
         ascii_draw.grid = document.getElementById('grid');
@@ -406,10 +419,10 @@ var ascii_draw;
         ascii_draw.grid.addEventListener('mouseleave', onMouseLeave, false);
 
         var rectangle_button = document.getElementById('rectangle-button');
-        rectangle_button.addEventListener('click', switchToRectangleController, false);
+        rectangle_button.addEventListener('click', controllerSwitcher(RectangleController), false);
 
         var selection_button = document.getElementById('selection-button');
-        selection_button.addEventListener('click', switchToSelectionController, false);
+        selection_button.addEventListener('click', controllerSwitcher(SelectMoveController), false);
     }
     ascii_draw.init = init;
 })(ascii_draw || (ascii_draw = {}));

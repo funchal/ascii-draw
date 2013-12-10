@@ -8,11 +8,14 @@ module ascii_draw {
         onMouseUp(): void;
         onMouseOver(target: HTMLTableCellElement): void;
         onMouseLeave(): void;
+        exit(): void;
     }
 
     module RectangleController {
         export function init(): void {
             console.log('init');
+            var selection_button = document.getElementById('rectangle-button');
+            utils.addClass(selection_button, 'pressed');
         }
         export function onMouseDown(target: HTMLTableCellElement): void {
             console.log('down');
@@ -26,6 +29,11 @@ module ascii_draw {
         export function onMouseLeave(): void {
             console.log('leave');
         }
+        export function exit(): void {
+            console.log('exit');
+            var selection_button = document.getElementById('rectangle-button');
+            utils.removeClass(selection_button, 'pressed');
+        }
     }
 
     module SelectMoveController {
@@ -35,6 +43,8 @@ module ascii_draw {
         var mouse_pos: CellPosition = null;
 
         export function init(): void {
+            var selection_button = document.getElementById('selection-button');
+            utils.addClass(selection_button, 'pressed');
             begin_selection = new CellPosition(0, 0);
             end_selection = begin_selection;
             setSelected(getCellAt(begin_selection), true);
@@ -60,6 +70,12 @@ module ascii_draw {
 
         export function onMouseLeave(): void {
             setMousePosition(null);
+        }
+
+        export function exit(): void {
+            console.log('exit');
+            var selection_button = document.getElementById('selection-button');
+            utils.removeClass(selection_button, 'pressed');
         }
 
         function setMousePosition(new_pos: CellPosition): void {
@@ -224,17 +240,13 @@ module ascii_draw {
         event.preventDefault();
     }
 
-    var switchToRectangleController = function() {
-        console.log('rect');
-        controller = RectangleController;
-        controller.init();
-    };
-
-    var switchToSelectionController = function() {
-        console.log('sel');
-        controller = SelectMoveController;
-        controller.init();
-    };
+    function controllerSwitcher(new_controller: Controller) {
+        return function(): void {
+            controller.exit();
+            controller = new_controller;
+            controller.init();
+        }
+    }
 
     export function init(): void {
         grid = <HTMLTableElement>document.getElementById('grid');
@@ -251,11 +263,11 @@ module ascii_draw {
 
         var rectangle_button = document.getElementById('rectangle-button');
         rectangle_button.addEventListener(
-            'click', switchToRectangleController, false);
+            'click', controllerSwitcher(RectangleController), false);
 
         var selection_button = document.getElementById('selection-button');
         selection_button.addEventListener(
-            'click', switchToSelectionController, false);
+            'click', controllerSwitcher(SelectMoveController), false);
     }
 }
 
