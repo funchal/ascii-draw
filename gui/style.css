@@ -21,9 +21,9 @@ html {
 }
 
 table {
+    background-color: #FFF;
     cursor: none;
     table-layout: fixed; /* override the browser's automatic column resizing */
-    background-color: #FFF;
     border-spacing: 0;
     border-collapse: collapse;
 }
@@ -51,7 +51,7 @@ button {
 }
 
 button:active {
-    background-color: #888;
+    background-color: #AAA;
     box-shadow: 0 3px 3px rgba(0, 0, 0, 0.25) inset;
     padding: 5px 3px 3px 5px;
 }
@@ -59,7 +59,6 @@ button:active {
 button.pressed {
     background-color: #AAA;
     box-shadow: 0 3px 3px rgba(0, 0, 0, 0.25) inset;
-    padding: 5px 3px 3px 5px;
 }
 
 button.left {
@@ -94,7 +93,7 @@ button img {
     border: 1px solid #000;
 }
 
-.toolbar {
+#toolbar {
     position: fixed;
     background-color: #DDD;
     top: 0px;
@@ -106,7 +105,7 @@ button img {
     text-shadow: rgb(255, 255, 255) 0px 1px 0px;
 }
 
-.apparea {
+#apparea {
     overflow: auto;
     position: fixed;
     top: 49px;

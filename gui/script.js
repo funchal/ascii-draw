@@ -1,178 +1,175 @@
-var ascii_draw;
-(function (ascii_draw) {
-    (function (utils) {
-        function changeStyleRule(selector, style, value) {
-            var stylesheet = document.styleSheets[0];
-            var rules = stylesheet.cssRules || stylesheet.rules;
+var utils;
+(function (utils) {
+    function changeStyleRule(selector, style, value) {
+        var stylesheet = document.styleSheets[0];
+        var rules = stylesheet.cssRules || stylesheet.rules;
 
-            var match = null;
-            for (var i = 0; i != rules.length; i++) {
-                if (rules[i].type === CSSRule.STYLE_RULE) {
-                    var style_rule = rules[i];
-                    if (style_rule.selectorText == selector) {
-                        match = style_rule.style;
-                        break;
-                    }
+        var match = null;
+        for (var i = 0; i != rules.length; i++) {
+            if (rules[i].type === CSSRule.STYLE_RULE) {
+                var style_rule = rules[i];
+                if (style_rule.selectorText == selector) {
+                    match = style_rule.style;
+                    break;
                 }
             }
+        }
 
-            if (match === null) {
-                if (stylesheet.insertRule) {
-                    stylesheet.insertRule(selector + ' {' + style + ':' + value + '}', rules.length);
-                } else {
-                    stylesheet.addRule(selector, style + ':' + value);
-                }
+        if (match === null) {
+            if (stylesheet.insertRule) {
+                stylesheet.insertRule(selector + ' {' + style + ':' + value + '}', rules.length);
             } else {
-                match[style] = value;
+                stylesheet.addRule(selector, style + ':' + value);
+            }
+        } else {
+            match[style] = value;
+        }
+    }
+    utils.changeStyleRule = changeStyleRule;
+
+    function computeFontSize() {
+        var tmp = document.createElement('table');
+        var row = tmp.insertRow();
+        var cell = row.insertCell();
+        var div = document.createElement('div');
+        div.textContent = 'X';
+        cell.appendChild(div);
+        document.body.appendChild(tmp);
+        var w = cell.clientWidth;
+        var h = cell.clientHeight;
+        document.body.removeChild(tmp);
+        return { width: w, height: h };
+    }
+    utils.computeFontSize = computeFontSize;
+
+    function addClass(elem, new_class) {
+        elem.className = elem.className + ' ' + new_class;
+    }
+    utils.addClass = addClass;
+
+    function removeClass(elem, old_class) {
+        var re = new RegExp('(?:^|\\s)' + old_class + '(?!\\S)', 'g');
+        elem.className = elem.className.replace(re, '');
+    }
+    utils.removeClass = removeClass;
+
+    /* find the index of a given element in its parent */
+    function indexInParent(element) {
+        var children = element.parentElement.children;
+        for (var i = 0; i < children.length; i++) {
+            if (children[i] == element) {
+                return i;
             }
         }
-        utils.changeStyleRule = changeStyleRule;
+        return -1;
+    }
+    utils.indexInParent = indexInParent;
 
-        function computeFontSize() {
-            var tmp = document.createElement('table');
-            var row = tmp.insertRow();
-            var cell = row.insertCell();
-            var div = document.createElement('div');
-            div.textContent = 'X';
-            cell.appendChild(div);
-            document.body.appendChild(tmp);
-            var w = cell.clientWidth;
-            var h = cell.clientHeight;
-            document.body.removeChild(tmp);
-            return { width: w, height: h };
+    var Point = (function () {
+        function Point(row, col) {
+            if (typeof row === "undefined") { row = 0; }
+            if (typeof col === "undefined") { col = 0; }
+            this.row = row;
+            this.col = col;
         }
-        utils.computeFontSize = computeFontSize;
+        Point.prototype.toString = function () {
+            return this.row + 'x' + this.col;
+        };
 
-        function addClass(elem, new_class) {
-            elem.className = elem.className + ' ' + new_class;
-        }
-        utils.addClass = addClass;
+        Point.prototype.isEqual = function (other) {
+            return (this.row == other.row && this.col == other.col);
+        };
+        return Point;
+    })();
+    utils.Point = Point;
 
-        function removeClass(elem, old_class) {
-            var re = new RegExp('(?:^|\\s)' + old_class + '(?!\\S)', 'g');
-            elem.className = elem.className.replace(re, '');
-        }
-        utils.removeClass = removeClass;
-
-        /* find the index of a given element in its parent */
-        function indexInParent(element) {
-            var children = element.parentElement.children;
-            for (var i = 0; i < children.length; i++) {
-                if (children[i] == element) {
-                    return i;
+    var Rectangle = (function () {
+        function Rectangle(top_left, bottom_right, normalize) {
+            this.top_left = top_left;
+            this.bottom_right = bottom_right;
+            if (normalize) {
+                if (this.top_left.row > this.bottom_right.row) {
+                    var tmp = this.top_left.row;
+                    this.top_left = new Point(this.bottom_right.row, this.top_left.col);
+                    this.bottom_right = new Point(tmp, this.bottom_right.col);
+                }
+                if (this.top_left.col > this.bottom_right.col) {
+                    var tmp = this.top_left.col;
+                    this.top_left = new Point(this.top_left.row, this.bottom_right.col);
+                    this.bottom_right = new Point(this.bottom_right.row, tmp);
                 }
             }
-            return -1;
         }
-        utils.indexInParent = indexInParent;
+        Rectangle.prototype.intersect = function (other) {
+            var top_left = new Point(Math.max(this.top_left.row, other.top_left.row), Math.max(this.top_left.col, other.top_left.col));
+            var bottom_right = new Point(Math.min(this.bottom_right.row, other.bottom_right.row), Math.min(this.bottom_right.col, other.bottom_right.col));
+            return new Rectangle(top_left, bottom_right);
+        };
 
-        var Point = (function () {
-            function Point(row, col) {
-                if (typeof row === "undefined") { row = 0; }
-                if (typeof col === "undefined") { col = 0; }
-                this.row = row;
-                this.col = col;
-            }
-            Point.prototype.toString = function () {
-                return this.row + 'x' + this.col;
-            };
+        Rectangle.prototype.getHeight = function () {
+            return this.bottom_right.row - this.top_left.row + 1;
+        };
 
-            Point.prototype.isEqual = function (other) {
-                return (this.row == other.row && this.col == other.col);
-            };
-            return Point;
-        })();
-        utils.Point = Point;
+        Rectangle.prototype.getWidth = function () {
+            return this.bottom_right.col - this.top_left.col + 1;
+        };
 
-        var Rectangle = (function () {
-            function Rectangle(top_left, bottom_right, normalize) {
-                this.top_left = top_left;
-                this.bottom_right = bottom_right;
-                if (normalize) {
-                    if (this.top_left.row > this.bottom_right.row) {
-                        var tmp = this.top_left.row;
-                        this.top_left = new Point(this.bottom_right.row, this.top_left.col);
-                        this.bottom_right = new Point(tmp, this.bottom_right.col);
-                    }
-                    if (this.top_left.col > this.bottom_right.col) {
-                        var tmp = this.top_left.col;
-                        this.top_left = new Point(this.top_left.row, this.bottom_right.col);
-                        this.bottom_right = new Point(this.bottom_right.row, tmp);
-                    }
-                }
-            }
-            Rectangle.prototype.intersect = function (other) {
-                var top_left = new Point(Math.max(this.top_left.row, other.top_left.row), Math.max(this.top_left.col, other.top_left.col));
-                var bottom_right = new Point(Math.min(this.bottom_right.row, other.bottom_right.row), Math.min(this.bottom_right.col, other.bottom_right.col));
-                return new Rectangle(top_left, bottom_right);
-            };
+        Rectangle.prototype.isEmpty = function () {
+            return (this.top_left.row > this.bottom_right.row) || (this.top_left.col > this.bottom_right.col);
+        };
 
-            Rectangle.prototype.getHeight = function () {
-                return this.bottom_right.row - this.top_left.row + 1;
-            };
+        Rectangle.prototype.isEqual = function (other) {
+            return (this.top_left.isEqual(other.top_left) && this.bottom_right.isEqual(other.bottom_right));
+        };
 
-            Rectangle.prototype.getWidth = function () {
-                return this.bottom_right.col - this.top_left.col + 1;
-            };
-
-            Rectangle.prototype.isEmpty = function () {
-                return (this.top_left.row > this.bottom_right.row) || (this.top_left.col > this.bottom_right.col);
-            };
-
-            Rectangle.prototype.isEqual = function (other) {
-                return (this.top_left.isEqual(other.top_left) && this.bottom_right.isEqual(other.bottom_right));
-            };
-
-            Rectangle.prototype.subtract = function (other) {
-                var rect_array = [];
-                if (this.isEmpty()) {
-                    return rect_array;
-                }
-
-                if (other.isEmpty()) {
-                    rect_array.push(this);
-                    return rect_array;
-                }
-
-                var top_rectangle = new Rectangle(this.top_left, new Point(other.top_left.row - 1, this.bottom_right.col));
-                if (!top_rectangle.isEmpty()) {
-                    rect_array.push(top_rectangle);
-                }
-                var left_rectangle = new Rectangle(new Point(other.top_left.row, this.top_left.col), new Point(other.bottom_right.row, other.top_left.col - 1));
-                if (!left_rectangle.isEmpty()) {
-                    rect_array.push(left_rectangle);
-                }
-                var right_rectangle = new Rectangle(new Point(other.top_left.row, other.bottom_right.col + 1), new Point(other.bottom_right.row, this.bottom_right.col));
-                if (!right_rectangle.isEmpty()) {
-                    rect_array.push(right_rectangle);
-                }
-                var bottom_rectangle = new Rectangle(new Point(other.bottom_right.row + 1, this.top_left.col), this.bottom_right);
-                if (!bottom_rectangle.isEmpty()) {
-                    rect_array.push(bottom_rectangle);
-                }
+        Rectangle.prototype.subtract = function (other) {
+            var rect_array = [];
+            if (this.isEmpty()) {
                 return rect_array;
-            };
+            }
 
-            Rectangle.prototype.toString = function () {
-                return this.top_left + '/' + this.bottom_right;
-            };
-            return Rectangle;
-        })();
-        utils.Rectangle = Rectangle;
-    })(ascii_draw.utils || (ascii_draw.utils = {}));
-    var utils = ascii_draw.utils;
-})(ascii_draw || (ascii_draw = {}));
+            if (other.isEmpty()) {
+                rect_array.push(this);
+                return rect_array;
+            }
+
+            var top_rectangle = new Rectangle(this.top_left, new Point(other.top_left.row - 1, this.bottom_right.col));
+            if (!top_rectangle.isEmpty()) {
+                rect_array.push(top_rectangle);
+            }
+            var left_rectangle = new Rectangle(new Point(other.top_left.row, this.top_left.col), new Point(other.bottom_right.row, other.top_left.col - 1));
+            if (!left_rectangle.isEmpty()) {
+                rect_array.push(left_rectangle);
+            }
+            var right_rectangle = new Rectangle(new Point(other.top_left.row, other.bottom_right.col + 1), new Point(other.bottom_right.row, this.bottom_right.col));
+            if (!right_rectangle.isEmpty()) {
+                rect_array.push(right_rectangle);
+            }
+            var bottom_rectangle = new Rectangle(new Point(other.bottom_right.row + 1, this.top_left.col), this.bottom_right);
+            if (!bottom_rectangle.isEmpty()) {
+                rect_array.push(bottom_rectangle);
+            }
+            return rect_array;
+        };
+
+        Rectangle.prototype.toString = function () {
+            return this.top_left + '/' + this.bottom_right;
+        };
+        return Rectangle;
+    })();
+    utils.Rectangle = Rectangle;
+})(utils || (utils = {}));
 var ascii_draw;
 (function (ascii_draw) {
-    var Rectangle = ascii_draw.utils.Rectangle;
-    var CellPosition = ascii_draw.utils.Point;
+    var Rectangle = utils.Rectangle;
+    var CellPosition = utils.Point;
 
     var RectangleController;
     (function (RectangleController) {
         function init() {
             console.log('init');
             var selection_button = document.getElementById('rectangle-button');
-            ascii_draw.utils.addClass(selection_button, 'pressed');
+            utils.addClass(selection_button, 'pressed');
         }
         RectangleController.init = init;
         function onMouseDown(target) {
@@ -194,7 +191,7 @@ var ascii_draw;
         function exit() {
             console.log('exit');
             var selection_button = document.getElementById('rectangle-button');
-            ascii_draw.utils.removeClass(selection_button, 'pressed');
+            utils.removeClass(selection_button, 'pressed');
         }
         RectangleController.exit = exit;
     })(RectangleController || (RectangleController = {}));
@@ -208,7 +205,7 @@ var ascii_draw;
 
         function init() {
             var selection_button = document.getElementById('selection-button');
-            ascii_draw.utils.addClass(selection_button, 'pressed');
+            utils.addClass(selection_button, 'pressed');
             begin_selection = new CellPosition(0, 0);
             end_selection = begin_selection;
             setSelected(getCellAt(begin_selection), true);
@@ -244,19 +241,19 @@ var ascii_draw;
         function exit() {
             console.log('exit');
             var selection_button = document.getElementById('selection-button');
-            ascii_draw.utils.removeClass(selection_button, 'pressed');
+            utils.removeClass(selection_button, 'pressed');
         }
         SelectMoveController.exit = exit;
 
         function setMousePosition(new_pos) {
             if (mouse_pos !== null) {
-                ascii_draw.utils.removeClass(getCellAt(mouse_pos), 'mouse');
+                utils.removeClass(getCellAt(mouse_pos), 'mouse');
             }
             mouse_pos = new_pos;
 
             var mousestatus = document.getElementById('mousestatus');
             if (mouse_pos !== null) {
-                ascii_draw.utils.addClass(getCellAt(mouse_pos), 'mouse');
+                utils.addClass(getCellAt(mouse_pos), 'mouse');
                 mousestatus.textContent = 'Cursor: ' + mouse_pos;
             } else {
                 mousestatus.textContent = '';
@@ -302,7 +299,7 @@ var ascii_draw;
     var controller = SelectMoveController;
 
     function getCellPosition(cell) {
-        return new CellPosition(ascii_draw.utils.indexInParent(cell.parentElement), ascii_draw.utils.indexInParent(cell));
+        return new CellPosition(utils.indexInParent(cell.parentElement), utils.indexInParent(cell));
     }
 
     function getCellAt(pos) {
@@ -356,22 +353,22 @@ var ascii_draw;
     }
 
     function changeFont() {
-        ascii_draw.utils.changeStyleRule('td div', 'width', 'auto');
-        ascii_draw.utils.changeStyleRule('td div', 'height', 'auto');
+        utils.changeStyleRule('td div', 'width', 'auto');
+        utils.changeStyleRule('td div', 'height', 'auto');
 
-        var font_size = ascii_draw.utils.computeFontSize();
+        var font_size = utils.computeFontSize();
 
-        ascii_draw.utils.changeStyleRule('td div', 'width', font_size.width + 'px');
-        ascii_draw.utils.changeStyleRule('td div', 'height', font_size.height + 'px');
+        utils.changeStyleRule('td div', 'width', font_size.width + 'px');
+        utils.changeStyleRule('td div', 'height', font_size.height + 'px');
     }
 
     function setSelected(cell, selected) {
         if (cell['data-selected'] !== selected) {
             cell['data-selected'] == selected;
             if (selected) {
-                ascii_draw.utils.addClass(cell, 'selected');
+                utils.addClass(cell, 'selected');
             } else {
-                ascii_draw.utils.removeClass(cell, 'selected');
+                utils.removeClass(cell, 'selected');
             }
         } else {
             console.log('bla');
@@ -394,12 +391,12 @@ var ascii_draw;
         if (target !== null) {
             controller.onMouseDown(target);
         }
-        event.preventDefault();
+        //event.preventDefault();
     }
 
     function onMouseUp(event) {
         controller.onMouseUp();
-        event.preventDefault();
+        //event.preventDefault();
     }
 
     function onMouseOver(event) {
@@ -407,12 +404,12 @@ var ascii_draw;
         if (target !== null) {
             controller.onMouseOver(target);
         }
-        event.preventDefault();
+        //event.preventDefault();
     }
 
     function onMouseLeave(event) {
         controller.onMouseLeave();
-        event.preventDefault();
+        //event.preventDefault();
     }
 
     function controllerSwitcher(new_controller) {
@@ -427,7 +424,7 @@ var ascii_draw;
         ascii_draw.grid = document.getElementById('grid');
 
         changeFont();
-        setGridSize(25, 80);
+        setGridSize(50, 120);
 
         controller.init();
 

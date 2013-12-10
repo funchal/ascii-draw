@@ -1,6 +1,6 @@
 module ascii_draw {
-    import Rectangle = ascii_draw.utils.Rectangle;
-    import CellPosition = ascii_draw.utils.Point;
+    import Rectangle = utils.Rectangle;
+    import CellPosition = utils.Point;
 
     interface Controller {
         init(): void;
@@ -230,12 +230,12 @@ module ascii_draw {
         if (target !== null) {
             controller.onMouseDown(target);
         }
-        event.preventDefault();
+        //event.preventDefault();
     }
 
     function onMouseUp(event: MouseEvent): void {
         controller.onMouseUp();
-        event.preventDefault();
+        //event.preventDefault();
     }
 
     function onMouseOver(event: MouseEvent): void {
@@ -243,12 +243,12 @@ module ascii_draw {
         if (target !== null) {
             controller.onMouseOver(target);
         }
-        event.preventDefault();
+        //event.preventDefault();
     }
 
     function onMouseLeave(event: MouseEvent): void {
         controller.onMouseLeave();
-        event.preventDefault();
+        //event.preventDefault();
     }
 
     function controllerSwitcher(new_controller: Controller) {
@@ -263,7 +263,7 @@ module ascii_draw {
         grid = <HTMLTableElement>document.getElementById('grid');
 
         changeFont();
-        setGridSize(25, 80);
+        setGridSize(50, 120);
 
         controller.init();
 
