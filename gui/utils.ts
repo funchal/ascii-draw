@@ -167,7 +167,7 @@ module ascii_draw {
             }
 
             toString(): string {
-                return this.top_left + "/" + this.bottom_right;
+                return this.top_left + '/' + this.bottom_right;
             }
         }
     }

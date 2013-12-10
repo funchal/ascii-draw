@@ -154,7 +154,7 @@ var ascii_draw;
             };
 
             Rectangle.prototype.toString = function () {
-                return this.top_left + "/" + this.bottom_right;
+                return this.top_left + '/' + this.bottom_right;
             };
             return Rectangle;
         })();
@@ -241,6 +241,13 @@ var ascii_draw;
         }
         SelectMoveController.onMouseLeave = onMouseLeave;
 
+        function exit() {
+            console.log('exit');
+            var selection_button = document.getElementById('selection-button');
+            ascii_draw.utils.removeClass(selection_button, 'pressed');
+        }
+        SelectMoveController.exit = exit;
+
         function setMousePosition(new_pos) {
             if (mouse_pos !== null) {
                 ascii_draw.utils.removeClass(getCellAt(mouse_pos), 'mouse');
@@ -286,13 +293,6 @@ var ascii_draw;
                 selectionstatus.textContent = '';
             }
         }
-
-        function exit() {
-            console.log('exit');
-            var selection_button = document.getElementById('selection-button');
-            ascii_draw.utils.removeClass(selection_button, 'pressed');
-        }
-        SelectMoveController.exit = exit;
     })(SelectMoveController || (SelectMoveController = {}));
 
     ascii_draw.grid;
@@ -374,7 +374,7 @@ var ascii_draw;
                 ascii_draw.utils.removeClass(cell, 'selected');
             }
         } else {
-            console.log("bla");
+            console.log('bla');
         }
     }
 

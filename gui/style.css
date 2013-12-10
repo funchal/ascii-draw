@@ -9,32 +9,28 @@
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none; /* disable table selection */
+    cursor: inherit;
+    font-family: inherit;
+    color: inherit;
+}
+
+html {
     cursor: default;
     font-family: monospace;
     color: #252525;
 }
 
-table, td {
-    cursor:none;
-    text-align: center;
-    border: 1px solid #DDD;
-    border-spacing: 0;
-    border-collapse: collapse;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none; /* disable table selection */
-}
-
 table {
+    cursor: none;
     table-layout: fixed; /* override the browser's automatic column resizing */
     background-color: #FFF;
+    border-spacing: 0;
+    border-collapse: collapse;
 }
 
-td div {
-    cursor:none;
+td {
+    text-align: center;
+    border: 1px solid #DDD;
 }
 
 img {

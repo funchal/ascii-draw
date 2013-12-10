@@ -210,7 +210,7 @@ module ascii_draw {
                 utils.removeClass(cell, 'selected');
             }
         } else {
-            console.log("bla");
+            console.log('bla');
         }
     }
 
