@@ -110,6 +110,14 @@ module ascii_draw {
                 return new Rectangle(top_left, bottom_right);
             }
 
+            getHeight(): number {
+                return this.bottom_right.row - this.top_left.row + 1;
+            }
+
+            getWidth(): number {
+                return this.bottom_right.col - this.top_left.col + 1;
+            }
+
             isEmpty(): boolean {
                 return (this.top_left.row > this.bottom_right.row) ||
                        (this.top_left.col > this.bottom_right.col);

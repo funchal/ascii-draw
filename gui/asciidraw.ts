@@ -84,12 +84,12 @@ module ascii_draw {
             }
             mouse_pos = new_pos;
 
-            var mouseposition = document.getElementById('mouseposition');
+            var mousestatus = document.getElementById('mousestatus');
             if (mouse_pos !== null) {
                 utils.addClass(getCellAt(mouse_pos), 'mouse');
-                mouseposition.textContent = 'Cursor: ' + mouse_pos;
+                mousestatus.textContent = 'Cursor: ' + mouse_pos;
             } else {
-                mouseposition.textContent = '';
+                mousestatus.textContent = '';
             }
         }
 
@@ -119,6 +119,14 @@ module ascii_draw {
 
             for (var i = 0; i < paint.length; i++) {
                 applyToRectangle(paint[i], setSelected, true);
+            }
+
+            var selectionstatus = document.getElementById('selectionstatus');
+            if (new_selection.getHeight() > 1 || new_selection.getWidth() > 1) {
+                selectionstatus.textContent = 'Selection: ' +
+                    new_selection.getHeight() + 'x' + new_selection.getWidth();
+            } else {
+                selectionstatus.textContent = '';
             }
         }
     }
@@ -153,7 +161,7 @@ module ascii_draw {
         }
     }
 
-    function resizeGrid(new_nrows: number, new_ncols: number): void {
+    function setGridSize(new_nrows: number, new_ncols: number): void {
         var nrows = grid.rows.length;
 
         for (var r = nrows; r < new_nrows; r++) {
@@ -178,6 +186,9 @@ module ascii_draw {
                 row.deleteCell(c - 1);
             }
         }
+
+        var gridstatus = document.getElementById('gridstatus');
+        gridstatus.textContent = 'Grid size: ' + new_nrows + 'x' + new_ncols;
     }
 
     function changeFont(): void {
@@ -252,7 +263,7 @@ module ascii_draw {
         grid = <HTMLTableElement>document.getElementById('grid');
 
         changeFont();
-        resizeGrid(25, 80);
+        setGridSize(25, 80);
 
         controller.init();
 
