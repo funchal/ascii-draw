@@ -107,6 +107,14 @@ var ascii_draw;
                 return new Rectangle(top_left, bottom_right);
             };
 
+            Rectangle.prototype.getHeight = function () {
+                return this.bottom_right.row - this.top_left.row + 1;
+            };
+
+            Rectangle.prototype.getWidth = function () {
+                return this.bottom_right.col - this.top_left.col + 1;
+            };
+
             Rectangle.prototype.isEmpty = function () {
                 return (this.top_left.row > this.bottom_right.row) || (this.top_left.col > this.bottom_right.col);
             };
@@ -229,12 +237,12 @@ var ascii_draw;
             }
             mouse_pos = new_pos;
 
-            var mouseposition = document.getElementById('mouseposition');
+            var mousestatus = document.getElementById('mousestatus');
             if (mouse_pos !== null) {
                 ascii_draw.utils.addClass(getCellAt(mouse_pos), 'mouse');
-                mouseposition.textContent = 'Cursor: ' + mouse_pos;
+                mousestatus.textContent = 'Cursor: ' + mouse_pos;
             } else {
-                mouseposition.textContent = '';
+                mousestatus.textContent = '';
             }
         }
 
@@ -259,6 +267,13 @@ var ascii_draw;
 
             for (var i = 0; i < paint.length; i++) {
                 applyToRectangle(paint[i], setSelected, true);
+            }
+
+            var selectionstatus = document.getElementById('selectionstatus');
+            if (new_selection.getHeight() > 1 || new_selection.getWidth() > 1) {
+                selectionstatus.textContent = 'Selection: ' + new_selection.getHeight() + 'x' + new_selection.getWidth();
+            } else {
+                selectionstatus.textContent = '';
             }
         }
     })(SelectMoveController || (SelectMoveController = {}));
@@ -293,7 +308,7 @@ var ascii_draw;
         }
     }
 
-    function resizeGrid(new_nrows, new_ncols) {
+    function setGridSize(new_nrows, new_ncols) {
         var nrows = ascii_draw.grid.rows.length;
 
         for (var r = nrows; r < new_nrows; r++) {
@@ -318,6 +333,9 @@ var ascii_draw;
                 row.deleteCell(c - 1);
             }
         }
+
+        var gridstatus = document.getElementById('gridstatus');
+        gridstatus.textContent = 'Grid size: ' + new_nrows + 'x' + new_ncols;
     }
 
     function changeFont() {
@@ -396,7 +414,7 @@ var ascii_draw;
         ascii_draw.grid = document.getElementById('grid');
 
         changeFont();
-        resizeGrid(25, 80);
+        setGridSize(25, 80);
 
         controller.init();
 

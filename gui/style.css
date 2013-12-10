@@ -116,15 +116,24 @@ button img {
 }
 
 #statusbar {
-    text-shadow: rgb(255, 255, 255) 0px 1px 0px;
-    font-size: 11px;
     position: fixed;
-    line-height: 16px;
-    padding: 2px 8px;
-    height: 16px;
     background-color: #DDD;
     left: 0;
     right: 0;
     bottom: 0;
     border-top: 1px solid #BBB;
+}
+
+#statusbar div {
+    vertical-align: middle;
+    text-shadow: rgb(255, 255, 255) 0px 1px 0px;
+    font-size: 11px;
+    line-height: 16px;
+    padding: 2px 8px;
+    height: 16px;
+    display: inline-block;
+    border-right: 1px solid #BBB;
+    min-width: 10%;
+    max-width: 33%;
+    overflow: hidden;
 }
