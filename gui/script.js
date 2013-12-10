@@ -159,6 +159,30 @@ var ascii_draw;
     var Rectangle = ascii_draw.utils.Rectangle;
     var CellPosition = ascii_draw.utils.Point;
 
+    var RectangleController;
+    (function (RectangleController) {
+        function init() {
+            console.log('init');
+        }
+        RectangleController.init = init;
+        function onMouseDown(target) {
+            console.log('down');
+        }
+        RectangleController.onMouseDown = onMouseDown;
+        function onMouseUp() {
+            console.log('up');
+        }
+        RectangleController.onMouseUp = onMouseUp;
+        function onMouseOver(target) {
+            console.log('over');
+        }
+        RectangleController.onMouseOver = onMouseOver;
+        function onMouseLeave() {
+            console.log('leave');
+        }
+        RectangleController.onMouseLeave = onMouseLeave;
+    })(RectangleController || (RectangleController = {}));
+
     var SelectMoveController;
     (function (SelectMoveController) {
         var begin_selection;
@@ -242,6 +266,8 @@ var ascii_draw;
     ascii_draw.grid;
 
     var emptyCell = ' ';
+
+    var controller = SelectMoveController;
 
     function getCellPosition(cell) {
         return new CellPosition(ascii_draw.utils.indexInParent(cell.parentElement), ascii_draw.utils.indexInParent(cell));
@@ -331,28 +357,40 @@ var ascii_draw;
     function onMouseDown(event) {
         var target = getTargetCell(event.target);
         if (target !== null) {
-            SelectMoveController.onMouseDown(target);
+            controller.onMouseDown(target);
         }
         event.preventDefault();
     }
 
     function onMouseUp(event) {
-        SelectMoveController.onMouseUp();
+        controller.onMouseUp();
         event.preventDefault();
     }
 
     function onMouseOver(event) {
         var target = getTargetCell(event.target);
         if (target !== null) {
-            SelectMoveController.onMouseOver(target);
+            controller.onMouseOver(target);
         }
         event.preventDefault();
     }
 
     function onMouseLeave(event) {
-        SelectMoveController.onMouseLeave();
+        controller.onMouseLeave();
         event.preventDefault();
     }
+
+    var switchToRectangleController = function () {
+        console.log('rect');
+        controller = RectangleController;
+        controller.init();
+    };
+
+    var switchToSelectionController = function () {
+        console.log('sel');
+        controller = SelectMoveController;
+        controller.init();
+    };
 
     function init() {
         ascii_draw.grid = document.getElementById('grid');
@@ -360,12 +398,18 @@ var ascii_draw;
         changeFont();
         resizeGrid(25, 80);
 
-        SelectMoveController.init();
+        controller.init();
 
         ascii_draw.grid.addEventListener('mousedown', onMouseDown, false);
         window.addEventListener('mouseup', onMouseUp, false);
         ascii_draw.grid.addEventListener('mouseover', onMouseOver, false);
         ascii_draw.grid.addEventListener('mouseleave', onMouseLeave, false);
+
+        var rectangle_button = document.getElementById('rectangle-button');
+        rectangle_button.addEventListener('click', switchToRectangleController, false);
+
+        var selection_button = document.getElementById('selection-button');
+        selection_button.addEventListener('click', switchToSelectionController, false);
     }
     ascii_draw.init = init;
 })(ascii_draw || (ascii_draw = {}));

@@ -2,6 +2,32 @@ module ascii_draw {
     import Rectangle = ascii_draw.utils.Rectangle;
     import CellPosition = ascii_draw.utils.Point;
 
+    interface Controller {
+        init(): void;
+        onMouseDown(target: HTMLTableCellElement): void;
+        onMouseUp(): void;
+        onMouseOver(target: HTMLTableCellElement): void;
+        onMouseLeave(): void;
+    }
+
+    module RectangleController {
+        export function init(): void {
+            console.log('init');
+        }
+        export function onMouseDown(target: HTMLTableCellElement): void {
+            console.log('down');
+        }
+        export function onMouseUp(): void {
+            console.log('up');
+        }
+        export function onMouseOver(target: HTMLTableCellElement): void {
+            console.log('over');
+        }
+        export function onMouseLeave(): void {
+            console.log('leave');
+        }
+    }
+
     module SelectMoveController {
         var begin_selection: CellPosition;
         var end_selection: CellPosition;
@@ -84,6 +110,8 @@ module ascii_draw {
     export var grid: HTMLTableElement;
 
     var emptyCell: string = ' ';
+
+    var controller: Controller = SelectMoveController;
 
     function getCellPosition(cell: HTMLTableCellElement): CellPosition {
         return new CellPosition(utils.indexInParent(cell.parentElement),
@@ -173,28 +201,40 @@ module ascii_draw {
     function onMouseDown(event: MouseEvent): void {
         var target = getTargetCell(event.target);
         if (target !== null) {
-            SelectMoveController.onMouseDown(target);
+            controller.onMouseDown(target);
         }
         event.preventDefault();
     }
 
     function onMouseUp(event: MouseEvent): void {
-        SelectMoveController.onMouseUp();
+        controller.onMouseUp();
         event.preventDefault();
     }
 
     function onMouseOver(event: MouseEvent): void {
         var target = getTargetCell(event.target);
         if (target !== null) {
-            SelectMoveController.onMouseOver(target);
+            controller.onMouseOver(target);
         }
         event.preventDefault();
     }
 
     function onMouseLeave(event: MouseEvent): void {
-        SelectMoveController.onMouseLeave();
+        controller.onMouseLeave();
         event.preventDefault();
     }
+
+    var switchToRectangleController = function() {
+        console.log('rect');
+        controller = RectangleController;
+        controller.init();
+    };
+
+    var switchToSelectionController = function() {
+        console.log('sel');
+        controller = SelectMoveController;
+        controller.init();
+    };
 
     export function init(): void {
         grid = <HTMLTableElement>document.getElementById('grid');
@@ -202,12 +242,20 @@ module ascii_draw {
         changeFont();
         resizeGrid(25, 80);
 
-        SelectMoveController.init();
+        controller.init();
 
         grid.addEventListener('mousedown', onMouseDown, false);
         window.addEventListener('mouseup', onMouseUp, false);
         grid.addEventListener('mouseover', onMouseOver, false);
         grid.addEventListener('mouseleave', onMouseLeave, false);
+
+        var rectangle_button = document.getElementById('rectangle-button');
+        rectangle_button.addEventListener(
+            'click', switchToRectangleController, false);
+
+        var selection_button = document.getElementById('selection-button');
+        selection_button.addEventListener(
+            'click', switchToSelectionController, false);
     }
 }
 
