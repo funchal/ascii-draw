@@ -43,7 +43,9 @@ module ascii_draw {
                 utils.removeClass(selection_button, 'pressed');
             }
 
-            function drawRectangle()
+            function drawRectangle() {
+                // FIXME
+            }
         }
 
         export module SelectMoveController {

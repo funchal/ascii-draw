@@ -169,4 +169,38 @@ module utils {
             return this.top_left + '/' + this.bottom_right;
         }
     }
+
+    export module commands {
+        var history: Array<Command> = [];
+        var limit = 3;
+        var current = 0;
+
+        export interface Command {
+            execute(): void;
+            unexecute(): void;
+        }
+
+        export function invoke(cmd: Command) {
+            history.splice(current, history.length - current, cmd);
+            if (history.length > limit) {
+                history.shift();
+                current--;
+            }
+            redo();
+        }
+
+        export function undo() {
+            if (current > 0) {
+                current--;
+                history[current].unexecute();
+            }
+        }
+
+        export function redo() {
+            if (current < history.length) {
+                history[current].execute();
+                current++;
+            }
+        }
+    }
 }

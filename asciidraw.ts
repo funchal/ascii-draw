@@ -7,15 +7,34 @@ module ascii_draw {
     import Controller = controllers.Controller;
     import SelectMoveController = controllers.SelectMoveController;
     import RectangleController = controllers.RectangleController;
+    import commands = utils.commands;
+    import Command = commands.Command;
 
     export var grid: HTMLTableElement;
-
     export var begin_selection: CellPosition;
     export var end_selection: CellPosition;
 
     var emptyCell: string = ' ';
 
     var controller: Controller = SelectMoveController;
+
+    class CommandA implements Command {
+        execute(): void {
+            console.log('CommandA execute');
+        }
+        unexecute(): void {
+            console.log('CommandA unexecute');
+        }
+    }
+
+    class CommandB implements Command {
+        execute(): void {
+            console.log('CommandB execute');
+        }
+        unexecute(): void {
+            console.log('CommandB unexecute');
+        }
+    }
 
     function getSelectionContent(): string {
         return 'content\ncontent\ncontent\ncontent\ncontent\ncontent\n';
@@ -54,11 +73,11 @@ module ascii_draw {
     }
 
     function onUndo(): void {
-        console.log('undo');
+        commands.undo();
     }
 
     function onRedo(): void {
-        console.log('redo');
+        commands.redo();
     }
 
     function onKeyUp(event: KeyboardEvent): void {
@@ -302,6 +321,13 @@ module ascii_draw {
         setGridSize(50, 120);
 
         controller.init();
+
+        commands.invoke(new CommandA());
+        commands.invoke(new CommandB());
+        commands.invoke(new CommandA());
+        commands.invoke(new CommandA());
+        commands.invoke(new CommandB());
+        commands.invoke(new CommandA());
 
         grid.addEventListener('mousedown', onMouseDown, false);
         window.addEventListener('mouseup', onMouseUp, false);
