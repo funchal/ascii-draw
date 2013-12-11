@@ -159,140 +159,152 @@ var utils;
     })();
     utils.Rectangle = Rectangle;
 })(utils || (utils = {}));
+///<reference path='utils.ts'/>
+var ascii_draw;
+(function (ascii_draw) {
+    (function (controllers) {
+        var Rectangle = utils.Rectangle;
+        var CellPosition = utils.Point;
+
+        (function (RectangleController) {
+            function init() {
+                console.log('init');
+                var selection_button = document.getElementById('rectangle-button');
+                utils.addClass(selection_button, 'pressed');
+            }
+            RectangleController.init = init;
+            function onMouseDown(target) {
+                console.log('down');
+            }
+            RectangleController.onMouseDown = onMouseDown;
+            function onMouseUp() {
+                console.log('up');
+            }
+            RectangleController.onMouseUp = onMouseUp;
+            function onMouseOver(target) {
+                console.log('over');
+            }
+            RectangleController.onMouseOver = onMouseOver;
+            function onMouseLeave() {
+                console.log('leave');
+            }
+            RectangleController.onMouseLeave = onMouseLeave;
+            function exit() {
+                console.log('exit');
+                var selection_button = document.getElementById('rectangle-button');
+                utils.removeClass(selection_button, 'pressed');
+            }
+            RectangleController.exit = exit;
+        })(controllers.RectangleController || (controllers.RectangleController = {}));
+        var RectangleController = controllers.RectangleController;
+
+        (function (SelectMoveController) {
+            var selecting = false;
+            var mouse_pos = null;
+
+            function init() {
+                var selection_button = document.getElementById('selection-button');
+                utils.addClass(selection_button, 'pressed');
+                ascii_draw.begin_selection = new CellPosition(0, 0);
+                ascii_draw.end_selection = ascii_draw.begin_selection;
+                ascii_draw.setSelected(ascii_draw.getCellAt(ascii_draw.begin_selection), true);
+            }
+            SelectMoveController.init = init;
+
+            function onMouseDown(target) {
+                // TODO: if current cell is selected change to move mode
+                selecting = true;
+                setSelection(ascii_draw.getCellPosition(target), ascii_draw.getCellPosition(target));
+            }
+            SelectMoveController.onMouseDown = onMouseDown;
+
+            function onMouseUp() {
+                selecting = false;
+            }
+            SelectMoveController.onMouseUp = onMouseUp;
+
+            function onMouseOver(target) {
+                var pos = ascii_draw.getCellPosition(target);
+                setMousePosition(pos);
+                if (selecting) {
+                    setSelection(ascii_draw.begin_selection, pos);
+                }
+            }
+            SelectMoveController.onMouseOver = onMouseOver;
+
+            function onMouseLeave() {
+                setMousePosition(null);
+            }
+            SelectMoveController.onMouseLeave = onMouseLeave;
+
+            function exit() {
+                console.log('exit');
+                var selection_button = document.getElementById('selection-button');
+                utils.removeClass(selection_button, 'pressed');
+            }
+            SelectMoveController.exit = exit;
+
+            function setMousePosition(new_pos) {
+                if (mouse_pos !== null) {
+                    utils.removeClass(ascii_draw.getCellAt(mouse_pos), 'mouse');
+                }
+                mouse_pos = new_pos;
+
+                var mousestatus = document.getElementById('mousestatus');
+                if (mouse_pos !== null) {
+                    utils.addClass(ascii_draw.getCellAt(mouse_pos), 'mouse');
+                    mousestatus.textContent = 'Cursor: ' + mouse_pos;
+                } else {
+                    mousestatus.textContent = '';
+                }
+            }
+
+            function setSelection(new_begin_selection, new_end_selection) {
+                var new_selection = new Rectangle(new_begin_selection, new_end_selection, true);
+                var old_selection = new Rectangle(ascii_draw.begin_selection, ascii_draw.end_selection, true);
+
+                if (old_selection.isEqual(new_selection)) {
+                    return;
+                }
+
+                ascii_draw.begin_selection = new_begin_selection;
+                ascii_draw.end_selection = new_end_selection;
+
+                var keep = old_selection.intersect(new_selection);
+                var clear = old_selection.subtract(keep);
+                var paint = new_selection.subtract(keep);
+
+                for (var i = 0; i < clear.length; i++) {
+                    ascii_draw.applyToRectangle(clear[i], ascii_draw.setSelected, false);
+                }
+
+                for (var i = 0; i < paint.length; i++) {
+                    ascii_draw.applyToRectangle(paint[i], ascii_draw.setSelected, true);
+                }
+
+                var selectionstatus = document.getElementById('selectionstatus');
+                if (new_selection.getHeight() > 1 || new_selection.getWidth() > 1) {
+                    selectionstatus.textContent = 'Selection: ' + new_selection.getHeight() + 'x' + new_selection.getWidth();
+                } else {
+                    selectionstatus.textContent = '';
+                }
+            }
+            SelectMoveController.setSelection = setSelection;
+        })(controllers.SelectMoveController || (controllers.SelectMoveController = {}));
+        var SelectMoveController = controllers.SelectMoveController;
+    })(ascii_draw.controllers || (ascii_draw.controllers = {}));
+    var controllers = ascii_draw.controllers;
+})(ascii_draw || (ascii_draw = {}));
 var ascii_draw;
 (function (ascii_draw) {
     var Rectangle = utils.Rectangle;
     var CellPosition = utils.Point;
 
-    var RectangleController;
-    (function (RectangleController) {
-        function init() {
-            console.log('init');
-            var selection_button = document.getElementById('rectangle-button');
-            utils.addClass(selection_button, 'pressed');
-        }
-        RectangleController.init = init;
-        function onMouseDown(target) {
-            console.log('down');
-        }
-        RectangleController.onMouseDown = onMouseDown;
-        function onMouseUp() {
-            console.log('up');
-        }
-        RectangleController.onMouseUp = onMouseUp;
-        function onMouseOver(target) {
-            console.log('over');
-        }
-        RectangleController.onMouseOver = onMouseOver;
-        function onMouseLeave() {
-            console.log('leave');
-        }
-        RectangleController.onMouseLeave = onMouseLeave;
-        function exit() {
-            console.log('exit');
-            var selection_button = document.getElementById('rectangle-button');
-            utils.removeClass(selection_button, 'pressed');
-        }
-        RectangleController.exit = exit;
-    })(RectangleController || (RectangleController = {}));
+    var SelectMoveController = ascii_draw.controllers.SelectMoveController;
+    var RectangleController = ascii_draw.controllers.RectangleController;
 
-    var begin_selection;
-    var end_selection;
-
-    var SelectMoveController;
-    (function (SelectMoveController) {
-        var selecting = false;
-        var mouse_pos = null;
-
-        function init() {
-            var selection_button = document.getElementById('selection-button');
-            utils.addClass(selection_button, 'pressed');
-            begin_selection = new CellPosition(0, 0);
-            end_selection = begin_selection;
-            setSelected(getCellAt(begin_selection), true);
-        }
-        SelectMoveController.init = init;
-
-        function onMouseDown(target) {
-            // TODO: if current cell is selected change to move mode
-            selecting = true;
-            setSelection(getCellPosition(target), getCellPosition(target));
-        }
-        SelectMoveController.onMouseDown = onMouseDown;
-
-        function onMouseUp() {
-            selecting = false;
-        }
-        SelectMoveController.onMouseUp = onMouseUp;
-
-        function onMouseOver(target) {
-            var pos = getCellPosition(target);
-            setMousePosition(pos);
-            if (selecting) {
-                setSelection(begin_selection, pos);
-            }
-        }
-        SelectMoveController.onMouseOver = onMouseOver;
-
-        function onMouseLeave() {
-            setMousePosition(null);
-        }
-        SelectMoveController.onMouseLeave = onMouseLeave;
-
-        function exit() {
-            console.log('exit');
-            var selection_button = document.getElementById('selection-button');
-            utils.removeClass(selection_button, 'pressed');
-        }
-        SelectMoveController.exit = exit;
-
-        function setMousePosition(new_pos) {
-            if (mouse_pos !== null) {
-                utils.removeClass(getCellAt(mouse_pos), 'mouse');
-            }
-            mouse_pos = new_pos;
-
-            var mousestatus = document.getElementById('mousestatus');
-            if (mouse_pos !== null) {
-                utils.addClass(getCellAt(mouse_pos), 'mouse');
-                mousestatus.textContent = 'Cursor: ' + mouse_pos;
-            } else {
-                mousestatus.textContent = '';
-            }
-        }
-
-        function setSelection(new_begin_selection, new_end_selection) {
-            var new_selection = new Rectangle(new_begin_selection, new_end_selection, true);
-            var old_selection = new Rectangle(begin_selection, end_selection, true);
-
-            if (old_selection.isEqual(new_selection)) {
-                return;
-            }
-
-            begin_selection = new_begin_selection;
-            end_selection = new_end_selection;
-
-            var keep = old_selection.intersect(new_selection);
-            var clear = old_selection.subtract(keep);
-            var paint = new_selection.subtract(keep);
-
-            for (var i = 0; i < clear.length; i++) {
-                applyToRectangle(clear[i], setSelected, false);
-            }
-
-            for (var i = 0; i < paint.length; i++) {
-                applyToRectangle(paint[i], setSelected, true);
-            }
-
-            var selectionstatus = document.getElementById('selectionstatus');
-            if (new_selection.getHeight() > 1 || new_selection.getWidth() > 1) {
-                selectionstatus.textContent = 'Selection: ' + new_selection.getHeight() + 'x' + new_selection.getWidth();
-            } else {
-                selectionstatus.textContent = '';
-            }
-        }
-        SelectMoveController.setSelection = setSelection;
-    })(SelectMoveController || (SelectMoveController = {}));
+    ascii_draw.begin_selection;
+    ascii_draw.end_selection;
 
     ascii_draw.grid;
 
@@ -355,12 +367,12 @@ var ascii_draw;
 
     function onKeyPress(event) {
         if (!event.ctrlKey && !event.altKey && !event.metaKey && event.charCode > 0) {
-            applyToRectangle(new Rectangle(begin_selection, end_selection, true), function (cell) {
+            applyToRectangle(new Rectangle(ascii_draw.begin_selection, ascii_draw.end_selection, true), function (cell) {
                 cell.children[0].textContent = String.fromCharCode(event.charCode);
             });
             var displacement = [0, 1];
-            if (displacement && begin_selection.isEqual(end_selection) && begin_selection.isEqual(end_selection)) {
-                var pos = new CellPosition(begin_selection.row + displacement[0], begin_selection.col + displacement[1]);
+            if (displacement && ascii_draw.begin_selection.isEqual(ascii_draw.end_selection) && ascii_draw.begin_selection.isEqual(ascii_draw.end_selection)) {
+                var pos = new CellPosition(ascii_draw.begin_selection.row + displacement[0], ascii_draw.begin_selection.col + displacement[1]);
                 SelectMoveController.setSelection(pos, pos);
             }
             event.preventDefault();
@@ -405,8 +417,8 @@ var ascii_draw;
                     break;
             }
 
-            if (displacement && begin_selection.isEqual(end_selection) && begin_selection.isEqual(end_selection)) {
-                var pos = new CellPosition(begin_selection.row + displacement[0], begin_selection.col + displacement[1]);
+            if (displacement && ascii_draw.begin_selection.isEqual(ascii_draw.end_selection) && ascii_draw.begin_selection.isEqual(ascii_draw.end_selection)) {
+                var pos = new CellPosition(ascii_draw.begin_selection.row + displacement[0], ascii_draw.begin_selection.col + displacement[1]);
                 SelectMoveController.setSelection(pos, pos);
             }
         }
@@ -430,12 +442,14 @@ var ascii_draw;
     function getCellPosition(cell) {
         return new CellPosition(utils.indexInParent(cell.parentElement), utils.indexInParent(cell));
     }
+    ascii_draw.getCellPosition = getCellPosition;
 
     function getCellAt(pos) {
         var row = ascii_draw.grid.rows[pos.row];
         var cell = row.cells[pos.col];
         return cell;
     }
+    ascii_draw.getCellAt = getCellAt;
 
     function applyToRectangle(rect, functor) {
         var params = [];
@@ -450,6 +464,7 @@ var ascii_draw;
             }
         }
     }
+    ascii_draw.applyToRectangle = applyToRectangle;
 
     function setGridSize(new_nrows, new_ncols) {
         var nrows = ascii_draw.grid.rows.length;
@@ -503,6 +518,7 @@ var ascii_draw;
             console.log('bla');
         }
     }
+    ascii_draw.setSelected = setSelected;
 
     function getTargetCell(target) {
         if (target instanceof HTMLDivElement) {

@@ -17,7 +17,7 @@ clean:
 	rm -f script.js
 	rm -f img/*.png
 
-script.js: utils.ts asciidraw.ts
+script.js: controllers.ts utils.ts asciidraw.ts
 	tsc $^ --out $@ --noImplicitAny
 
 img/%.png: img/icons.svg $(MAKEFILE_LIST)
