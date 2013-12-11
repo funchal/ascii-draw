@@ -174,6 +174,14 @@ module ascii_draw {
         copypastearea.value = '';
     }
 
+    function onUndo(): void {
+        console.log('undo');
+    }
+
+    function onRedo(): void {
+        console.log('redo');
+    }
+
     function onKeyUp(event: KeyboardEvent): void {
         if (event.ctrlKey && !event.altKey && !event.shiftKey) {
             switch (event.keyCode) {
@@ -264,6 +272,12 @@ module ascii_draw {
                     break;
                 case 88: /* ctrl+x: cut */
                     initiateCopyAction();
+                    break;
+                case 89: /* ctrl+y: redo */
+                    onRedo();
+                    break;
+                case 90: /* ctrl+z: undo */
+                    onUndo();
                     break;
             }
         }
@@ -425,6 +439,12 @@ module ascii_draw {
         var selection_button = document.getElementById('selection-button');
         selection_button.addEventListener(
             'click', controllerSwitcher(SelectMoveController), false);
+
+        var undo_button = document.getElementById('undo-button');
+        undo_button.addEventListener('click', onUndo, false);
+
+        var redo_button = document.getElementById('redo-button');
+        redo_button.addEventListener('click', onRedo, false);
     }
 }
 
