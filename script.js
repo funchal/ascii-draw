@@ -193,12 +193,24 @@ var ascii_draw;
                 console.log('leave');
             }
             RectangleController.onMouseLeave = onMouseLeave;
+            function onArrowDown(displacement) {
+                console.log('arrowdown');
+            }
+            RectangleController.onArrowDown = onArrowDown;
+            function onKeyPress(character) {
+                console.log('keypress');
+            }
+            RectangleController.onKeyPress = onKeyPress;
             function exit() {
                 console.log('exit');
                 var selection_button = document.getElementById('rectangle-button');
                 utils.removeClass(selection_button, 'pressed');
             }
             RectangleController.exit = exit;
+
+            function drawRectangle() {
+                // TODO
+            }
         })(controllers.RectangleController || (controllers.RectangleController = {}));
         var RectangleController = controllers.RectangleController;
 
@@ -207,7 +219,6 @@ var ascii_draw;
             var mouse_pos = null;
 
             function init() {
-                console.log('INIT');
                 reset();
                 ascii_draw.begin_selection = new CellPosition(0, 0);
                 ascii_draw.end_selection = ascii_draw.begin_selection;
@@ -246,6 +257,23 @@ var ascii_draw;
                 setMousePosition(null);
             }
             SelectMoveController.onMouseLeave = onMouseLeave;
+
+            function onArrowDown(displacement) {
+                var pos = new CellPosition(ascii_draw.begin_selection.row + displacement[0], ascii_draw.begin_selection.col + displacement[1]);
+                setSelection(pos, pos);
+            }
+            SelectMoveController.onArrowDown = onArrowDown;
+            function onKeyPress(character) {
+                ascii_draw.applyToRectangle(new Rectangle(ascii_draw.begin_selection, ascii_draw.end_selection, true), function (cell) {
+                    cell.children[0].textContent = character;
+                });
+                var displacement = [0, 1];
+                if (displacement && ascii_draw.begin_selection.isEqual(ascii_draw.end_selection) && ascii_draw.begin_selection.isEqual(ascii_draw.end_selection)) {
+                    var pos = new CellPosition(ascii_draw.begin_selection.row + displacement[0], ascii_draw.begin_selection.col + displacement[1]);
+                    setSelection(pos, pos);
+                }
+            }
+            SelectMoveController.onKeyPress = onKeyPress;
 
             function exit() {
                 console.log('exit');
@@ -299,7 +327,6 @@ var ascii_draw;
                     selectionstatus.textContent = '';
                 }
             }
-            SelectMoveController.setSelection = setSelection;
         })(controllers.SelectMoveController || (controllers.SelectMoveController = {}));
         var SelectMoveController = controllers.SelectMoveController;
     })(ascii_draw.controllers || (ascii_draw.controllers = {}));
@@ -387,14 +414,7 @@ var ascii_draw;
 
     function onKeyPress(event) {
         if (!event.ctrlKey && !event.altKey && !event.metaKey && event.charCode > 0) {
-            applyToRectangle(new Rectangle(ascii_draw.begin_selection, ascii_draw.end_selection, true), function (cell) {
-                cell.children[0].textContent = String.fromCharCode(event.charCode);
-            });
-            var displacement = [0, 1];
-            if (displacement && ascii_draw.begin_selection.isEqual(ascii_draw.end_selection) && ascii_draw.begin_selection.isEqual(ascii_draw.end_selection)) {
-                var pos = new CellPosition(ascii_draw.begin_selection.row + displacement[0], ascii_draw.begin_selection.col + displacement[1]);
-                SelectMoveController.setSelection(pos, pos);
-            }
+            controller.onKeyPress(String.fromCharCode(event.charCode));
             event.preventDefault();
         }
         event.stopPropagation();
@@ -427,6 +447,7 @@ var ascii_draw;
                     event.preventDefault();
                     break;
                 case 8:
+                    // TODO: print a space character
                     event.preventDefault();
                     break;
                 case 27:
@@ -438,8 +459,7 @@ var ascii_draw;
             }
 
             if (displacement && ascii_draw.begin_selection.isEqual(ascii_draw.end_selection) && ascii_draw.begin_selection.isEqual(ascii_draw.end_selection)) {
-                var pos = new CellPosition(ascii_draw.begin_selection.row + displacement[0], ascii_draw.begin_selection.col + displacement[1]);
-                SelectMoveController.setSelection(pos, pos);
+                controller.onArrowDown(displacement);
             }
         }
 
