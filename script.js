@@ -211,33 +211,50 @@ var ascii_draw;
         var Rectangle = utils.Rectangle;
         var CellPosition = utils.Point;
 
+        var selecting = false;
+        var mouse_pos = null;
+
         (function (RectangleController) {
             function init() {
                 console.log('init');
                 reset();
             }
             RectangleController.init = init;
+
             function reset() {
                 var selection_button = document.getElementById('rectangle-button');
                 utils.addClass(selection_button, 'pressed');
             }
             RectangleController.reset = reset;
+
             function onMouseDown(target) {
-                console.log('down');
+                // TODO: if current cell is selected change to move mode
+                selecting = true;
+                setSelection(ascii_draw.getCellPosition(target), ascii_draw.getCellPosition(target));
+                drawRectangle(new Rectangle(ascii_draw.begin_selection, ascii_draw.end_selection, true));
             }
             RectangleController.onMouseDown = onMouseDown;
+
             function onMouseUp() {
-                console.log('up');
+                selecting = false;
             }
             RectangleController.onMouseUp = onMouseUp;
+
             function onMouseOver(target) {
-                console.log('over');
+                var pos = ascii_draw.getCellPosition(target);
+                setMousePosition(pos);
+                if (selecting) {
+                    setSelection(ascii_draw.begin_selection, pos);
+                    drawRectangle(new Rectangle(ascii_draw.begin_selection, ascii_draw.end_selection, true));
+                }
             }
             RectangleController.onMouseOver = onMouseOver;
+
             function onMouseLeave() {
-                console.log('leave');
+                setMousePosition(null);
             }
             RectangleController.onMouseLeave = onMouseLeave;
+
             function onArrowDown(displacement) {
                 console.log('arrowdown');
             }
@@ -246,6 +263,7 @@ var ascii_draw;
                 console.log('keypress');
             }
             RectangleController.onKeyPress = onKeyPress;
+
             function exit() {
                 console.log('exit');
                 var selection_button = document.getElementById('rectangle-button');
@@ -253,16 +271,38 @@ var ascii_draw;
             }
             RectangleController.exit = exit;
 
-            function drawRectangle() {
-                // TODO
+            function drawRectangle(rect) {
+                var top = rect.top_left.row;
+                var left = rect.top_left.col;
+                var bottom = rect.bottom_right.row;
+                var right = rect.bottom_right.col;
+
+                // print first row: +---+
+                var first_row = ascii_draw.grid.rows[top];
+                first_row.cells[left].textContent = '+';
+                for (var col = left + 1; col <= right - 1; col++) {
+                    first_row.cells[col].textContent = '-';
+                }
+                first_row.cells[right].textContent = '+';
+
+                for (var row = top + 1; row <= bottom - 1; row++) {
+                    var current_row = ascii_draw.grid.rows[row];
+                    current_row.cells[left].textContent = '|';
+                    current_row.cells[right].textContent = '|';
+                }
+
+                // print last row
+                var last_row = ascii_draw.grid.rows[bottom];
+                last_row.cells[left].textContent = '+';
+                for (var col = left + 1; col <= right - 1; col++) {
+                    last_row.cells[col].textContent = '-';
+                }
+                last_row.cells[right].textContent = '+';
             }
         })(controllers.RectangleController || (controllers.RectangleController = {}));
         var RectangleController = controllers.RectangleController;
 
         (function (SelectMoveController) {
-            var selecting = false;
-            var mouse_pos = null;
-
             function init() {
                 reset();
                 ascii_draw.begin_selection = new CellPosition(0, 0);
@@ -326,54 +366,76 @@ var ascii_draw;
                 utils.removeClass(selection_button, 'pressed');
             }
             SelectMoveController.exit = exit;
-
-            function setMousePosition(new_pos) {
-                if (mouse_pos !== null) {
-                    utils.removeClass(ascii_draw.getCellAt(mouse_pos), 'mouse');
-                }
-                mouse_pos = new_pos;
-
-                var mousestatus = document.getElementById('mousestatus');
-                if (mouse_pos !== null) {
-                    utils.addClass(ascii_draw.getCellAt(mouse_pos), 'mouse');
-                    mousestatus.textContent = 'Cursor: ' + mouse_pos;
-                } else {
-                    mousestatus.textContent = '';
-                }
-            }
-
-            function setSelection(new_begin_selection, new_end_selection) {
-                var new_selection = new Rectangle(new_begin_selection, new_end_selection, true);
-                var old_selection = new Rectangle(ascii_draw.begin_selection, ascii_draw.end_selection, true);
-
-                if (old_selection.isEqual(new_selection)) {
-                    return;
-                }
-
-                ascii_draw.begin_selection = new_begin_selection;
-                ascii_draw.end_selection = new_end_selection;
-
-                var keep = old_selection.intersect(new_selection);
-                var clear = old_selection.subtract(keep);
-                var paint = new_selection.subtract(keep);
-
-                for (var i = 0; i < clear.length; i++) {
-                    ascii_draw.applyToRectangle(clear[i], ascii_draw.setSelected, false);
-                }
-
-                for (var i = 0; i < paint.length; i++) {
-                    ascii_draw.applyToRectangle(paint[i], ascii_draw.setSelected, true);
-                }
-
-                var selectionstatus = document.getElementById('selectionstatus');
-                if (new_selection.getHeight() > 1 || new_selection.getWidth() > 1) {
-                    selectionstatus.textContent = 'Selection: ' + new_selection.getHeight() + 'x' + new_selection.getWidth();
-                } else {
-                    selectionstatus.textContent = '';
-                }
-            }
         })(controllers.SelectMoveController || (controllers.SelectMoveController = {}));
         var SelectMoveController = controllers.SelectMoveController;
+
+        function setMousePosition(new_pos) {
+            if (mouse_pos !== null) {
+                utils.removeClass(ascii_draw.getCellAt(mouse_pos), 'mouse');
+            }
+            mouse_pos = new_pos;
+
+            var mousestatus = document.getElementById('mousestatus');
+            if (mouse_pos !== null) {
+                utils.addClass(ascii_draw.getCellAt(mouse_pos), 'mouse');
+                mousestatus.textContent = 'Cursor: ' + mouse_pos;
+            } else {
+                mousestatus.textContent = '';
+            }
+        }
+
+        function setSelection(new_begin_selection, new_end_selection) {
+            var new_selection = new Rectangle(new_begin_selection, new_end_selection, true);
+            var old_selection = new Rectangle(ascii_draw.begin_selection, ascii_draw.end_selection, true);
+
+            if (old_selection.isEqual(new_selection)) {
+                return;
+            }
+
+            ascii_draw.begin_selection = new_begin_selection;
+            ascii_draw.end_selection = new_end_selection;
+
+            var keep = old_selection.intersect(new_selection);
+            var clear = old_selection.subtract(keep);
+            var paint = new_selection.subtract(keep);
+
+            for (var i = 0; i < clear.length; i++) {
+                ascii_draw.applyToRectangle(clear[i], ascii_draw.setSelected, false);
+            }
+
+            for (var i = 0; i < paint.length; i++) {
+                ascii_draw.applyToRectangle(paint[i], ascii_draw.setSelected, true);
+            }
+
+            var selectionstatus = document.getElementById('selectionstatus');
+            if (new_selection.getHeight() > 1 || new_selection.getWidth() > 1) {
+                selectionstatus.textContent = 'Selection: ' + new_selection.getHeight() + 'x' + new_selection.getWidth();
+            } else {
+                selectionstatus.textContent = '';
+            }
+        }
+
+        function setHollowSelection(new_begin_selection, new_end_selection) {
+            var new_selection = new Rectangle(new_begin_selection, new_end_selection, true);
+            var old_selection = new Rectangle(ascii_draw.begin_selection, ascii_draw.end_selection, true);
+
+            if (old_selection.isEqual(new_selection)) {
+                return;
+            }
+
+            ascii_draw.begin_selection = new_begin_selection;
+            ascii_draw.end_selection = new_end_selection;
+
+            ascii_draw.applyToRectangle(old_selection, ascii_draw.setSelected, false);
+            ascii_draw.applyToRectangle(new_selection, ascii_draw.setSelected, true);
+
+            var selectionstatus = document.getElementById('selectionstatus');
+            if (new_selection.getHeight() > 1 || new_selection.getWidth() > 1) {
+                selectionstatus.textContent = 'Selection: ' + new_selection.getHeight() + 'x' + new_selection.getWidth();
+            } else {
+                selectionstatus.textContent = '';
+            }
+        }
     })(ascii_draw.controllers || (ascii_draw.controllers = {}));
     var controllers = ascii_draw.controllers;
 })(ascii_draw || (ascii_draw = {}));
