@@ -138,14 +138,17 @@ var utils;
             if (!top_rectangle.isEmpty()) {
                 rect_array.push(top_rectangle);
             }
+
             var left_rectangle = new Rectangle(new Point(other.top_left.row, this.top_left.col), new Point(other.bottom_right.row, other.top_left.col - 1));
             if (!left_rectangle.isEmpty()) {
                 rect_array.push(left_rectangle);
             }
+
             var right_rectangle = new Rectangle(new Point(other.top_left.row, other.bottom_right.col + 1), new Point(other.bottom_right.row, this.bottom_right.col));
             if (!right_rectangle.isEmpty()) {
                 rect_array.push(right_rectangle);
             }
+
             var bottom_rectangle = new Rectangle(new Point(other.bottom_right.row + 1, this.top_left.col), this.bottom_right);
             if (!bottom_rectangle.isEmpty()) {
                 rect_array.push(bottom_rectangle);
@@ -218,8 +221,7 @@ var ascii_draw;
             }
             RectangleController.init = init;
             function reset() {
-                var selection_button = document.getElementById('rectangle-button');
-                utils.addClass(selection_button, 'pressed');
+                utils.addClass(ascii_draw.selection_button, 'pressed');
             }
             RectangleController.reset = reset;
             function onMouseDown(target) {
@@ -248,8 +250,7 @@ var ascii_draw;
             RectangleController.onKeyPress = onKeyPress;
             function exit() {
                 console.log('exit');
-                var selection_button = document.getElementById('rectangle-button');
-                utils.removeClass(selection_button, 'pressed');
+                utils.removeClass(ascii_draw.selection_button, 'pressed');
             }
             RectangleController.exit = exit;
 
@@ -272,8 +273,7 @@ var ascii_draw;
             SelectMoveController.init = init;
 
             function reset() {
-                var selection_button = document.getElementById('selection-button');
-                utils.addClass(selection_button, 'pressed');
+                utils.addClass(ascii_draw.selection_button, 'pressed');
             }
             SelectMoveController.reset = reset;
 
@@ -322,8 +322,7 @@ var ascii_draw;
 
             function exit() {
                 console.log('exit');
-                var selection_button = document.getElementById('selection-button');
-                utils.removeClass(selection_button, 'pressed');
+                utils.removeClass(ascii_draw.selection_button, 'pressed');
             }
             SelectMoveController.exit = exit;
 
@@ -333,12 +332,11 @@ var ascii_draw;
                 }
                 mouse_pos = new_pos;
 
-                var mousestatus = document.getElementById('mousestatus');
                 if (mouse_pos !== null) {
                     utils.addClass(ascii_draw.getCellAt(mouse_pos), 'mouse');
-                    mousestatus.textContent = 'Cursor: ' + mouse_pos;
+                    ascii_draw.mousestatus.textContent = 'Cursor: ' + mouse_pos;
                 } else {
-                    mousestatus.textContent = '';
+                    ascii_draw.mousestatus.textContent = '';
                 }
             }
 
@@ -365,11 +363,10 @@ var ascii_draw;
                     ascii_draw.applyToRectangle(paint[i], ascii_draw.setSelected, true);
                 }
 
-                var selectionstatus = document.getElementById('selectionstatus');
                 if (new_selection.getHeight() > 1 || new_selection.getWidth() > 1) {
-                    selectionstatus.textContent = 'Selection: ' + new_selection.getHeight() + 'x' + new_selection.getWidth();
+                    ascii_draw.selectionstatus.textContent = 'Selection: ' + new_selection.getHeight() + 'x' + new_selection.getWidth();
                 } else {
-                    selectionstatus.textContent = '';
+                    ascii_draw.selectionstatus.textContent = '';
                 }
             }
         })(controllers.SelectMoveController || (controllers.SelectMoveController = {}));
@@ -392,9 +389,15 @@ var ascii_draw;
     ascii_draw.grid;
     ascii_draw.begin_selection;
     ascii_draw.end_selection;
-
+    var copypastearea;
+    ascii_draw.selection_button;
+    var rectangle_button;
+    var gridstatus;
+    ascii_draw.mousestatus;
+    ascii_draw.selectionstatus;
+    var redo_button;
+    var undo_button;
     var emptyCell = ' ';
-
     var controller = SelectMoveController;
 
     var CommandA = (function () {
@@ -427,7 +430,6 @@ var ascii_draw;
 
     function initiateCopyAction() {
         if (window.getSelection && document.createRange) {
-            var copypastearea = document.getElementById('copypastearea');
             copypastearea.textContent = getSelectionContent();
             var sel = window.getSelection();
             var range = document.createRange();
@@ -440,19 +442,16 @@ var ascii_draw;
     }
 
     function completeCopyAction() {
-        var copypastearea = document.getElementById('copypastearea');
         copypastearea.value = '';
         console.log('copy');
     }
 
     function initiatePasteAction() {
-        var copypastearea = document.getElementById('copypastearea');
         copypastearea.value = '';
         copypastearea.focus();
     }
 
     function completePasteAction() {
-        var copypastearea = document.getElementById('copypastearea');
         console.log('paste: ' + copypastearea.value);
         copypastearea.value = '';
     }
@@ -468,15 +467,12 @@ var ascii_draw;
     }
 
     function updateUndoRedo() {
-        var undo_button = document.getElementById('undo-button');
         if (commands.canUndo()) {
             undo_button.disabled = false;
         } else {
             undo_button.disabled = true;
         }
 
-        var redo_button = document.getElementById('redo-button');
-        redo_button.addEventListener('click', onRedo, false);
         if (commands.canRedo()) {
             redo_button.disabled = false;
         } else {
@@ -627,7 +623,6 @@ var ascii_draw;
             }
         }
 
-        var gridstatus = document.getElementById('gridstatus');
         gridstatus.textContent = 'Grid size: ' + new_nrows + 'x' + new_ncols;
     }
 
@@ -711,9 +706,18 @@ var ascii_draw;
 
     function init() {
         ascii_draw.grid = document.getElementById('grid');
+        copypastearea = document.getElementById('copypastearea');
+        rectangle_button = document.getElementById('rectangle-button');
+        ascii_draw.selection_button = document.getElementById('selection-button');
+        undo_button = document.getElementById('undo-button');
+        redo_button = document.getElementById('redo-button');
+        gridstatus = document.getElementById('gridstatus');
+        ascii_draw.selectionstatus = document.getElementById('selectionstatus');
+        ascii_draw.mousestatus = document.getElementById('mousestatus');
 
         changeFont();
         setGridSize(50, 120);
+        updateUndoRedo();
 
         controller.init();
 
@@ -733,19 +737,12 @@ var ascii_draw;
         window.addEventListener('keyup', onKeyUp, false);
         window.addEventListener('keypress', onKeyPress, false);
 
-        var rectangle_button = document.getElementById('rectangle-button');
         rectangle_button.addEventListener('click', controllerSwitcher(RectangleController), false);
 
-        var selection_button = document.getElementById('selection-button');
-        selection_button.addEventListener('click', controllerSwitcher(SelectMoveController), false);
+        ascii_draw.selection_button.addEventListener('click', controllerSwitcher(SelectMoveController), false);
 
-        var undo_button = document.getElementById('undo-button');
         undo_button.addEventListener('click', onUndo, false);
-
-        var redo_button = document.getElementById('redo-button');
         redo_button.addEventListener('click', onRedo, false);
-
-        updateUndoRedo();
     }
     ascii_draw.init = init;
 })(ascii_draw || (ascii_draw = {}));

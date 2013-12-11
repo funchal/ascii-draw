@@ -26,7 +26,6 @@ module ascii_draw {
                 reset();
             }
             export function reset(): void {
-                var selection_button = document.getElementById('rectangle-button');
                 utils.addClass(selection_button, 'pressed');
             }
             export function onMouseDown(target: HTMLTableCellElement): void {
@@ -49,7 +48,6 @@ module ascii_draw {
             }
             export function exit(): void {
                 console.log('exit');
-                var selection_button = document.getElementById('rectangle-button');
                 utils.removeClass(selection_button, 'pressed');
             }
 
@@ -70,7 +68,6 @@ module ascii_draw {
             }
 
             export function reset(): void {
-                var selection_button = document.getElementById('selection-button');
                 utils.addClass(selection_button, 'pressed');
             }
 
@@ -118,7 +115,6 @@ module ascii_draw {
 
             export function exit(): void {
                 console.log('exit');
-                var selection_button = document.getElementById('selection-button');
                 utils.removeClass(selection_button, 'pressed');
             }
 
@@ -128,7 +124,6 @@ module ascii_draw {
                 }
                 mouse_pos = new_pos;
 
-                var mousestatus = document.getElementById('mousestatus');
                 if (mouse_pos !== null) {
                     utils.addClass(getCellAt(mouse_pos), 'mouse');
                     mousestatus.textContent = 'Cursor: ' + mouse_pos;
@@ -165,10 +160,9 @@ module ascii_draw {
                     applyToRectangle(paint[i], setSelected, true);
                 }
 
-                var selectionstatus = document.getElementById('selectionstatus');
                 if (new_selection.getHeight() > 1 || new_selection.getWidth() > 1) {
                     selectionstatus.textContent = 'Selection: ' +
-                        new_selection.getHeight() + 'x' + new_selection.getWidth();
+                    new_selection.getHeight() + 'x' + new_selection.getWidth();
                 } else {
                     selectionstatus.textContent = '';
                 }
