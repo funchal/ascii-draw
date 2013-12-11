@@ -17,7 +17,7 @@ module ascii_draw {
     export var end_selection: CellPosition;
     var copypastearea: HTMLTextAreaElement;
     export var selection_button: HTMLButtonElement;
-    var rectangle_button: HTMLButtonElement;
+    export var rectangle_button: HTMLButtonElement;
     var gridstatus: HTMLDivElement;
     export var mousestatus: HTMLDivElement;
     export var selectionstatus: HTMLDivElement;
@@ -336,18 +336,18 @@ module ascii_draw {
         selectionstatus = <HTMLDivElement>document.getElementById('selectionstatus');
         mousestatus = <HTMLDivElement>document.getElementById('mousestatus');
 
+        commands.invoke(new CommandA());
+        commands.invoke(new CommandB());
+        commands.invoke(new CommandA());
+        commands.invoke(new CommandA());
+        commands.invoke(new CommandB());
+        commands.invoke(new CommandA());
+
         changeFont();
         setGridSize(50, 120);
         updateUndoRedo();
 
         controller.init();
-
-        commands.invoke(new CommandA());
-        commands.invoke(new CommandB());
-        commands.invoke(new CommandA());
-        commands.invoke(new CommandA());
-        commands.invoke(new CommandB());
-        commands.invoke(new CommandA());
 
         grid.addEventListener('mousedown', onMouseDown, false);
         window.addEventListener('mouseup', onMouseUp, false);
