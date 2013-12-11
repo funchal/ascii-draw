@@ -15,9 +15,15 @@ module ascii_draw {
     export var grid: HTMLTableElement;
     export var begin_selection: CellPosition;
     export var end_selection: CellPosition;
-
+    var copypastearea: HTMLTextAreaElement;
+    export var selection_button: HTMLButtonElement;
+    export var rectangle_button: HTMLButtonElement;
+    var gridstatus: HTMLDivElement;
+    export var mousestatus: HTMLDivElement;
+    export var selectionstatus: HTMLDivElement;
+    var redo_button: HTMLButtonElement;
+    var undo_button: HTMLButtonElement;
     var emptyCell: string = ' ';
-
     var controller: Controller = SelectMoveController;
 
     class CommandA implements Command {
@@ -44,7 +50,6 @@ module ascii_draw {
 
     function initiateCopyAction(): void {
         if (window.getSelection && document.createRange) {
-            var copypastearea = document.getElementById('copypastearea');
             copypastearea.textContent = getSelectionContent();
             var sel = window.getSelection();
             var range = document.createRange();
@@ -57,19 +62,16 @@ module ascii_draw {
     }
 
     function completeCopyAction(): void {
-        var copypastearea = <HTMLTextAreaElement>document.getElementById('copypastearea');
         copypastearea.value = '';
         console.log('copy');
     }
 
     function initiatePasteAction(): void {
-        var copypastearea = <HTMLTextAreaElement>document.getElementById('copypastearea');
         copypastearea.value = '';
         copypastearea.focus();
     }
 
     function completePasteAction(): void {
-        var copypastearea = <HTMLTextAreaElement>document.getElementById('copypastearea');
         console.log('paste: ' + copypastearea.value);
         copypastearea.value = '';
     }
@@ -85,15 +87,12 @@ module ascii_draw {
     }
 
     function updateUndoRedo(): void {
-        var undo_button = document.getElementById('undo-button');
         if (commands.canUndo()) {
             undo_button.disabled = false;
         } else {
             undo_button.disabled = true;
         }
 
-        var redo_button = document.getElementById('redo-button');
-        redo_button.addEventListener('click', onRedo, false);
         if (commands.canRedo()) {
             redo_button.disabled = false;
         } else {
@@ -119,7 +118,8 @@ module ascii_draw {
     }
 
     function onKeyPress(event: KeyboardEvent): void {
-        if (!event.ctrlKey && !event.altKey && !event.metaKey && event.charCode > 0) {
+        if (!event.ctrlKey && !event.altKey &&
+            !event.metaKey && event.charCode > 0) {
             controller.onKeyPress(String.fromCharCode(event.charCode));
             event.preventDefault();
         }
@@ -127,7 +127,8 @@ module ascii_draw {
     }
 
     function onKeyDown(event: KeyboardEvent): void {
-        if (!event.ctrlKey && !event.altKey && !event.shiftKey && !event.metaKey) {
+        if (!event.ctrlKey && !event.altKey &&
+            !event.shiftKey && !event.metaKey) {
             var displacement: Array<number> = null;
             switch (event.keyCode) {
                 case 37: /* left arrow */
@@ -170,7 +171,8 @@ module ascii_draw {
             }
         }
 
-        if (event.ctrlKey && !event.altKey && !event.shiftKey && !event.metaKey) {
+        if (event.ctrlKey && !event.altKey &&
+            !event.shiftKey && !event.metaKey) {
             switch (event.keyCode) {
                 case 67: /* ctrl+c: copy */
                     initiateCopyAction();
@@ -242,7 +244,6 @@ module ascii_draw {
             }
         }
 
-        var gridstatus = document.getElementById('gridstatus');
         gridstatus.textContent = 'Grid size: ' + new_nrows + 'x' + new_ncols;
     }
 
@@ -256,7 +257,8 @@ module ascii_draw {
         utils.changeStyleRule('td div', 'height', font_size.height + 'px');
     }
 
-    export function setSelected(cell: HTMLTableCellElement, selected: boolean): void {
+    export function setSelected(cell: HTMLTableCellElement,
+                                selected: boolean): void {
         if (cell['data-selected'] !== selected) {
             cell['data-selected'] = selected;
             if (selected) {
@@ -325,18 +327,27 @@ module ascii_draw {
 
     export function init(): void {
         grid = <HTMLTableElement>document.getElementById('grid');
+        copypastearea = <HTMLTextAreaElement>document.getElementById('copypastearea');
+        rectangle_button = <HTMLButtonElement>document.getElementById('rectangle-button');
+        selection_button = <HTMLButtonElement>document.getElementById('selection-button');
+        undo_button = <HTMLButtonElement>document.getElementById('undo-button');
+        redo_button = <HTMLButtonElement>document.getElementById('redo-button');
+        gridstatus = <HTMLDivElement>document.getElementById('gridstatus');
+        selectionstatus = <HTMLDivElement>document.getElementById('selectionstatus');
+        mousestatus = <HTMLDivElement>document.getElementById('mousestatus');
+
+        commands.invoke(new CommandA());
+        commands.invoke(new CommandB());
+        commands.invoke(new CommandA());
+        commands.invoke(new CommandA());
+        commands.invoke(new CommandB());
+        commands.invoke(new CommandA());
 
         changeFont();
         setGridSize(50, 120);
+        updateUndoRedo();
 
         controller.init();
-
-        commands.invoke(new CommandA());
-        commands.invoke(new CommandB());
-        commands.invoke(new CommandA());
-        commands.invoke(new CommandA());
-        commands.invoke(new CommandB());
-        commands.invoke(new CommandA());
 
         grid.addEventListener('mousedown', onMouseDown, false);
         window.addEventListener('mouseup', onMouseUp, false);
@@ -347,21 +358,14 @@ module ascii_draw {
         window.addEventListener('keyup', onKeyUp, false);
         window.addEventListener('keypress', onKeyPress, false);
 
-        var rectangle_button = document.getElementById('rectangle-button');
         rectangle_button.addEventListener(
             'click', controllerSwitcher(RectangleController), false);
 
-        var selection_button = document.getElementById('selection-button');
         selection_button.addEventListener(
             'click', controllerSwitcher(SelectMoveController), false);
 
-        var undo_button = document.getElementById('undo-button');
         undo_button.addEventListener('click', onUndo, false);
-
-        var redo_button = document.getElementById('redo-button');
         redo_button.addEventListener('click', onRedo, false);
-
-        updateUndoRedo();
     }
 }
 

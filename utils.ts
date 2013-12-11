@@ -148,18 +148,21 @@ module utils {
             if (!top_rectangle.isEmpty()) {
                 rect_array.push(top_rectangle);
             }
+
             var left_rectangle = new Rectangle(
                 new Point(other.top_left.row, this.top_left.col),
                 new Point(other.bottom_right.row, other.top_left.col - 1));
             if (!left_rectangle.isEmpty()) {
                 rect_array.push(left_rectangle);
             }
+
             var right_rectangle = new Rectangle(
                 new Point(other.top_left.row, other.bottom_right.col + 1),
                 new Point(other.bottom_right.row, this.bottom_right.col));
             if (!right_rectangle.isEmpty()) {
                 rect_array.push(right_rectangle);
             }
+
             var bottom_rectangle = new Rectangle(
                 new Point(other.bottom_right.row + 1, this.top_left.col),
                 this.bottom_right);

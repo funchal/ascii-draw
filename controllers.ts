@@ -30,8 +30,8 @@ module ascii_draw {
             }
 
             export function reset(): void {
-                var selection_button = document.getElementById('rectangle-button');
-                utils.addClass(selection_button, 'pressed');
+                console.log('reset');
+                utils.addClass(rectangle_button, 'pressed');
             }
 
             export function onMouseDown(target: HTMLTableCellElement): void {
@@ -79,8 +79,7 @@ module ascii_draw {
 
             export function exit(): void {
                 console.log('exit');
-                var selection_button = document.getElementById('rectangle-button');
-                utils.removeClass(selection_button, 'pressed');
+                utils.removeClass(rectangle_button, 'pressed');
                 setHollowSelection(begin_selection, begin_selection);
             }
 
@@ -124,7 +123,6 @@ module ascii_draw {
             }
 
             export function reset(): void {
-                var selection_button = document.getElementById('selection-button');
                 utils.addClass(selection_button, 'pressed');
             }
 
@@ -170,7 +168,6 @@ module ascii_draw {
             }
 
             export function exit(): void {
-                var selection_button = document.getElementById('selection-button');
                 utils.removeClass(selection_button, 'pressed');
                 setSelection(begin_selection, begin_selection);
             }
@@ -211,18 +208,17 @@ module ascii_draw {
             var clear = old_selection.subtract(keep);
             var paint = new_selection.subtract(keep);
 
-            for (var i = 0; i < clear.length; i++) {
-                applyToRectangle(clear[i], setSelected, false);
-            }
-
             for (var i = 0; i < paint.length; i++) {
                 applyToRectangle(paint[i], setSelected, true);
             }
 
-            var selectionstatus = document.getElementById('selectionstatus');
+            for (var i = 0; i < clear.length; i++) {
+                applyToRectangle(clear[i], setSelected, false);
+            }
+
             if (new_selection.getHeight() > 1 || new_selection.getWidth() > 1) {
                 selectionstatus.textContent = 'Selection: ' +
-                    new_selection.getHeight() + 'x' + new_selection.getWidth();
+                new_selection.getHeight() + 'x' + new_selection.getWidth();
             } else {
                 selectionstatus.textContent = '';
             }
