@@ -1,3 +1,4 @@
+'use strict';
 var utils;
 (function (utils) {
     function changeStyleRule(selector, style, value) {
@@ -193,6 +194,7 @@ var utils;
     var commands = utils.commands;
 })(utils || (utils = {}));
 ///<reference path='utils.ts'/>
+'use strict';
 var ascii_draw;
 (function (ascii_draw) {
     (function (controllers) {
@@ -367,6 +369,7 @@ var ascii_draw;
 })(ascii_draw || (ascii_draw = {}));
 ///<reference path='controllers.ts'/>
 ///<reference path='utils.ts'/>
+'use strict';
 var ascii_draw;
 (function (ascii_draw) {
     var Rectangle = utils.Rectangle;

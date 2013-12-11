@@ -1,6 +1,8 @@
 ///<reference path='controllers.ts'/>
 ///<reference path='utils.ts'/>
 
+'use strict';
+
 module ascii_draw {
     import Rectangle = utils.Rectangle;
     import CellPosition = utils.Point;

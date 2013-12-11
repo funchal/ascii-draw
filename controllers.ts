@@ -1,5 +1,7 @@
 ///<reference path='utils.ts'/>
 
+'use strict';
+
 module ascii_draw {
     export module controllers {
 

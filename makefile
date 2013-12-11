@@ -17,6 +17,10 @@ clean:
 	rm -f script.js
 	rm -f img/*.png
 
+.PHONY: check
+check:
+	jshint -c jshint.json script.js
+
 script.js: controllers.ts utils.ts asciidraw.ts
 	tsc $^ --out $@ --noImplicitAny
 

@@ -1,0 +1,13 @@
+{
+    "bitwise": true,
+    "browser": true,
+    "undef": true,
+    "unused": true,
+    "curly": true,
+    "indent": 4,
+    "forin": true,
+    "latedef": true,
+    "quotmark": "single",
+    "trailing": true,
+    "devel": true
+}

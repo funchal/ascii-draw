@@ -1,3 +1,5 @@
+'use strict';
+
 module utils {
     export function changeStyleRule(selector: string,
                                     style: string,
