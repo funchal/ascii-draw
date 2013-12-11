@@ -348,6 +348,14 @@ var ascii_draw;
         copypastearea.value = '';
     }
 
+    function onUndo() {
+        console.log('undo');
+    }
+
+    function onRedo() {
+        console.log('redo');
+    }
+
     function onKeyUp(event) {
         if (event.ctrlKey && !event.altKey && !event.shiftKey) {
             switch (event.keyCode) {
@@ -433,6 +441,12 @@ var ascii_draw;
                     break;
                 case 88:
                     initiateCopyAction();
+                    break;
+                case 89:
+                    onRedo();
+                    break;
+                case 90:
+                    onUndo();
                     break;
             }
         }
@@ -596,6 +610,12 @@ var ascii_draw;
 
         var selection_button = document.getElementById('selection-button');
         selection_button.addEventListener('click', controllerSwitcher(SelectMoveController), false);
+
+        var undo_button = document.getElementById('undo-button');
+        undo_button.addEventListener('click', onUndo, false);
+
+        var redo_button = document.getElementById('redo-button');
+        redo_button.addEventListener('click', onRedo, false);
     }
     ascii_draw.init = init;
 })(ascii_draw || (ascii_draw = {}));
