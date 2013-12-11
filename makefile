@@ -18,7 +18,7 @@ clean:
 	rm -f img/*.png
 
 script.js: controllers.ts utils.ts asciidraw.ts
-	tsc $^ --out $@ --noImplicitAny --comments
+	tsc $^ --out $@ --noImplicitAny
 
 img/%.png: img/icons.svg $(MAKEFILE_LIST)
 	inkscape $< --without-gui --export-png=$@ --export-id=$* --export-width=$(SIZE) --export-height=$(SIZE)

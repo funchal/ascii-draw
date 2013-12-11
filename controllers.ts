@@ -13,6 +13,8 @@ module ascii_draw {
             onMouseUp(): void;
             onMouseOver(target: HTMLTableCellElement): void;
             onMouseLeave(): void;
+            onArrowDown(displacement: Array<number>): void;
+            onKeyPress(character: string): void;
             exit(): void;
         }
 
@@ -37,14 +39,20 @@ module ascii_draw {
             export function onMouseLeave(): void {
                 console.log('leave');
             }
+            export function onArrowDown(displacement: Array<number>): void {
+                console.log('arrowdown');
+            }
+            export function onKeyPress(character: string) {
+                console.log('keypress');
+            }
             export function exit(): void {
                 console.log('exit');
                 var selection_button = document.getElementById('rectangle-button');
                 utils.removeClass(selection_button, 'pressed');
             }
 
-            function drawRectangle() {
-                // FIXME
+            function drawRectangle():void {
+                // TODO
             }
         }
 
@@ -86,6 +94,26 @@ module ascii_draw {
                 setMousePosition(null);
             }
 
+            export function onArrowDown(displacement: Array<number>): void {
+                var pos = new CellPosition(begin_selection.row + displacement[0],
+                           begin_selection.col + displacement[1]);
+                setSelection(pos, pos);
+
+            }
+            export function onKeyPress(character: string) {
+                applyToRectangle(new Rectangle(begin_selection, end_selection, true /*normalize*/),
+                                 function(cell: HTMLTableCellElement) {
+                                    cell.children[0].textContent = character;
+                                 });
+                var displacement = [0, 1];
+                if (displacement && begin_selection.isEqual(end_selection) &&
+                                    begin_selection.isEqual(end_selection)) {
+                    var pos = new CellPosition(begin_selection.row + displacement[0],
+                                               begin_selection.col + displacement[1]);
+                    setSelection(pos, pos);
+                }
+            }
+
             export function exit(): void {
                 console.log('exit');
                 var selection_button = document.getElementById('selection-button');
@@ -107,7 +135,7 @@ module ascii_draw {
                 }
             }
 
-            export function setSelection(new_begin_selection: CellPosition,
+            function setSelection(new_begin_selection: CellPosition,
                                   new_end_selection: CellPosition): void {
                 var new_selection = new Rectangle(new_begin_selection,
                                                   new_end_selection,

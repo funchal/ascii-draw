@@ -99,17 +99,7 @@ module ascii_draw {
 
     function onKeyPress(event: KeyboardEvent): void {
         if (!event.ctrlKey && !event.altKey && !event.metaKey && event.charCode > 0) {
-            applyToRectangle(new Rectangle(begin_selection, end_selection, true /*normalize*/),
-                             function(cell: HTMLTableCellElement) {
-                                cell.children[0].textContent = String.fromCharCode(event.charCode);
-                             });
-            var displacement = [0, 1];
-            if (displacement && begin_selection.isEqual(end_selection) &&
-                                begin_selection.isEqual(end_selection)) {
-                var pos = new CellPosition(begin_selection.row + displacement[0],
-                                           begin_selection.col + displacement[1]);
-                controller.setSelection(pos, pos);
-            }
+            controller.onKeyPress(String.fromCharCode(event.charCode));
             event.preventDefault();
         }
         event.stopPropagation();
@@ -117,7 +107,7 @@ module ascii_draw {
 
     function onKeyDown(event: KeyboardEvent): void {
         if (!event.ctrlKey && !event.altKey && !event.shiftKey && !event.metaKey) {
-            var displacement: any = null;
+            var displacement: Array<number> = null;
             switch (event.keyCode) {
                 case 37: /* left arrow */
                     displacement = [0, -1];
@@ -155,9 +145,7 @@ module ascii_draw {
 
             if (displacement && begin_selection.isEqual(end_selection) &&
                                 begin_selection.isEqual(end_selection)) {
-                var pos = new CellPosition(begin_selection.row + displacement[0],
-                                           begin_selection.col + displacement[1]);
-                controller.setSelection(pos, pos);
+                controller.onArrowDown(displacement);
             }
         }
 
