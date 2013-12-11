@@ -108,10 +108,12 @@ var utils;
         };
 
         Rectangle.prototype.getHeight = function () {
+            // Warning: can be < 0 if this.isEmpty()
             return this.bottom_right.row - this.top_left.row + 1;
         };
 
         Rectangle.prototype.getWidth = function () {
+            // Warning: can be < 0 if this.isEmpty()
             return this.bottom_right.col - this.top_left.col + 1;
         };
 
@@ -230,7 +232,7 @@ var ascii_draw;
             function onMouseDown(target) {
                 // TODO: if current cell is selected change to move mode
                 selecting = true;
-                setSelection(ascii_draw.getCellPosition(target), ascii_draw.getCellPosition(target));
+                setHollowSelection(ascii_draw.getCellPosition(target), ascii_draw.getCellPosition(target));
                 drawRectangle(new Rectangle(ascii_draw.begin_selection, ascii_draw.end_selection, true));
             }
             RectangleController.onMouseDown = onMouseDown;
@@ -244,7 +246,7 @@ var ascii_draw;
                 var pos = ascii_draw.getCellPosition(target);
                 setMousePosition(pos);
                 if (selecting) {
-                    setSelection(ascii_draw.begin_selection, pos);
+                    setHollowSelection(ascii_draw.begin_selection, pos);
                     drawRectangle(new Rectangle(ascii_draw.begin_selection, ascii_draw.end_selection, true));
                 }
             }
@@ -256,11 +258,21 @@ var ascii_draw;
             RectangleController.onMouseLeave = onMouseLeave;
 
             function onArrowDown(displacement) {
-                console.log('arrowdown');
+                // Do nothing
             }
             RectangleController.onArrowDown = onArrowDown;
             function onKeyPress(character) {
-                console.log('keypress');
+                var rect_pieces = getHollowRectangle(new Rectangle(ascii_draw.begin_selection, ascii_draw.end_selection, true));
+                for (var piece = 0; piece < rect_pieces.length; piece++) {
+                    ascii_draw.applyToRectangle(rect_pieces[piece], function (cell) {
+                        writeToCell(cell, character);
+                    });
+                }
+                if (ascii_draw.begin_selection.isEqual(ascii_draw.end_selection)) {
+                    var displacement = [0, 1];
+                    var pos = new CellPosition(ascii_draw.begin_selection.row + displacement[0], ascii_draw.begin_selection.col + displacement[1]);
+                    setSelection(pos, pos);
+                }
             }
             RectangleController.onKeyPress = onKeyPress;
 
@@ -268,6 +280,7 @@ var ascii_draw;
                 console.log('exit');
                 var selection_button = document.getElementById('rectangle-button');
                 utils.removeClass(selection_button, 'pressed');
+                setHollowSelection(ascii_draw.begin_selection, ascii_draw.begin_selection);
             }
             RectangleController.exit = exit;
 
@@ -279,25 +292,25 @@ var ascii_draw;
 
                 // print first row: +---+
                 var first_row = ascii_draw.grid.rows[top];
-                first_row.cells[left].textContent = '+';
+                writeToCell(first_row.cells[left], '+');
                 for (var col = left + 1; col <= right - 1; col++) {
-                    first_row.cells[col].textContent = '-';
+                    writeToCell(first_row.cells[col], '-');
                 }
-                first_row.cells[right].textContent = '+';
+                writeToCell(first_row.cells[right], '+');
 
                 for (var row = top + 1; row <= bottom - 1; row++) {
                     var current_row = ascii_draw.grid.rows[row];
-                    current_row.cells[left].textContent = '|';
-                    current_row.cells[right].textContent = '|';
+                    writeToCell(current_row.cells[left], '|');
+                    writeToCell(current_row.cells[right], '|');
                 }
 
                 // print last row
                 var last_row = ascii_draw.grid.rows[bottom];
-                last_row.cells[left].textContent = '+';
+                writeToCell(last_row.cells[left], '+');
                 for (var col = left + 1; col <= right - 1; col++) {
-                    last_row.cells[col].textContent = '-';
+                    writeToCell(last_row.cells[col], '-');
                 }
-                last_row.cells[right].textContent = '+';
+                writeToCell(last_row.cells[right], '+');
             }
         })(controllers.RectangleController || (controllers.RectangleController = {}));
         var RectangleController = controllers.RectangleController;
@@ -350,10 +363,10 @@ var ascii_draw;
             SelectMoveController.onArrowDown = onArrowDown;
             function onKeyPress(character) {
                 ascii_draw.applyToRectangle(new Rectangle(ascii_draw.begin_selection, ascii_draw.end_selection, true), function (cell) {
-                    cell.children[0].textContent = character;
+                    writeToCell(cell, character);
                 });
-                var displacement = [0, 1];
-                if (displacement && ascii_draw.begin_selection.isEqual(ascii_draw.end_selection) && ascii_draw.begin_selection.isEqual(ascii_draw.end_selection)) {
+                if (ascii_draw.begin_selection.isEqual(ascii_draw.end_selection)) {
+                    var displacement = [0, 1];
                     var pos = new CellPosition(ascii_draw.begin_selection.row + displacement[0], ascii_draw.begin_selection.col + displacement[1]);
                     setSelection(pos, pos);
                 }
@@ -361,9 +374,9 @@ var ascii_draw;
             SelectMoveController.onKeyPress = onKeyPress;
 
             function exit() {
-                console.log('exit');
                 var selection_button = document.getElementById('selection-button');
                 utils.removeClass(selection_button, 'pressed');
+                setSelection(ascii_draw.begin_selection, ascii_draw.begin_selection);
             }
             SelectMoveController.exit = exit;
         })(controllers.SelectMoveController || (controllers.SelectMoveController = {}));
@@ -415,6 +428,53 @@ var ascii_draw;
             }
         }
 
+        function getHollowRectangle(rect) {
+            var top = rect.top_left.row;
+            var left = rect.top_left.col;
+            var bottom = rect.bottom_right.row;
+            var right = rect.bottom_right.col;
+
+            /* Build up to 4 rectangles depending on the dimentions of the
+            * surrounding rectangle: top (T), bottom (B), left (L), right (R).
+            * Examples:
+            *
+            *   TTTT  TT  T
+            *   L  R  LR  L
+            *   L  R  LR  L
+            *   BBBB  BB  B
+            *
+            *   TTTT  TT  T
+            *   BBBB  BB  B
+            *
+            *   TTTT  TT  T
+            */
+            var rect_pieces = [];
+
+            if (rect.isEmpty()) {
+                return rect_pieces;
+            }
+
+            // top
+            rect_pieces.push(new Rectangle(new CellPosition(top, left), new CellPosition(top, right)));
+
+            if (rect.getHeight() > 1) {
+                // bottom
+                rect_pieces.push(new Rectangle(new CellPosition(bottom, left), new CellPosition(bottom, right)));
+
+                if (rect.getHeight() > 2) {
+                    // left
+                    rect_pieces.push(new Rectangle(new CellPosition(top + 1, left), new CellPosition(bottom - 1, left)));
+
+                    if (rect.getWidth() > 1) {
+                        // right
+                        rect_pieces.push(new Rectangle(new CellPosition(top + 1, right), new CellPosition(bottom - 1, right)));
+                    }
+                }
+            }
+
+            return rect_pieces;
+        }
+
         function setHollowSelection(new_begin_selection, new_end_selection) {
             var new_selection = new Rectangle(new_begin_selection, new_end_selection, true);
             var old_selection = new Rectangle(ascii_draw.begin_selection, ascii_draw.end_selection, true);
@@ -426,8 +486,14 @@ var ascii_draw;
             ascii_draw.begin_selection = new_begin_selection;
             ascii_draw.end_selection = new_end_selection;
 
-            ascii_draw.applyToRectangle(old_selection, ascii_draw.setSelected, false);
-            ascii_draw.applyToRectangle(new_selection, ascii_draw.setSelected, true);
+            var rect_pieces = getHollowRectangle(old_selection);
+            for (var piece = 0; piece < rect_pieces.length; piece++) {
+                ascii_draw.applyToRectangle(rect_pieces[piece], ascii_draw.setSelected, false);
+            }
+            rect_pieces = getHollowRectangle(new_selection);
+            for (var piece = 0; piece < rect_pieces.length; piece++) {
+                ascii_draw.applyToRectangle(rect_pieces[piece], ascii_draw.setSelected, true);
+            }
 
             var selectionstatus = document.getElementById('selectionstatus');
             if (new_selection.getHeight() > 1 || new_selection.getWidth() > 1) {
@@ -435,6 +501,10 @@ var ascii_draw;
             } else {
                 selectionstatus.textContent = '';
             }
+        }
+
+        function writeToCell(cell, character) {
+            cell.children[0].textContent = character;
         }
     })(ascii_draw.controllers || (ascii_draw.controllers = {}));
     var controllers = ascii_draw.controllers;

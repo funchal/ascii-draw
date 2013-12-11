@@ -37,7 +37,7 @@ module ascii_draw {
             export function onMouseDown(target: HTMLTableCellElement): void {
                 // TODO: if current cell is selected change to move mode
                 selecting = true;
-                setSelection(getCellPosition(target), getCellPosition(target));
+                setHollowSelection(getCellPosition(target), getCellPosition(target));
                 drawRectangle(new Rectangle(begin_selection, end_selection, true /*normalize*/));
             }
 
@@ -49,7 +49,7 @@ module ascii_draw {
                 var pos = getCellPosition(target);
                 setMousePosition(pos);
                 if (selecting) {
-                    setSelection(begin_selection, pos);
+                    setHollowSelection(begin_selection, pos);
                     drawRectangle(new Rectangle(begin_selection, end_selection, true /*normalize*/));
                 }
             }
@@ -59,16 +59,29 @@ module ascii_draw {
             }
 
             export function onArrowDown(displacement: Array<number>): void {
-                console.log('arrowdown');
+                // Do nothing
             }
             export function onKeyPress(character: string): void {
-                console.log('keypress');
+                var rect_pieces = getHollowRectangle(new Rectangle(begin_selection, end_selection, true /*normalize*/));
+                for (var piece = 0; piece < rect_pieces.length; piece++) {
+                    applyToRectangle(rect_pieces[piece],
+                                     function(cell: HTMLTableCellElement) {
+                                        writeToCell(cell, character);
+                                     });
+                }
+                if (begin_selection.isEqual(end_selection)) {
+                    var displacement = [0, 1];
+                    var pos = new CellPosition(begin_selection.row + displacement[0],
+                                               begin_selection.col + displacement[1]);
+                    setSelection(pos, pos);
+                }
             }
 
             export function exit(): void {
                 console.log('exit');
                 var selection_button = document.getElementById('rectangle-button');
                 utils.removeClass(selection_button, 'pressed');
+                setHollowSelection(begin_selection, begin_selection);
             }
 
             function drawRectangle(rect: Rectangle):void {
@@ -79,26 +92,26 @@ module ascii_draw {
 
                 // print first row: +---+
                 var first_row = <HTMLTableRowElement>grid.rows[top];
-                first_row.cells[left].textContent = '+';
+                writeToCell(<HTMLTableCellElement>first_row.cells[left], '+');
                 for (var col = left + 1; col <= right - 1; col++) {
-                    first_row.cells[col].textContent = '-';
+                    writeToCell(<HTMLTableCellElement>first_row.cells[col], '-');
                 }
-                first_row.cells[right].textContent = '+';
+                writeToCell(<HTMLTableCellElement>first_row.cells[right], '+');
 
                 // print intermediate rows: |   |
                 for (var row = top + 1; row <= bottom - 1; row++) {
                     var current_row = <HTMLTableRowElement>grid.rows[row];
-                    current_row.cells[left].textContent = '|';
-                    current_row.cells[right].textContent = '|';
+                    writeToCell(<HTMLTableCellElement>current_row.cells[left], '|');
+                    writeToCell(<HTMLTableCellElement>current_row.cells[right], '|');
                 }
 
                 // print last row
                 var last_row = <HTMLTableRowElement>grid.rows[bottom];
-                last_row.cells[left].textContent = '+';
+                writeToCell(<HTMLTableCellElement>last_row.cells[left], '+');
                 for (var col = left + 1; col <= right - 1; col++) {
-                    last_row.cells[col].textContent = '-';
+                    writeToCell(<HTMLTableCellElement>last_row.cells[col], '-');
                 }
-                last_row.cells[right].textContent = '+';
+                writeToCell(<HTMLTableCellElement>last_row.cells[right], '+');
             }
         }
 
@@ -146,11 +159,10 @@ module ascii_draw {
             export function onKeyPress(character: string): void {
                 applyToRectangle(new Rectangle(begin_selection, end_selection, true /*normalize*/),
                                  function(cell: HTMLTableCellElement) {
-                                    cell.children[0].textContent = character;
+                                    writeToCell(cell, character);
                                  });
-                var displacement = [0, 1];
-                if (displacement && begin_selection.isEqual(end_selection) &&
-                                    begin_selection.isEqual(end_selection)) {
+                if (begin_selection.isEqual(end_selection)) {
+                    var displacement = [0, 1];
                     var pos = new CellPosition(begin_selection.row + displacement[0],
                                                begin_selection.col + displacement[1]);
                     setSelection(pos, pos);
@@ -158,9 +170,9 @@ module ascii_draw {
             }
 
             export function exit(): void {
-                console.log('exit');
                 var selection_button = document.getElementById('selection-button');
                 utils.removeClass(selection_button, 'pressed');
+                setSelection(begin_selection, begin_selection);
             }
         }
 
@@ -216,6 +228,58 @@ module ascii_draw {
             }
         }
 
+        function getHollowRectangle(rect: Rectangle): Array<Rectangle> {
+            var top = rect.top_left.row;
+            var left = rect.top_left.col;
+            var bottom = rect.bottom_right.row;
+            var right = rect.bottom_right.col;
+
+            /* Build up to 4 rectangles depending on the dimentions of the
+             * surrounding rectangle: top (T), bottom (B), left (L), right (R).
+             * Examples:
+             *
+             *   TTTT  TT  T
+             *   L  R  LR  L
+             *   L  R  LR  L
+             *   BBBB  BB  B
+             *
+             *   TTTT  TT  T
+             *   BBBB  BB  B
+             *
+             *   TTTT  TT  T
+             */
+
+            var rect_pieces: Array<Rectangle> = [];
+
+            if (rect.isEmpty()) {
+                return rect_pieces;
+            }
+
+            // top
+            rect_pieces.push(new Rectangle(new CellPosition(top, left),
+                                           new CellPosition(top, right)));
+
+            if (rect.getHeight() > 1) {
+                // bottom
+                rect_pieces.push(new Rectangle(new CellPosition(bottom, left),
+                                               new CellPosition(bottom, right)));
+
+                if (rect.getHeight() > 2) {
+                    // left
+                    rect_pieces.push(new Rectangle(new CellPosition(top+1, left),
+                                                   new CellPosition(bottom-1, left)));
+
+                    if (rect.getWidth() > 1) {
+                        // right
+                        rect_pieces.push(new Rectangle(new CellPosition(top+1, right),
+                                                       new CellPosition(bottom-1, right)));
+                    }
+                }
+            }
+
+            return rect_pieces;
+        }
+
         function setHollowSelection(new_begin_selection: CellPosition,
                                     new_end_selection: CellPosition): void {
             var new_selection = new Rectangle(new_begin_selection,
@@ -232,8 +296,14 @@ module ascii_draw {
             begin_selection = new_begin_selection;
             end_selection = new_end_selection;
 
-            applyToRectangle(old_selection, setSelected, false);
-            applyToRectangle(new_selection, setSelected, true);
+            var rect_pieces = getHollowRectangle(old_selection);
+            for (var piece = 0; piece < rect_pieces.length; piece++) {
+                applyToRectangle(rect_pieces[piece], setSelected, false);
+            }
+            rect_pieces = getHollowRectangle(new_selection);
+            for (var piece = 0; piece < rect_pieces.length; piece++) {
+                applyToRectangle(rect_pieces[piece], setSelected, true);
+            }
 
             var selectionstatus = document.getElementById('selectionstatus');
             if (new_selection.getHeight() > 1 || new_selection.getWidth() > 1) {
@@ -244,5 +314,8 @@ module ascii_draw {
             }
         }
 
+        function writeToCell(cell: HTMLTableCellElement, character: string): void {
+            cell.children[0].textContent = character;
+        }
     }
 }

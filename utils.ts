@@ -112,10 +112,12 @@ module utils {
         }
 
         getHeight(): number {
+            // Warning: can be < 0 if this.isEmpty()
             return this.bottom_right.row - this.top_left.row + 1;
         }
 
         getWidth(): number {
+            // Warning: can be < 0 if this.isEmpty()
             return this.bottom_right.col - this.top_left.col + 1;
         }
 
