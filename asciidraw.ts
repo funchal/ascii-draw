@@ -1,3 +1,6 @@
+///<reference path='controllers.ts'/>
+///<reference path='utils.ts'/>
+
 module ascii_draw {
     import Rectangle = utils.Rectangle;
     import CellPosition = utils.Point;
@@ -86,7 +89,7 @@ module ascii_draw {
                                 begin_selection.isEqual(end_selection)) {
                 var pos = new CellPosition(begin_selection.row + displacement[0],
                                            begin_selection.col + displacement[1]);
-                SelectMoveController.setSelection(pos, pos);
+                controller.setSelection(pos, pos);
             }
             event.preventDefault();
         }
@@ -120,6 +123,7 @@ module ascii_draw {
                     event.preventDefault();
                     break;
                 case 8: /* backspace */
+                    // TODO: print a space character
                     event.preventDefault();
                     break;
                 case 27: /* escape */
@@ -134,7 +138,7 @@ module ascii_draw {
                                 begin_selection.isEqual(end_selection)) {
                 var pos = new CellPosition(begin_selection.row + displacement[0],
                                            begin_selection.col + displacement[1]);
-                SelectMoveController.setSelection(pos, pos);
+                controller.setSelection(pos, pos);
             }
         }
 
@@ -287,7 +291,7 @@ module ascii_draw {
         return function(): void {
             controller.exit();
             controller = new_controller;
-            controller.init();
+            controller.reset();
         }
     }
 

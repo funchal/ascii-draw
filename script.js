@@ -169,10 +169,14 @@ var ascii_draw;
         (function (RectangleController) {
             function init() {
                 console.log('init');
+                reset();
+            }
+            RectangleController.init = init;
+            function reset() {
                 var selection_button = document.getElementById('rectangle-button');
                 utils.addClass(selection_button, 'pressed');
             }
-            RectangleController.init = init;
+            RectangleController.reset = reset;
             function onMouseDown(target) {
                 console.log('down');
             }
@@ -203,13 +207,19 @@ var ascii_draw;
             var mouse_pos = null;
 
             function init() {
-                var selection_button = document.getElementById('selection-button');
-                utils.addClass(selection_button, 'pressed');
+                console.log('INIT');
+                reset();
                 ascii_draw.begin_selection = new CellPosition(0, 0);
                 ascii_draw.end_selection = ascii_draw.begin_selection;
                 ascii_draw.setSelected(ascii_draw.getCellAt(ascii_draw.begin_selection), true);
             }
             SelectMoveController.init = init;
+
+            function reset() {
+                var selection_button = document.getElementById('selection-button');
+                utils.addClass(selection_button, 'pressed');
+            }
+            SelectMoveController.reset = reset;
 
             function onMouseDown(target) {
                 // TODO: if current cell is selected change to move mode
@@ -295,6 +305,8 @@ var ascii_draw;
     })(ascii_draw.controllers || (ascii_draw.controllers = {}));
     var controllers = ascii_draw.controllers;
 })(ascii_draw || (ascii_draw = {}));
+///<reference path='controllers.ts'/>
+///<reference path='utils.ts'/>
 var ascii_draw;
 (function (ascii_draw) {
     var Rectangle = utils.Rectangle;
@@ -303,10 +315,10 @@ var ascii_draw;
     var SelectMoveController = ascii_draw.controllers.SelectMoveController;
     var RectangleController = ascii_draw.controllers.RectangleController;
 
+    ascii_draw.grid;
+
     ascii_draw.begin_selection;
     ascii_draw.end_selection;
-
-    ascii_draw.grid;
 
     var emptyCell = ' ';
 
@@ -584,7 +596,7 @@ var ascii_draw;
         return function () {
             controller.exit();
             controller = new_controller;
-            controller.init();
+            controller.reset();
         };
     }
 

@@ -8,6 +8,7 @@ module ascii_draw {
 
         export interface Controller {
             init(): void;
+            reset(): void;
             onMouseDown(target: HTMLTableCellElement): void;
             onMouseUp(): void;
             onMouseOver(target: HTMLTableCellElement): void;
@@ -18,6 +19,9 @@ module ascii_draw {
         export module RectangleController {
             export function init(): void {
                 console.log('init');
+                reset();
+            }
+            export function reset(): void {
                 var selection_button = document.getElementById('rectangle-button');
                 utils.addClass(selection_button, 'pressed');
             }
@@ -38,18 +42,24 @@ module ascii_draw {
                 var selection_button = document.getElementById('rectangle-button');
                 utils.removeClass(selection_button, 'pressed');
             }
-        }    
+
+            function drawRectangle()
+        }
 
         export module SelectMoveController {
             var selecting = false;
             var mouse_pos: CellPosition = null;
 
             export function init(): void {
-                var selection_button = document.getElementById('selection-button');
-                utils.addClass(selection_button, 'pressed');
+                reset();
                 begin_selection = new CellPosition(0, 0);
                 end_selection = begin_selection;
                 setSelected(getCellAt(begin_selection), true);
+            }
+
+            export function reset(): void {
+                var selection_button = document.getElementById('selection-button');
+                utils.addClass(selection_button, 'pressed');
             }
 
             export function onMouseDown(target: HTMLTableCellElement): void {
