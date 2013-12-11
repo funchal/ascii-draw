@@ -13,8 +13,6 @@ module ascii_draw {
     import Command = commands.Command;
 
     export var grid: HTMLTableElement;
-    export var begin_selection: CellPosition;
-    export var end_selection: CellPosition;
     var copypastearea: HTMLTextAreaElement;
     export var selection_button: HTMLButtonElement;
     export var rectangle_button: HTMLButtonElement;
@@ -26,12 +24,23 @@ module ascii_draw {
     var emptyCell: string = ' ';
     var controller: Controller = SelectMoveController;
 
-    class CommandA implements Command {
+    class ChangeSelection implements Command {
+        constructor(public save_selection: Array<Rectangle>) {}
+
         execute(): void {
-            console.log('CommandA execute');
+            console.log('execute ChangeSelection');
+            // var old_selection = selection;
+            // clear selection
+            // for each in array, setSelection(this.save_selection);
+            // this.save_selection = old_selection;
         }
+
         unexecute(): void {
-            console.log('CommandA unexecute');
+            console.log('unexecute ChangeSelection');
+            // var new_selection = selection;
+            // clear selection
+            // for each in array, setSelection(this.save_selection);
+            // this.save_selection = new_selection;
         }
     }
 
@@ -165,8 +174,8 @@ module ascii_draw {
                     break;
             }
 
-            if (displacement && begin_selection.isEqual(end_selection) &&
-                                begin_selection.isEqual(end_selection)) {
+            if (displacement &&
+                controllers.begin_selection.isEqual(controllers.end_selection)) {
                 controller.onArrowDown(displacement);
             }
         }
@@ -335,13 +344,6 @@ module ascii_draw {
         gridstatus = <HTMLDivElement>document.getElementById('gridstatus');
         selectionstatus = <HTMLDivElement>document.getElementById('selectionstatus');
         mousestatus = <HTMLDivElement>document.getElementById('mousestatus');
-
-        commands.invoke(new CommandA());
-        commands.invoke(new CommandB());
-        commands.invoke(new CommandA());
-        commands.invoke(new CommandA());
-        commands.invoke(new CommandB());
-        commands.invoke(new CommandA());
 
         changeFont();
         setGridSize(50, 120);

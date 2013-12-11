@@ -8,6 +8,9 @@ module ascii_draw {
         import Rectangle = utils.Rectangle;
         import CellPosition = utils.Point;
 
+        export var begin_selection: CellPosition;
+        export var end_selection: CellPosition;
+
         var selecting = false;
         var mouse_pos: CellPosition = null;
 
@@ -133,7 +136,10 @@ module ascii_draw {
             }
 
             export function onMouseUp(): void {
-                selecting = false;
+                if (selecting) {
+                    //commands.invoke(new ChangeSelection(begin_selection, end_selection));
+                    selecting = false;
+                }
             }
 
             export function onMouseOver(target: HTMLTableCellElement): void {
@@ -188,8 +194,8 @@ module ascii_draw {
             }
         }
 
-        function setSelection(new_begin_selection: CellPosition,
-                              new_end_selection: CellPosition): void {
+        export function setSelection(new_begin_selection: CellPosition,
+                                     new_end_selection: CellPosition): void {
             var new_selection = new Rectangle(new_begin_selection,
                                               new_end_selection,
                                               true /*normalize*/);

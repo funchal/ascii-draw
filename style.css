@@ -31,6 +31,7 @@ table {
 td {
     text-align: center;
     border: 1px solid #DDD;
+    overflow: hidden;
 }
 
 img {
@@ -101,9 +102,8 @@ button img {
     background-color: #FF0;
 }
 
-.mouse div {
-    margin: -1px;
-    border: 1px solid #000;
+.mouse {
+    background-color: #F80;
 }
 
 #toolbar {
