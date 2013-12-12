@@ -10,29 +10,27 @@ module ascii_draw {
         import Rectangle = utils.Rectangle;
         import CellPosition = utils.Point;
         import Cell = grid.Cell;
-        import Command = commands.Command;
 
         export interface Controller {
-            init(): void;
-            reset(): void;
+            activate(): void;
+            deactivate(): void;
             onMouseDown(target: Cell): void;
             onMouseUp(): void;
             onMouseOver(target: Cell): void;
             onMouseLeave(): void;
             onArrowDown(displacement: Array<number>): void;
             onKeyPress(character: string): void;
-            exit(): void;
         }
 
         export module RectangleController {
-            export function init(): void {
-                console.log('init');
-                reset();
+            export function activate(): void {
+                console.log('activate RectangleController');
+                utils.addClass(rectangle_button, 'pressed');
             }
 
-            export function reset(): void {
-                console.log('reset');
-                utils.addClass(rectangle_button, 'pressed');
+            export function deactivate(): void {
+                console.log('deactivate RectangleController');
+                utils.removeClass(rectangle_button, 'pressed');
             }
 
             export function onMouseDown(target: Cell): void {
@@ -43,7 +41,14 @@ module ascii_draw {
             }
 
             export function onMouseUp(): void {
-                highlighting = false;
+                if (highlighting) {
+                    highlighting = false;
+
+                    var new_selection = setHollowHighlight(new CellPosition(0, 0), new CellPosition(0, 0));
+                    highlighting = false;
+
+                    commands.invoke(new commands.ReplaceSelection(new_selection));
+                }
             }
 
             export function onMouseOver(target: Cell): void {
@@ -60,26 +65,24 @@ module ascii_draw {
             }
 
             export function onArrowDown(displacement: Array<number>): void {
-                // Do nothing
+                if (highlighting) {
+                    return;
+                }
+                selection.move(displacement[0], displacement[1]);
             }
 
             export function onKeyPress(character: string): void {
-                var rect_pieces = getHollowRectangle(new Rectangle(begin_highlight, end_highlight, true /*normalize*/));
-                for (var piece = 0; piece < rect_pieces.length; piece++) {
-                    applyToRectangle(rect_pieces[piece], writeToCell, character);
+                if (highlighting) {
+                    return;
                 }
-                if (begin_highlight.isEqual(end_highlight)) {
-                    var displacement = [0, 1];
-                    var pos = new CellPosition(begin_highlight.row + displacement[0],
-                                               begin_highlight.col + displacement[1]);
-                    setHighlight(pos, pos);
-                }
-            }
 
-            export function exit(): void {
-                console.log('exit');
-                utils.removeClass(rectangle_button, 'pressed');
-                setHollowHighlight(begin_highlight, begin_highlight);
+                for (var i = 0; i < selection.contents.length; i++) {
+                    applyToRectangle(selection.contents[i], writeToCell, character);
+                }
+
+                if (selection.isUnit()) {
+                    selection.move(0, 1);
+                }
             }
 
             function drawRectangle(rect: Rectangle):void {
@@ -114,16 +117,14 @@ module ascii_draw {
         }
 
         export module SelectMoveController {
-            export function init(): void {
-                reset();
-                begin_highlight = new CellPosition(0, 0);
-                end_highlight = begin_highlight;
-                selection.clear();
-                selection.add(new Rectangle(begin_highlight, end_highlight, true /*normalize*/));
+            export function activate(): void {
+                console.log('activate SelectMoveController');
+                utils.addClass(selection_button, 'pressed');
             }
 
-            export function reset(): void {
-                utils.addClass(selection_button, 'pressed');
+            export function deactivate(): void {
+                console.log('deactivate SelectMoveController');
+                utils.removeClass(selection_button, 'pressed');
             }
 
             export function onMouseDown(target: Cell): void {
@@ -132,27 +133,13 @@ module ascii_draw {
                 setHighlight(grid.getCellPosition(target), grid.getCellPosition(target));
             }
 
-            class ReplaceSelection implements Command {
-                constructor(public save_selection: Array<Rectangle>) {}
-
-                execute(): void {
-                    console.log('ReplaceSelection execute');
-                    this.save_selection = selection.set(this.save_selection);
-                }
-
-                unexecute(): void {
-                    console.log('ReplaceSelection unexecute');
-                    this.save_selection = selection.set(this.save_selection);
-                }
-            }
-
             export function onMouseUp(): void {
                 if (highlighting) {
                     var new_selection = new Rectangle(begin_highlight, end_highlight, true /*normalize*/);
                     setHighlight(new CellPosition(0, 0), new CellPosition(0, 0));
                     highlighting = false;
 
-                    commands.invoke(new ReplaceSelection([new_selection]));
+                    commands.invoke(new commands.ReplaceSelection([new_selection]));
                 }
             }
 
@@ -184,15 +171,10 @@ module ascii_draw {
                     setHighlight(pos, pos);
                 }
             }
-
-            export function exit(): void {
-                utils.removeClass(selection_button, 'pressed');
-                setHighlight(begin_highlight, begin_highlight);
-            }
         }
 
-        export var begin_highlight: CellPosition;
-        export var end_highlight: CellPosition;
+        export var begin_highlight: CellPosition = new CellPosition(0, 0);
+        export var end_highlight: CellPosition = begin_highlight;
 
         var highlighting = false;
         var mouse_pos: CellPosition = null;
@@ -201,14 +183,16 @@ module ascii_draw {
 
         export function swap(new_controller: Controller): () => void {
             return function(): void {
-                current.exit();
+                current.deactivate();
                 current = new_controller;
-                current.reset();
+                current.activate();
             }
         }
 
         export function init() : void {
-            current.init();
+            current.activate();
+            selection.clear();
+            selection.add(new Rectangle(begin_highlight, end_highlight, true /*normalize*/));
         }
 
         function setMousePosition(new_pos: CellPosition): void {
@@ -275,7 +259,7 @@ module ascii_draw {
         }
 
         function setHollowHighlight(new_begin_highlight: CellPosition,
-                                    new_end_highlight: CellPosition): void {
+                                    new_end_highlight: CellPosition): Array<Rectangle> {
             var new_highlight = new Rectangle(new_begin_highlight,
                                               new_end_highlight,
                                               true /*normalize*/);
@@ -290,14 +274,16 @@ module ascii_draw {
             begin_highlight = new_begin_highlight;
             end_highlight = new_end_highlight;
 
-            var rect_pieces = getHollowRectangle(old_highlight);
-            for (var piece = 0; piece < rect_pieces.length; piece++) {
-                applyToRectangle(rect_pieces[piece], setHighlighted, false);
+            var old_pieces = getHollowRectangle(old_highlight);
+            for (var piece = 0; piece < old_pieces.length; piece++) {
+                applyToRectangle(old_pieces[piece], setHighlighted, false);
             }
-            rect_pieces = getHollowRectangle(new_highlight);
-            for (var piece = 0; piece < rect_pieces.length; piece++) {
-                applyToRectangle(rect_pieces[piece], setHighlighted, true);
+
+            var new_pieces = getHollowRectangle(new_highlight);
+            for (var piece = 0; piece < new_pieces.length; piece++) {
+                applyToRectangle(new_pieces[piece], setHighlighted, true);
             }
+
             var selectionstatus = document.getElementById('selectionstatus');
             if (new_highlight.getHeight() > 1 || new_highlight.getWidth() > 1) {
                 selectionstatus.textContent = 'Highlight: ' +
@@ -305,6 +291,8 @@ module ascii_draw {
             } else {
                 selectionstatus.textContent = '';
             }
+
+            return old_pieces;
         }
 
         function writeToCell(cell: Cell, character: string): void {

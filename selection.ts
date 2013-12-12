@@ -5,7 +5,7 @@ module ascii_draw {
         import Rectangle = utils.Rectangle;
         import Cell = grid.Cell;
 
-        var contents: Array<Rectangle> = [];
+        export var contents: Array<Rectangle> = [];
 
         export function clear(): void {
             for (var i = 0; i < contents.length; i++) {
@@ -35,6 +35,23 @@ module ascii_draw {
         export function remove(index: number): void {
             applyToRectangle(contents[index], selectCell, false);
             contents.splice(index, 1);
+        }
+
+        export function isUnit(): boolean {
+            return (selection.contents.length == 1 &&
+                    selection.contents[0].isUnit());
+        }
+
+        export function move(rows: number, cols: number): void {
+            for (var i = 0; i < contents.length; i++) {
+                applyToRectangle(contents[i], selectCell, false);
+            }
+            for (var i = 0; i < contents.length; i++) {
+                contents[i].move(rows, cols);
+            }
+            for (var i = 0; i < contents.length; i++) {
+                applyToRectangle(contents[i], selectCell, true);
+            }
         }
 
         export function getContents(): string {

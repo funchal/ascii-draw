@@ -1,7 +1,11 @@
+///<reference path='utils.ts'/>
+
 'use strict';
 
 module ascii_draw {
     export module commands {
+        import Rectangle = utils.Rectangle;
+
         var history: Array<Command> = [];
         var limit = 100;
         var current = 0;
@@ -12,6 +16,20 @@ module ascii_draw {
         export interface Command {
             execute(): void;
             unexecute(): void;
+        }
+
+        export class ReplaceSelection implements Command {
+            constructor(public save_selection: Array<Rectangle>) {}
+
+            execute(): void {
+                console.log('execute ReplaceSelection');
+                this.save_selection = selection.set(this.save_selection);
+            }
+
+            unexecute(): void {
+                console.log('unexecute ReplaceSelection');
+                this.save_selection = selection.set(this.save_selection);
+            }
         }
 
         export function init(): void {
@@ -76,6 +94,5 @@ module ascii_draw {
                 redo_button.disabled = true;
             }
         }
-
     }
 }

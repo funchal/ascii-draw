@@ -122,6 +122,10 @@ var utils;
             return this.bottom_right.col - this.top_left.col + 1;
         };
 
+        Rectangle.prototype.isUnit = function () {
+            return (this.top_left.row == this.bottom_right.row) || (this.top_left.col == this.bottom_right.col);
+        };
+
         Rectangle.prototype.isEmpty = function () {
             return (this.top_left.row > this.bottom_right.row) || (this.top_left.col > this.bottom_right.col);
         };
@@ -193,6 +197,13 @@ var utils;
                 rect_array.push(bottom_rectangle);
             }
             return rect_array;
+        };
+
+        Rectangle.prototype.move = function (rows, cols) {
+            this.top_left.row += rows;
+            this.top_left.col += cols;
+            this.bottom_right.row += rows;
+            this.bottom_right.col += cols;
         };
 
         Rectangle.prototype.toString = function () {
@@ -293,24 +304,24 @@ var ascii_draw;
     (function (selection) {
         var Rectangle = utils.Rectangle;
 
-        var contents = [];
+        selection.contents = [];
 
         function clear() {
-            for (var i = 0; i < contents.length; i++) {
-                ascii_draw.applyToRectangle(contents[i], selectCell, false);
+            for (var i = 0; i < selection.contents.length; i++) {
+                ascii_draw.applyToRectangle(selection.contents[i], selectCell, false);
             }
-            contents = [];
+            selection.contents = [];
         }
         selection.clear = clear;
 
         function set(new_contents) {
-            var old_contents = contents;
-            for (var i = 0; i < contents.length; i++) {
-                ascii_draw.applyToRectangle(contents[i], selectCell, false);
+            var old_contents = selection.contents;
+            for (var i = 0; i < selection.contents.length; i++) {
+                ascii_draw.applyToRectangle(selection.contents[i], selectCell, false);
             }
-            contents = new_contents;
-            for (var i = 0; i < contents.length; i++) {
-                ascii_draw.applyToRectangle(contents[i], selectCell, true);
+            selection.contents = new_contents;
+            for (var i = 0; i < selection.contents.length; i++) {
+                ascii_draw.applyToRectangle(selection.contents[i], selectCell, true);
             }
             return old_contents;
         }
@@ -319,15 +330,33 @@ var ascii_draw;
         /* must not overlap any existing selection */
         function add(sel) {
             ascii_draw.applyToRectangle(sel, selectCell, true);
-            contents.push(sel);
+            selection.contents.push(sel);
         }
         selection.add = add;
 
         function remove(index) {
-            ascii_draw.applyToRectangle(contents[index], selectCell, false);
-            contents.splice(index, 1);
+            ascii_draw.applyToRectangle(selection.contents[index], selectCell, false);
+            selection.contents.splice(index, 1);
         }
         selection.remove = remove;
+
+        function isUnit() {
+            return (selection.contents.length == 1 && selection.contents[0].isUnit());
+        }
+        selection.isUnit = isUnit;
+
+        function move(rows, cols) {
+            for (var i = 0; i < selection.contents.length; i++) {
+                ascii_draw.applyToRectangle(selection.contents[i], selectCell, false);
+            }
+            for (var i = 0; i < selection.contents.length; i++) {
+                selection.contents[i].move(rows, cols);
+            }
+            for (var i = 0; i < selection.contents.length; i++) {
+                ascii_draw.applyToRectangle(selection.contents[i], selectCell, true);
+            }
+        }
+        selection.move = move;
 
         function getContents() {
             return 'content\ncontent\ncontent\ncontent\ncontent\ncontent\n';
@@ -349,16 +378,36 @@ var ascii_draw;
     })(ascii_draw.selection || (ascii_draw.selection = {}));
     var selection = ascii_draw.selection;
 })(ascii_draw || (ascii_draw = {}));
+///<reference path='utils.ts'/>
 'use strict';
 var ascii_draw;
 (function (ascii_draw) {
     (function (commands) {
+        var Rectangle = utils.Rectangle;
+
         var history = [];
         var limit = 100;
         var current = 0;
 
         var redo_button;
         var undo_button;
+
+        var ReplaceSelection = (function () {
+            function ReplaceSelection(save_selection) {
+                this.save_selection = save_selection;
+            }
+            ReplaceSelection.prototype.execute = function () {
+                console.log('execute ReplaceSelection');
+                this.save_selection = ascii_draw.selection.set(this.save_selection);
+            };
+
+            ReplaceSelection.prototype.unexecute = function () {
+                console.log('unexecute ReplaceSelection');
+                this.save_selection = ascii_draw.selection.set(this.save_selection);
+            };
+            return ReplaceSelection;
+        })();
+        commands.ReplaceSelection = ReplaceSelection;
 
         function init() {
             undo_button = document.getElementById('undo-button');
@@ -441,17 +490,17 @@ var ascii_draw;
         var CellPosition = utils.Point;
 
         (function (RectangleController) {
-            function init() {
-                console.log('init');
-                reset();
-            }
-            RectangleController.init = init;
-
-            function reset() {
-                console.log('reset');
+            function activate() {
+                console.log('activate RectangleController');
                 utils.addClass(ascii_draw.rectangle_button, 'pressed');
             }
-            RectangleController.reset = reset;
+            RectangleController.activate = activate;
+
+            function deactivate() {
+                console.log('deactivate RectangleController');
+                utils.removeClass(ascii_draw.rectangle_button, 'pressed');
+            }
+            RectangleController.deactivate = deactivate;
 
             function onMouseDown(target) {
                 // TODO: if current cell is highlighted change to move mode
@@ -462,7 +511,14 @@ var ascii_draw;
             RectangleController.onMouseDown = onMouseDown;
 
             function onMouseUp() {
-                highlighting = false;
+                if (highlighting) {
+                    highlighting = false;
+
+                    var new_selection = setHollowHighlight(new CellPosition(0, 0), new CellPosition(0, 0));
+                    highlighting = false;
+
+                    ascii_draw.commands.invoke(new ascii_draw.commands.ReplaceSelection(new_selection));
+                }
             }
             RectangleController.onMouseUp = onMouseUp;
 
@@ -482,29 +538,26 @@ var ascii_draw;
             RectangleController.onMouseLeave = onMouseLeave;
 
             function onArrowDown(displacement) {
-                // Do nothing
+                if (highlighting) {
+                    return;
+                }
+                ascii_draw.selection.move(displacement[0], displacement[1]);
             }
             RectangleController.onArrowDown = onArrowDown;
 
             function onKeyPress(character) {
-                var rect_pieces = getHollowRectangle(new Rectangle(controllers.begin_highlight, controllers.end_highlight, true));
-                for (var piece = 0; piece < rect_pieces.length; piece++) {
-                    ascii_draw.applyToRectangle(rect_pieces[piece], writeToCell, character);
+                if (highlighting) {
+                    return;
                 }
-                if (controllers.begin_highlight.isEqual(controllers.end_highlight)) {
-                    var displacement = [0, 1];
-                    var pos = new CellPosition(controllers.begin_highlight.row + displacement[0], controllers.begin_highlight.col + displacement[1]);
-                    controllers.setHighlight(pos, pos);
+                for (var i = 0; i < ascii_draw.selection.contents.length; i++) {
+                    ascii_draw.applyToRectangle(ascii_draw.selection.contents[i], writeToCell, character);
+                }
+
+                if (ascii_draw.selection.isUnit()) {
+                    ascii_draw.selection.move(0, 1);
                 }
             }
             RectangleController.onKeyPress = onKeyPress;
-
-            function exit() {
-                console.log('exit');
-                utils.removeClass(ascii_draw.rectangle_button, 'pressed');
-                setHollowHighlight(controllers.begin_highlight, controllers.begin_highlight);
-            }
-            RectangleController.exit = exit;
 
             function drawRectangle(rect) {
                 var top = rect.top_left.row;
@@ -538,19 +591,17 @@ var ascii_draw;
         var RectangleController = controllers.RectangleController;
 
         (function (SelectMoveController) {
-            function init() {
-                reset();
-                controllers.begin_highlight = new CellPosition(0, 0);
-                controllers.end_highlight = controllers.begin_highlight;
-                ascii_draw.selection.clear();
-                ascii_draw.selection.add(new Rectangle(controllers.begin_highlight, controllers.end_highlight, true));
-            }
-            SelectMoveController.init = init;
-
-            function reset() {
+            function activate() {
+                console.log('activate SelectMoveController');
                 utils.addClass(ascii_draw.selection_button, 'pressed');
             }
-            SelectMoveController.reset = reset;
+            SelectMoveController.activate = activate;
+
+            function deactivate() {
+                console.log('deactivate SelectMoveController');
+                utils.removeClass(ascii_draw.selection_button, 'pressed');
+            }
+            SelectMoveController.deactivate = deactivate;
 
             function onMouseDown(target) {
                 // TODO: if current cell is highlighted change to move mode
@@ -559,29 +610,13 @@ var ascii_draw;
             }
             SelectMoveController.onMouseDown = onMouseDown;
 
-            var ReplaceSelection = (function () {
-                function ReplaceSelection(save_selection) {
-                    this.save_selection = save_selection;
-                }
-                ReplaceSelection.prototype.execute = function () {
-                    console.log('ReplaceSelection execute');
-                    this.save_selection = ascii_draw.selection.set(this.save_selection);
-                };
-
-                ReplaceSelection.prototype.unexecute = function () {
-                    console.log('ReplaceSelection unexecute');
-                    this.save_selection = ascii_draw.selection.set(this.save_selection);
-                };
-                return ReplaceSelection;
-            })();
-
             function onMouseUp() {
                 if (highlighting) {
                     var new_selection = new Rectangle(controllers.begin_highlight, controllers.end_highlight, true);
                     controllers.setHighlight(new CellPosition(0, 0), new CellPosition(0, 0));
                     highlighting = false;
 
-                    ascii_draw.commands.invoke(new ReplaceSelection([new_selection]));
+                    ascii_draw.commands.invoke(new ascii_draw.commands.ReplaceSelection([new_selection]));
                 }
             }
             SelectMoveController.onMouseUp = onMouseUp;
@@ -614,17 +649,11 @@ var ascii_draw;
                 }
             }
             SelectMoveController.onKeyPress = onKeyPress;
-
-            function exit() {
-                utils.removeClass(ascii_draw.selection_button, 'pressed');
-                controllers.setHighlight(controllers.begin_highlight, controllers.begin_highlight);
-            }
-            SelectMoveController.exit = exit;
         })(controllers.SelectMoveController || (controllers.SelectMoveController = {}));
         var SelectMoveController = controllers.SelectMoveController;
 
-        controllers.begin_highlight;
-        controllers.end_highlight;
+        controllers.begin_highlight = new CellPosition(0, 0);
+        controllers.end_highlight = controllers.begin_highlight;
 
         var highlighting = false;
         var mouse_pos = null;
@@ -633,15 +662,17 @@ var ascii_draw;
 
         function swap(new_controller) {
             return function () {
-                controllers.current.exit();
+                controllers.current.deactivate();
                 controllers.current = new_controller;
-                controllers.current.reset();
+                controllers.current.activate();
             };
         }
         controllers.swap = swap;
 
         function init() {
-            controllers.current.init();
+            controllers.current.activate();
+            ascii_draw.selection.clear();
+            ascii_draw.selection.add(new Rectangle(controllers.begin_highlight, controllers.end_highlight, true));
         }
         controllers.init = init;
 
@@ -710,20 +741,24 @@ var ascii_draw;
             controllers.begin_highlight = new_begin_highlight;
             controllers.end_highlight = new_end_highlight;
 
-            var rect_pieces = getHollowRectangle(old_highlight);
-            for (var piece = 0; piece < rect_pieces.length; piece++) {
-                ascii_draw.applyToRectangle(rect_pieces[piece], setHighlighted, false);
+            var old_pieces = getHollowRectangle(old_highlight);
+            for (var piece = 0; piece < old_pieces.length; piece++) {
+                ascii_draw.applyToRectangle(old_pieces[piece], setHighlighted, false);
             }
-            rect_pieces = getHollowRectangle(new_highlight);
-            for (var piece = 0; piece < rect_pieces.length; piece++) {
-                ascii_draw.applyToRectangle(rect_pieces[piece], setHighlighted, true);
+
+            var new_pieces = getHollowRectangle(new_highlight);
+            for (var piece = 0; piece < new_pieces.length; piece++) {
+                ascii_draw.applyToRectangle(new_pieces[piece], setHighlighted, true);
             }
+
             var selectionstatus = document.getElementById('selectionstatus');
             if (new_highlight.getHeight() > 1 || new_highlight.getWidth() > 1) {
                 selectionstatus.textContent = 'Highlight: ' + new_highlight.getHeight() + 'x' + new_highlight.getWidth();
             } else {
                 selectionstatus.textContent = '';
             }
+
+            return old_pieces;
         }
 
         function writeToCell(cell, character) {
@@ -857,7 +892,7 @@ var ascii_draw;
                     break;
             }
 
-            if (displacement && ascii_draw.controllers.begin_highlight.isEqual(ascii_draw.controllers.end_highlight)) {
+            if (displacement !== null) {
                 ascii_draw.controllers.current.onArrowDown(displacement);
             }
         }

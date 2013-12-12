@@ -113,8 +113,7 @@ module ascii_draw {
                     break;
             }
 
-            if (displacement &&
-                controllers.begin_highlight.isEqual(controllers.end_highlight)) {
+            if (displacement !== null) {
                 controllers.current.onArrowDown(displacement);
             }
         }

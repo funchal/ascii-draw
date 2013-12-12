@@ -125,6 +125,11 @@ module utils {
             return this.bottom_right.col - this.top_left.col + 1;
         }
 
+        isUnit(): boolean {
+            return (this.top_left.row == this.bottom_right.row) ||
+                   (this.top_left.col == this.bottom_right.col);
+        }
+
         isEmpty(): boolean {
             return (this.top_left.row > this.bottom_right.row) ||
                    (this.top_left.col > this.bottom_right.col);
@@ -206,6 +211,13 @@ module utils {
                 rect_array.push(bottom_rectangle);
             }
             return rect_array;
+        }
+
+        move(rows: number, cols: number) {
+            this.top_left.row += rows;
+            this.top_left.col += cols;
+            this.bottom_right.row += rows;
+            this.bottom_right.col += cols;
         }
 
         toString(): string {

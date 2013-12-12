@@ -21,7 +21,7 @@ clean:
 check:
 	jshint -c jshint.json script.js
 
-script.js: asciidraw.ts $(MAKEFILE_LIST)
+script.js: asciidraw.ts $(wildcard *.ts) $(MAKEFILE_LIST)
 	tsc $< --out $@ --noImplicitAny
 
 img/%.png: img/icons.svg $(MAKEFILE_LIST)
