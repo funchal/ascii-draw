@@ -212,46 +212,4 @@ module utils {
             return this.top_left + '/' + this.bottom_right;
         }
     }
-
-    export module commands {
-        var history: Array<Command> = [];
-        var limit = 100;
-        var current = 0;
-
-        export interface Command {
-            execute(): void;
-            unexecute(): void;
-        }
-
-        export function invoke(cmd: Command): void {
-            history.splice(current, history.length - current, cmd);
-            if (history.length > limit) {
-                history.shift();
-                current--;
-            }
-            redo();
-        }
-
-        export function undo(): void {
-            if (canUndo()) {
-                current--;
-                history[current].unexecute();
-            }
-        }
-
-        export function redo(): void {
-            if (canRedo()) {
-                history[current].execute();
-                current++;
-            }
-        }
-
-        export function canUndo(): boolean {
-            return (current > 0);
-        }
-
-        export function canRedo(): boolean {
-            return (current < history.length);
-        }
-    }
 }

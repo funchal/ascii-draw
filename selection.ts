@@ -8,19 +8,32 @@ module ascii_draw {
         var contents: Array<Rectangle> = [];
 
         export function clear(): void {
-            for (var i = contents.length; i > 0; i--) {
-                remove(i-1);
+            for (var i = 0; i < contents.length; i++) {
+                applyToRectangle(contents[i], selectCell, false);
             }
+            contents = [];
+        }
+
+        export function set(new_contents: Array<Rectangle>): Array<Rectangle> {
+            var old_contents = contents;
+            for (var i = 0; i < contents.length; i++) {
+                applyToRectangle(contents[i], selectCell, false);
+            }
+            contents = new_contents;
+            for (var i = 0; i < contents.length; i++) {
+                applyToRectangle(contents[i], selectCell, true);
+            }
+            return old_contents;
         }
 
         /* must not overlap any existing selection */
         export function add(sel: Rectangle): void {
-            applyToRectangle(sel, setSelected, true);
+            applyToRectangle(sel, selectCell, true);
             contents.push(sel);
         }
 
         export function remove(index: number): void {
-            applyToRectangle(contents[index], setSelected, false);
+            applyToRectangle(contents[index], selectCell, false);
             contents.splice(index, 1);
         }
 
@@ -28,7 +41,7 @@ module ascii_draw {
             return 'content\ncontent\ncontent\ncontent\ncontent\ncontent\n';
         }
 
-        function setSelected(cell: Cell, selected: boolean): void {
+        function selectCell(cell: Cell, selected: boolean): void {
             if (cell['data-selected'] !== selected) {
                 cell['data-selected'] = selected;
                 if (selected) {

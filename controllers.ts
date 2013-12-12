@@ -1,6 +1,7 @@
 ///<reference path='utils.ts'/>
 ///<reference path='grid.ts'/>
 ///<reference path='selection.ts'/>
+///<reference path='commands.ts'/>
 
 'use strict';
 
@@ -9,6 +10,7 @@ module ascii_draw {
         import Rectangle = utils.Rectangle;
         import CellPosition = utils.Point;
         import Cell = grid.Cell;
+        import Command = commands.Command;
 
         export interface Controller {
             init(): void;
@@ -130,15 +132,27 @@ module ascii_draw {
                 setHighlight(grid.getCellPosition(target), grid.getCellPosition(target));
             }
 
+            class ReplaceSelection implements Command {
+                constructor(public save_selection: Array<Rectangle>) {}
+
+                execute(): void {
+                    console.log('ReplaceSelection execute');
+                    this.save_selection = selection.set(this.save_selection);
+                }
+
+                unexecute(): void {
+                    console.log('ReplaceSelection unexecute');
+                    this.save_selection = selection.set(this.save_selection);
+                }
+            }
+
             export function onMouseUp(): void {
                 if (highlighting) {
-                    //commands.invoke(new ChangeHighlight(begin_highlight, end_highlight));
                     var new_selection = new Rectangle(begin_highlight, end_highlight, true /*normalize*/);
                     setHighlight(new CellPosition(0, 0), new CellPosition(0, 0));
                     highlighting = false;
 
-                    selection.clear();
-                    selection.add(new_selection);
+                    commands.invoke(new ReplaceSelection([new_selection]));
                 }
             }
 

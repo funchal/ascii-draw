@@ -21,8 +21,8 @@ clean:
 check:
 	jshint -c jshint.json script.js
 
-script.js: controllers.ts utils.ts asciidraw.ts selection.ts grid.ts
-	tsc $^ --out $@ --noImplicitAny
+script.js: asciidraw.ts $(MAKEFILE_LIST)
+	tsc $< --out $@ --noImplicitAny
 
 img/%.png: img/icons.svg $(MAKEFILE_LIST)
 	inkscape $< --without-gui --export-png=$@ --export-id=$* --export-width=$(SIZE) --export-height=$(SIZE)

@@ -8,15 +8,11 @@ module ascii_draw {
     import CellPosition = utils.Point;
     import SelectMoveController = controllers.SelectMoveController;
     import RectangleController = controllers.RectangleController;
-    import commands = utils.commands;
-    import Command = commands.Command;
 
     var copypastearea: HTMLTextAreaElement;
 
     export var selection_button: HTMLButtonElement;
     export var rectangle_button: HTMLButtonElement;
-    var redo_button: HTMLButtonElement;
-    var undo_button: HTMLButtonElement;
 
     export var gridstatus: HTMLDivElement;
     export var mousestatus: HTMLDivElement;
@@ -50,30 +46,6 @@ module ascii_draw {
     function completePasteAction(): void {
         console.log('paste: ' + copypastearea.value);
         copypastearea.value = '';
-    }
-
-    function onUndo(): void {
-        commands.undo();
-        updateUndoRedo();
-    }
-
-    function onRedo(): void {
-        commands.redo();
-        updateUndoRedo();
-    }
-
-    function updateUndoRedo(): void {
-        if (commands.canUndo()) {
-            undo_button.disabled = false;
-        } else {
-            undo_button.disabled = true;
-        }
-
-        if (commands.canRedo()) {
-            redo_button.disabled = false;
-        } else {
-            redo_button.disabled = true;
-        }
     }
 
     function onKeyUp(event: KeyboardEvent): void {
@@ -160,10 +132,10 @@ module ascii_draw {
                     initiateCopyAction();
                     break;
                 case 89: /* ctrl+y: redo */
-                    onRedo();
+                    commands.onRedo();
                     break;
                 case 90: /* ctrl+z: undo */
-                    onUndo();
+                    commands.onUndo();
                     break;
             }
         }
@@ -222,16 +194,13 @@ module ascii_draw {
         copypastearea = <HTMLTextAreaElement>document.getElementById('copypastearea');
         rectangle_button = <HTMLButtonElement>document.getElementById('rectangle-button');
         selection_button = <HTMLButtonElement>document.getElementById('selection-button');
-        undo_button = <HTMLButtonElement>document.getElementById('undo-button');
-        redo_button = <HTMLButtonElement>document.getElementById('redo-button');
         gridstatus = <HTMLDivElement>document.getElementById('gridstatus');
         selectionstatus = <HTMLDivElement>document.getElementById('selectionstatus');
         mousestatus = <HTMLDivElement>document.getElementById('mousestatus');
 
         grid.init();
         controllers.init();
-
-        updateUndoRedo();
+        commands.init();
 
         grid.container.addEventListener('mousedown', onMouseDown, false);
         window.addEventListener('mouseup', onMouseUp, false);
@@ -247,9 +216,6 @@ module ascii_draw {
 
         selection_button.addEventListener(
             'click', controllers.swap(SelectMoveController), false);
-
-        undo_button.addEventListener('click', onUndo, false);
-        redo_button.addEventListener('click', onRedo, false);
     }
 }
 

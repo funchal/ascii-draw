@@ -201,49 +201,6 @@ var utils;
         return Rectangle;
     })();
     utils.Rectangle = Rectangle;
-
-    (function (commands) {
-        var history = [];
-        var limit = 100;
-        var current = 0;
-
-        function invoke(cmd) {
-            history.splice(current, history.length - current, cmd);
-            if (history.length > limit) {
-                history.shift();
-                current--;
-            }
-            redo();
-        }
-        commands.invoke = invoke;
-
-        function undo() {
-            if (canUndo()) {
-                current--;
-                history[current].unexecute();
-            }
-        }
-        commands.undo = undo;
-
-        function redo() {
-            if (canRedo()) {
-                history[current].execute();
-                current++;
-            }
-        }
-        commands.redo = redo;
-
-        function canUndo() {
-            return (current > 0);
-        }
-        commands.canUndo = canUndo;
-
-        function canRedo() {
-            return (current < history.length);
-        }
-        commands.canRedo = canRedo;
-    })(utils.commands || (utils.commands = {}));
-    var commands = utils.commands;
 })(utils || (utils = {}));
 'use strict';
 var ascii_draw;
@@ -339,21 +296,35 @@ var ascii_draw;
         var contents = [];
 
         function clear() {
-            for (var i = contents.length; i > 0; i--) {
-                remove(i - 1);
+            for (var i = 0; i < contents.length; i++) {
+                ascii_draw.applyToRectangle(contents[i], selectCell, false);
             }
+            contents = [];
         }
         selection.clear = clear;
 
+        function set(new_contents) {
+            var old_contents = contents;
+            for (var i = 0; i < contents.length; i++) {
+                ascii_draw.applyToRectangle(contents[i], selectCell, false);
+            }
+            contents = new_contents;
+            for (var i = 0; i < contents.length; i++) {
+                ascii_draw.applyToRectangle(contents[i], selectCell, true);
+            }
+            return old_contents;
+        }
+        selection.set = set;
+
         /* must not overlap any existing selection */
         function add(sel) {
-            ascii_draw.applyToRectangle(sel, setSelected, true);
+            ascii_draw.applyToRectangle(sel, selectCell, true);
             contents.push(sel);
         }
         selection.add = add;
 
         function remove(index) {
-            ascii_draw.applyToRectangle(contents[index], setSelected, false);
+            ascii_draw.applyToRectangle(contents[index], selectCell, false);
             contents.splice(index, 1);
         }
         selection.remove = remove;
@@ -363,7 +334,7 @@ var ascii_draw;
         }
         selection.getContents = getContents;
 
-        function setSelected(cell, selected) {
+        function selectCell(cell, selected) {
             if (cell['data-selected'] !== selected) {
                 cell['data-selected'] = selected;
                 if (selected) {
@@ -378,9 +349,90 @@ var ascii_draw;
     })(ascii_draw.selection || (ascii_draw.selection = {}));
     var selection = ascii_draw.selection;
 })(ascii_draw || (ascii_draw = {}));
+'use strict';
+var ascii_draw;
+(function (ascii_draw) {
+    (function (commands) {
+        var history = [];
+        var limit = 100;
+        var current = 0;
+
+        var redo_button;
+        var undo_button;
+
+        function init() {
+            undo_button = document.getElementById('undo-button');
+            redo_button = document.getElementById('redo-button');
+            update();
+            undo_button.addEventListener('click', onUndo, false);
+            redo_button.addEventListener('click', onRedo, false);
+        }
+        commands.init = init;
+
+        function invoke(cmd) {
+            history.splice(current, history.length - current, cmd);
+            if (history.length > limit) {
+                history.shift();
+                current--;
+            }
+            redo();
+        }
+        commands.invoke = invoke;
+
+        function onUndo() {
+            if (canUndo()) {
+                undo();
+            }
+        }
+        commands.onUndo = onUndo;
+
+        function onRedo() {
+            if (canRedo()) {
+                redo();
+            }
+        }
+        commands.onRedo = onRedo;
+
+        function undo() {
+            current--;
+            history[current].unexecute();
+            update();
+        }
+
+        function redo() {
+            current++;
+            history[current - 1].execute();
+            update();
+        }
+
+        function canUndo() {
+            return (current > 0);
+        }
+
+        function canRedo() {
+            return (current < history.length);
+        }
+
+        function update() {
+            if (canUndo()) {
+                undo_button.disabled = false;
+            } else {
+                undo_button.disabled = true;
+            }
+
+            if (canRedo()) {
+                redo_button.disabled = false;
+            } else {
+                redo_button.disabled = true;
+            }
+        }
+    })(ascii_draw.commands || (ascii_draw.commands = {}));
+    var commands = ascii_draw.commands;
+})(ascii_draw || (ascii_draw = {}));
 ///<reference path='utils.ts'/>
 ///<reference path='grid.ts'/>
 ///<reference path='selection.ts'/>
+///<reference path='commands.ts'/>
 'use strict';
 var ascii_draw;
 (function (ascii_draw) {
@@ -507,15 +559,29 @@ var ascii_draw;
             }
             SelectMoveController.onMouseDown = onMouseDown;
 
+            var ReplaceSelection = (function () {
+                function ReplaceSelection(save_selection) {
+                    this.save_selection = save_selection;
+                }
+                ReplaceSelection.prototype.execute = function () {
+                    console.log('ReplaceSelection execute');
+                    this.save_selection = ascii_draw.selection.set(this.save_selection);
+                };
+
+                ReplaceSelection.prototype.unexecute = function () {
+                    console.log('ReplaceSelection unexecute');
+                    this.save_selection = ascii_draw.selection.set(this.save_selection);
+                };
+                return ReplaceSelection;
+            })();
+
             function onMouseUp() {
                 if (highlighting) {
-                    //commands.invoke(new ChangeHighlight(begin_highlight, end_highlight));
                     var new_selection = new Rectangle(controllers.begin_highlight, controllers.end_highlight, true);
                     controllers.setHighlight(new CellPosition(0, 0), new CellPosition(0, 0));
                     highlighting = false;
 
-                    ascii_draw.selection.clear();
-                    ascii_draw.selection.add(new_selection);
+                    ascii_draw.commands.invoke(new ReplaceSelection([new_selection]));
                 }
             }
             SelectMoveController.onMouseUp = onMouseUp;
@@ -688,14 +754,11 @@ var ascii_draw;
     var CellPosition = utils.Point;
     var SelectMoveController = ascii_draw.controllers.SelectMoveController;
     var RectangleController = ascii_draw.controllers.RectangleController;
-    var commands = utils.commands;
 
     var copypastearea;
 
     ascii_draw.selection_button;
     ascii_draw.rectangle_button;
-    var redo_button;
-    var undo_button;
 
     ascii_draw.gridstatus;
     ascii_draw.mousestatus;
@@ -729,30 +792,6 @@ var ascii_draw;
     function completePasteAction() {
         console.log('paste: ' + copypastearea.value);
         copypastearea.value = '';
-    }
-
-    function onUndo() {
-        commands.undo();
-        updateUndoRedo();
-    }
-
-    function onRedo() {
-        commands.redo();
-        updateUndoRedo();
-    }
-
-    function updateUndoRedo() {
-        if (commands.canUndo()) {
-            undo_button.disabled = false;
-        } else {
-            undo_button.disabled = true;
-        }
-
-        if (commands.canRedo()) {
-            redo_button.disabled = false;
-        } else {
-            redo_button.disabled = true;
-        }
     }
 
     function onKeyUp(event) {
@@ -835,10 +874,10 @@ var ascii_draw;
                     initiateCopyAction();
                     break;
                 case 89:
-                    onRedo();
+                    ascii_draw.commands.onRedo();
                     break;
                 case 90:
-                    onUndo();
+                    ascii_draw.commands.onUndo();
                     break;
             }
         }
@@ -895,16 +934,13 @@ var ascii_draw;
         copypastearea = document.getElementById('copypastearea');
         ascii_draw.rectangle_button = document.getElementById('rectangle-button');
         ascii_draw.selection_button = document.getElementById('selection-button');
-        undo_button = document.getElementById('undo-button');
-        redo_button = document.getElementById('redo-button');
         ascii_draw.gridstatus = document.getElementById('gridstatus');
         ascii_draw.selectionstatus = document.getElementById('selectionstatus');
         ascii_draw.mousestatus = document.getElementById('mousestatus');
 
         ascii_draw.grid.init();
         ascii_draw.controllers.init();
-
-        updateUndoRedo();
+        ascii_draw.commands.init();
 
         ascii_draw.grid.container.addEventListener('mousedown', onMouseDown, false);
         window.addEventListener('mouseup', onMouseUp, false);
@@ -918,9 +954,6 @@ var ascii_draw;
         ascii_draw.rectangle_button.addEventListener('click', ascii_draw.controllers.swap(RectangleController), false);
 
         ascii_draw.selection_button.addEventListener('click', ascii_draw.controllers.swap(SelectMoveController), false);
-
-        undo_button.addEventListener('click', onUndo, false);
-        redo_button.addEventListener('click', onRedo, false);
     }
     ascii_draw.init = init;
 })(ascii_draw || (ascii_draw = {}));
