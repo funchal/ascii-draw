@@ -243,9 +243,7 @@ module ascii_draw {
             var ncols = row.cells.length;
             for (var c = ncols; c < new_ncols; c++) {
                 var cell = row.insertCell();
-                var div = document.createElement('div');
-                div.textContent = emptyCell;
-                cell.appendChild(div);
+                cell.textContent = emptyCell;
             }
 
             for (var c = ncols; c > new_ncols; c--) {
@@ -257,13 +255,15 @@ module ascii_draw {
     }
 
     function changeFont(): void {
-        utils.changeStyleRule('td div', 'width', 'auto');
-        utils.changeStyleRule('td div', 'height', 'auto');
+        utils.changeStyleRule('td', 'width', 'auto');
+        utils.changeStyleRule('td', 'height', 'auto');
+        utils.changeStyleRule('tr', 'height', 'auto');
 
         var font_size = utils.computeFontSize();
 
-        utils.changeStyleRule('td div', 'width', font_size.width + 'px');
-        utils.changeStyleRule('td div', 'height', font_size.height + 'px');
+        utils.changeStyleRule('td', 'width', font_size.width + 'px');
+        utils.changeStyleRule('td', 'height', font_size.height + 'px');
+        utils.changeStyleRule('tr', 'height', font_size.height + 'px');
     }
 
     export function setSelected(cell: HTMLTableCellElement,
@@ -281,9 +281,6 @@ module ascii_draw {
     }
 
     function getTargetCell(target: EventTarget): HTMLTableCellElement {
-        if (target instanceof HTMLDivElement) {
-            target = (<HTMLDivElement>target).parentElement;
-        }
         if (target instanceof HTMLTableCellElement) {
             return <HTMLTableCellElement>target;
         } else {

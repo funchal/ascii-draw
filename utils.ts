@@ -36,9 +36,7 @@ module utils {
         var tmp = document.createElement('table');
         var row = <HTMLTableRowElement>tmp.insertRow();
         var cell = row.insertCell();
-        var div = document.createElement('div');
-        div.textContent = 'X';
-        cell.appendChild(div);
+        cell.textContent = 'X';
         document.body.appendChild(tmp);
         var w = cell.clientWidth;
         var h = cell.clientHeight;

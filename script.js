@@ -32,9 +32,7 @@ var utils;
         var tmp = document.createElement('table');
         var row = tmp.insertRow();
         var cell = row.insertCell();
-        var div = document.createElement('div');
-        div.textContent = 'X';
-        cell.appendChild(div);
+        cell.textContent = 'X';
         document.body.appendChild(tmp);
         var w = cell.clientWidth;
         var h = cell.clientHeight;
@@ -500,7 +498,7 @@ var ascii_draw;
         }
 
         function writeToCell(cell, character) {
-            cell.children[0].textContent = character;
+            cell.textContent = character;
         }
     })(ascii_draw.controllers || (ascii_draw.controllers = {}));
     var controllers = ascii_draw.controllers;
@@ -752,9 +750,7 @@ var ascii_draw;
             var ncols = row.cells.length;
             for (var c = ncols; c < new_ncols; c++) {
                 var cell = row.insertCell();
-                var div = document.createElement('div');
-                div.textContent = emptyCell;
-                cell.appendChild(div);
+                cell.textContent = emptyCell;
             }
 
             for (var c = ncols; c > new_ncols; c--) {
@@ -766,13 +762,15 @@ var ascii_draw;
     }
 
     function changeFont() {
-        utils.changeStyleRule('td div', 'width', 'auto');
-        utils.changeStyleRule('td div', 'height', 'auto');
+        utils.changeStyleRule('td', 'width', 'auto');
+        utils.changeStyleRule('td', 'height', 'auto');
+        utils.changeStyleRule('tr', 'height', 'auto');
 
         var font_size = utils.computeFontSize();
 
-        utils.changeStyleRule('td div', 'width', font_size.width + 'px');
-        utils.changeStyleRule('td div', 'height', font_size.height + 'px');
+        utils.changeStyleRule('td', 'width', font_size.width + 'px');
+        utils.changeStyleRule('td', 'height', font_size.height + 'px');
+        utils.changeStyleRule('tr', 'height', font_size.height + 'px');
     }
 
     function setSelected(cell, selected) {
@@ -790,9 +788,6 @@ var ascii_draw;
     ascii_draw.setSelected = setSelected;
 
     function getTargetCell(target) {
-        if (target instanceof HTMLDivElement) {
-            target = target.parentElement;
-        }
         if (target instanceof HTMLTableCellElement) {
             return target;
         } else {

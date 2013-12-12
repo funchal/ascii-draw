@@ -274,7 +274,7 @@ module ascii_draw {
         }
 
         function writeToCell(cell: HTMLTableCellElement, character: string): void {
-            cell.children[0].textContent = character;
+            cell.textContent = character;
         }
     }
 }

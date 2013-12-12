@@ -21,17 +21,26 @@ html {
 }
 
 table {
-    background-color: #FFF;
     cursor: none;
     table-layout: fixed; /* override the browser's automatic column resizing */
+    border: none;
+    display: inline-block;
+    padding: 0;
+    margin: 0;
     border-spacing: 0;
-    border-collapse: collapse;
+}
+
+tr {
+    display: block;
 }
 
 td {
+    display: inline-block;
     text-align: center;
-    border: 1px solid #DDD;
+    border-top: 1px solid #DDD;
+    border-right: 1px solid #DDD;
     overflow: hidden;
+    background-color: #FFF;
 }
 
 img {
