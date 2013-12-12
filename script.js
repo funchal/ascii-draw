@@ -125,6 +125,38 @@ var utils;
             return (this.top_left.isEqual(other.top_left) && this.bottom_right.isEqual(other.bottom_right));
         };
 
+        /* Return the difference of this with other as a list of Rectangles.
+        Examples:
+        this (o), other (x), top (T), left (L), right (R), bottom (B)
+        
+        this      other     diff
+        
+        oooooo    ------    TTTTTT
+        oooooo    ------    TTTTTT
+        oooooo    --xx--    LL  RR
+        oooooo    --xx--    LL  RR
+        oooooo    ------    BBBBBB
+        oooooo    ------    BBBBBB
+        
+        
+        oooooo    ------    TTTTTT
+        oooooo    ------    TTTTTT
+        oooooo    --xxxx    LL
+        oooooo    --xxxx    LL
+        oooooo    --xxxx    LL
+        oooooo    --xxxx    LL
+        xxxx
+        xxxx
+        
+        
+        oooooo    xx----      RRRR
+        oooooo    ------    BBBBBB
+        oooooo    ------    BBBBBB
+        oooooo    ------    BBBBBB
+        oooooo    ------    BBBBBB
+        oooooo    ------    BBBBBB
+        
+        */
         Rectangle.prototype.subtract = function (other) {
             var rect_array = [];
             if (this.isEmpty()) {
@@ -435,50 +467,9 @@ var ascii_draw;
         controllers.setSelection = setSelection;
 
         function getHollowRectangle(rect) {
-            var top = rect.top_left.row;
-            var left = rect.top_left.col;
-            var bottom = rect.bottom_right.row;
-            var right = rect.bottom_right.col;
-
-            /* Build up to 4 rectangles depending on the dimentions of the
-            * surrounding rectangle: top (T), bottom (B), left (L), right (R).
-            * Examples:
-            *
-            *   TTTT  TT  T
-            *   L  R  LR  L
-            *   L  R  LR  L
-            *   BBBB  BB  B
-            *
-            *   TTTT  TT  T
-            *   BBBB  BB  B
-            *
-            *   TTTT  TT  T
-            */
-            var rect_pieces = [];
-
-            if (rect.isEmpty()) {
-                return rect_pieces;
-            }
-
-            // top
-            rect_pieces.push(new Rectangle(new CellPosition(top, left), new CellPosition(top, right)));
-
-            if (rect.getHeight() > 1) {
-                // bottom
-                rect_pieces.push(new Rectangle(new CellPosition(bottom, left), new CellPosition(bottom, right)));
-
-                if (rect.getHeight() > 2) {
-                    // left
-                    rect_pieces.push(new Rectangle(new CellPosition(top + 1, left), new CellPosition(bottom - 1, left)));
-
-                    if (rect.getWidth() > 1) {
-                        // right
-                        rect_pieces.push(new Rectangle(new CellPosition(top + 1, right), new CellPosition(bottom - 1, right)));
-                    }
-                }
-            }
-
-            return rect_pieces;
+            var inside_rect = new Rectangle(new CellPosition(rect.top_left.row + 1, rect.top_left.col + 1), new CellPosition(rect.bottom_right.row - 1, rect.bottom_right.col - 1));
+            var surrounding = rect.subtract(inside_rect);
+            return surrounding;
         }
 
         function setHollowSelection(new_begin_selection, new_end_selection) {
@@ -500,7 +491,6 @@ var ascii_draw;
             for (var piece = 0; piece < rect_pieces.length; piece++) {
                 ascii_draw.applyToRectangle(rect_pieces[piece], ascii_draw.setSelected, true);
             }
-
             var selectionstatus = document.getElementById('selectionstatus');
             if (new_selection.getHeight() > 1 || new_selection.getWidth() > 1) {
                 selectionstatus.textContent = 'Selection: ' + new_selection.getHeight() + 'x' + new_selection.getWidth();

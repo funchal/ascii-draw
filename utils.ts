@@ -131,6 +131,38 @@ module utils {
                     this.bottom_right.isEqual(other.bottom_right));
         }
 
+        /* Return the difference of this with other as a list of Rectangles.
+        Examples:
+        this (o), other (x), top (T), left (L), right (R), bottom (B)
+
+             this      other     diff
+
+            oooooo    ------    TTTTTT
+            oooooo    ------    TTTTTT
+            oooooo    --xx--    LL  RR
+            oooooo    --xx--    LL  RR
+            oooooo    ------    BBBBBB
+            oooooo    ------    BBBBBB
+
+
+            oooooo    ------    TTTTTT
+            oooooo    ------    TTTTTT
+            oooooo    --xxxx    LL
+            oooooo    --xxxx    LL
+            oooooo    --xxxx    LL
+            oooooo    --xxxx    LL
+                        xxxx
+                        xxxx
+
+
+            oooooo    xx----      RRRR
+            oooooo    ------    BBBBBB
+            oooooo    ------    BBBBBB
+            oooooo    ------    BBBBBB
+            oooooo    ------    BBBBBB
+            oooooo    ------    BBBBBB
+
+        */
         subtract(other: Rectangle): Array<Rectangle> {
             var rect_array: Array<Rectangle> = [];
             if (this.isEmpty()) {
