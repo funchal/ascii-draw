@@ -91,53 +91,50 @@ var utils;
 
     var Rectangle = (function () {
         function Rectangle(top_left, bottom_right, normalize) {
-            this.top_left = top_left;
-            this.bottom_right = bottom_right;
-            if (normalize) {
-                if (this.top_left.row > this.bottom_right.row) {
-                    var tmp = this.top_left.row;
-                    this.top_left = new Point(this.bottom_right.row, this.top_left.col);
-                    this.bottom_right = new Point(tmp, this.bottom_right.col);
-                }
-                if (this.top_left.col > this.bottom_right.col) {
-                    var tmp = this.top_left.col;
-                    this.top_left = new Point(this.top_left.row, this.bottom_right.col);
-                    this.bottom_right = new Point(this.bottom_right.row, tmp);
-                }
+            if (normalize && bottom_right.row < top_left.row) {
+                this.top = bottom_right.row;
+                this.bottom = top_left.row;
+            } else {
+                this.top = top_left.row;
+                this.bottom = bottom_right.row;
+            }
+            if (normalize && bottom_right.col < top_left.col) {
+                this.left = bottom_right.col;
+                this.right = top_left.col;
+            } else {
+                this.left = top_left.col;
+                this.right = bottom_right.col;
             }
         }
         Rectangle.prototype.intersect = function (other) {
-            var top_left = new Point(Math.max(this.top_left.row, other.top_left.row), Math.max(this.top_left.col, other.top_left.col));
-            var bottom_right = new Point(Math.min(this.bottom_right.row, other.bottom_right.row), Math.min(this.bottom_right.col, other.bottom_right.col));
+            var top_left = new Point(Math.max(this.top, other.top), Math.max(this.left, other.left));
+            var bottom_right = new Point(Math.min(this.bottom, other.bottom), Math.min(this.right, other.right));
             return new Rectangle(top_left, bottom_right);
         };
 
         Rectangle.prototype.getHeight = function () {
             // Warning: can be < 0 if this.isEmpty()
-            return this.bottom_right.row - this.top_left.row + 1;
+            return this.bottom - this.top + 1;
         };
 
         Rectangle.prototype.getWidth = function () {
             // Warning: can be < 0 if this.isEmpty()
-            return this.bottom_right.col - this.top_left.col + 1;
+            return this.right - this.left + 1;
         };
 
         Rectangle.prototype.isUnit = function () {
-            return (this.top_left.row === this.bottom_right.row) && (this.top_left.col === this.bottom_right.col);
+            return (this.top === this.bottom) && (this.left === this.right);
         };
 
         Rectangle.prototype.isEmpty = function () {
-            return (this.top_left.row > this.bottom_right.row) || (this.top_left.col > this.bottom_right.col);
+            return (this.top > this.bottom) || (this.left > this.right);
         };
 
         Rectangle.prototype.isEqual = function (other) {
-            return (this.top_left.isEqual(other.top_left) && this.bottom_right.isEqual(other.bottom_right));
+            return (this.top == other.top && this.left == other.left && this.right == other.right && this.bottom == other.bottom);
         };
 
         /* Return the difference of this with other as a list of Rectangles.
-        Assumes other is completely included inside this.
-        If this is a problem for you, use this.subtract(other.intersect(this)).
-        
         Examples:
         this (o), other (x), top (T), left (L), right (R), bottom (B)
         
@@ -157,6 +154,8 @@ var utils;
         oooooo    --xxxx    LL
         oooooo    --xxxx    LL
         oooooo    --xxxx    LL
+        xxxx
+        xxxx
         
         
         oooooo    xx----      RRRR
@@ -178,22 +177,22 @@ var utils;
                 return rect_array;
             }
 
-            var top_rectangle = new Rectangle(this.top_left, new Point(other.top_left.row - 1, this.bottom_right.col));
+            var top_rectangle = new Rectangle(new Point(this.top, this.left), new Point(other.top - 1, this.right));
             if (!top_rectangle.isEmpty()) {
                 rect_array.push(top_rectangle);
             }
 
-            var left_rectangle = new Rectangle(new Point(other.top_left.row, this.top_left.col), new Point(other.bottom_right.row, other.top_left.col - 1));
+            var left_rectangle = new Rectangle(new Point(other.top, this.left), new Point(other.bottom, other.left - 1));
             if (!left_rectangle.isEmpty()) {
                 rect_array.push(left_rectangle);
             }
 
-            var right_rectangle = new Rectangle(new Point(other.top_left.row, other.bottom_right.col + 1), new Point(other.bottom_right.row, this.bottom_right.col));
+            var right_rectangle = new Rectangle(new Point(other.top, other.right + 1), new Point(other.bottom, this.right));
             if (!right_rectangle.isEmpty()) {
                 rect_array.push(right_rectangle);
             }
 
-            var bottom_rectangle = new Rectangle(new Point(other.bottom_right.row + 1, this.top_left.col), this.bottom_right);
+            var bottom_rectangle = new Rectangle(new Point(other.bottom + 1, this.left), new Point(this.bottom, this.right));
             if (!bottom_rectangle.isEmpty()) {
                 rect_array.push(bottom_rectangle);
             }
@@ -201,14 +200,14 @@ var utils;
         };
 
         Rectangle.prototype.move = function (rows, cols) {
-            this.top_left.row += rows;
-            this.top_left.col += cols;
-            this.bottom_right.row += rows;
-            this.bottom_right.col += cols;
+            this.top += rows;
+            this.left += cols;
+            this.bottom += rows;
+            this.right += cols;
         };
 
         Rectangle.prototype.toString = function () {
-            return this.top_left + '/' + this.bottom_right;
+            return this.top + 'x' + this.left + '/' + this.bottom + 'x' + this.right;
         };
         return Rectangle;
     })();
@@ -586,10 +585,10 @@ var ascii_draw;
             RectangleController.onKeyPress = onKeyPress;
 
             function drawRectangle(rect) {
-                var top = rect.top_left.row;
-                var left = rect.top_left.col;
-                var bottom = rect.bottom_right.row;
-                var right = rect.bottom_right.col;
+                var top = rect.top;
+                var left = rect.left;
+                var bottom = rect.bottom;
+                var right = rect.right;
 
                 // print first row: +---+
                 var first_row = ascii_draw.grid.getRow(top);
@@ -755,7 +754,7 @@ var ascii_draw;
         controllers.setHighlight = setHighlight;
 
         function getHollowRectangle(rect) {
-            var inside_rect = new Rectangle(new CellPosition(rect.top_left.row + 1, rect.top_left.col + 1), new CellPosition(rect.bottom_right.row - 1, rect.bottom_right.col - 1));
+            var inside_rect = new Rectangle(new CellPosition(rect.top + 1, rect.left + 1), new CellPosition(rect.bottom - 1, rect.right - 1));
             var surrounding = rect.subtract(inside_rect);
             return surrounding;
         }
@@ -951,9 +950,9 @@ var ascii_draw;
     }
 
     function applyToRectangle(rect, functor, param) {
-        for (var r = rect.top_left.row; r <= rect.bottom_right.row; r++) {
+        for (var r = rect.top; r <= rect.bottom; r++) {
             var row = ascii_draw.grid.getRow(r);
-            for (var c = rect.top_left.col; c <= rect.bottom_right.col; c++) {
+            for (var c = rect.left; c <= rect.right; c++) {
                 var cell = ascii_draw.grid.getCell(row, c);
                 functor(cell, param);
             }

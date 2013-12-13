@@ -80,10 +80,10 @@ module ascii_draw {
             }
 
             function drawRectangle(rect: Rectangle):void {
-                var top = rect.top_left.row;
-                var left = rect.top_left.col;
-                var bottom = rect.bottom_right.row;
-                var right = rect.bottom_right.col;
+                var top = rect.top;
+                var left = rect.left;
+                var bottom = rect.bottom;
+                var right = rect.right;
 
                 // print first row: +---+
                 var first_row = grid.getRow(top);
@@ -244,10 +244,10 @@ module ascii_draw {
 
         function getHollowRectangle(rect: Rectangle): Array<Rectangle> {
             var inside_rect = new Rectangle(
-                    new CellPosition(rect.top_left.row + 1,
-                                     rect.top_left.col + 1),
-                    new CellPosition(rect.bottom_right.row - 1,
-                                     rect.bottom_right.col - 1));
+                    new CellPosition(rect.top + 1,
+                                     rect.left + 1),
+                    new CellPosition(rect.bottom - 1,
+                                     rect.right - 1));
             var surrounding = rect.subtract(inside_rect);
             return surrounding;
         }

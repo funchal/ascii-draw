@@ -145,9 +145,9 @@ module ascii_draw {
                                      functor: Function,
                                      param: any): void
     {
-        for (var r = rect.top_left.row; r <= rect.bottom_right.row; r++) {
+        for (var r = rect.top; r <= rect.bottom; r++) {
             var row = grid.getRow(r);
-            for (var c = rect.top_left.col; c <= rect.bottom_right.col; c++) {
+            for (var c = rect.left; c <= rect.right; c++) {
                 var cell = grid.getCell(row, c);
                 functor(cell, param);
             }

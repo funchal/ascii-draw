@@ -87,57 +87,64 @@ module utils {
     }
 
     export class Rectangle {
-        constructor(public top_left: Point,
-                    public bottom_right: Point, normalize?: boolean) {
-            if (normalize) {
-                if (this.top_left.row > this.bottom_right.row) {
-                    var tmp = this.top_left.row;
-                    this.top_left = new Point(this.bottom_right.row,
-                                                    this.top_left.col);
-                    this.bottom_right = new Point(tmp, this.bottom_right.col);
-                }
-                if (this.top_left.col > this.bottom_right.col) {
-                    var tmp = this.top_left.col;
-                    this.top_left = new Point(this.top_left.row,
-                                                    this.bottom_right.col);
-                    this.bottom_right = new Point(this.bottom_right.row, tmp);
-                }
+        public top: number;
+        public left: number;
+        public right: number;
+        public bottom: number;
+
+        constructor(top_left: Point,
+                    bottom_right: Point, normalize?: boolean) {
+            if (normalize && bottom_right.row < top_left.row) {
+                this.top = bottom_right.row;
+                this.bottom = top_left.row;
+            } else {
+                this.top = top_left.row;
+                this.bottom = bottom_right.row;
+            }
+            if (normalize && bottom_right.col < top_left.col) {
+                this.left = bottom_right.col;
+                this.right = top_left.col;
+            } else {
+                this.left = top_left.col;
+                this.right = bottom_right.col;
             }
         }
 
         intersect(other: Rectangle): Rectangle {
             var top_left = new Point(
-                Math.max(this.top_left.row, other.top_left.row),
-                Math.max(this.top_left.col, other.top_left.col));
+                Math.max(this.top, other.top),
+                Math.max(this.left, other.left));
             var bottom_right = new Point(
-                Math.min(this.bottom_right.row, other.bottom_right.row),
-                Math.min(this.bottom_right.col, other.bottom_right.col));
+                Math.min(this.bottom, other.bottom),
+                Math.min(this.right, other.right));
             return new Rectangle(top_left, bottom_right);
         }
 
         getHeight(): number {
             // Warning: can be < 0 if this.isEmpty()
-            return this.bottom_right.row - this.top_left.row + 1;
+            return this.bottom - this.top + 1;
         }
 
         getWidth(): number {
             // Warning: can be < 0 if this.isEmpty()
-            return this.bottom_right.col - this.top_left.col + 1;
+            return this.right - this.left + 1;
         }
 
         isUnit(): boolean {
-            return (this.top_left.row === this.bottom_right.row) &&
-                   (this.top_left.col === this.bottom_right.col);
+            return (this.top === this.bottom) &&
+                   (this.left === this.right);
         }
 
         isEmpty(): boolean {
-            return (this.top_left.row > this.bottom_right.row) ||
-                   (this.top_left.col > this.bottom_right.col);
+            return (this.top > this.bottom) ||
+                   (this.left > this.right);
         }
 
         isEqual(other: Rectangle): boolean {
-            return (this.top_left.isEqual(other.top_left) &&
-                    this.bottom_right.isEqual(other.bottom_right));
+            return (this.top == other.top &&
+                    this.left == other.left &&
+                    this.right == other.right &&
+                    this.bottom == other.bottom);
         }
 
         /* Return the difference of this with other as a list of Rectangles.
@@ -184,29 +191,29 @@ module utils {
             }
 
             var top_rectangle = new Rectangle(
-                this.top_left,
-                new Point(other.top_left.row - 1, this.bottom_right.col));
+                new Point(this.top, this.left),
+                new Point(other.top - 1, this.right));
             if (!top_rectangle.isEmpty()) {
                 rect_array.push(top_rectangle);
             }
 
             var left_rectangle = new Rectangle(
-                new Point(other.top_left.row, this.top_left.col),
-                new Point(other.bottom_right.row, other.top_left.col - 1));
+                new Point(other.top, this.left),
+                new Point(other.bottom, other.left - 1));
             if (!left_rectangle.isEmpty()) {
                 rect_array.push(left_rectangle);
             }
 
             var right_rectangle = new Rectangle(
-                new Point(other.top_left.row, other.bottom_right.col + 1),
-                new Point(other.bottom_right.row, this.bottom_right.col));
+                new Point(other.top, other.right + 1),
+                new Point(other.bottom, this.right));
             if (!right_rectangle.isEmpty()) {
                 rect_array.push(right_rectangle);
             }
 
             var bottom_rectangle = new Rectangle(
-                new Point(other.bottom_right.row + 1, this.top_left.col),
-                this.bottom_right);
+                new Point(other.bottom + 1, this.left),
+                new Point(this.bottom, this.right));
             if (!bottom_rectangle.isEmpty()) {
                 rect_array.push(bottom_rectangle);
             }
@@ -214,14 +221,15 @@ module utils {
         }
 
         move(rows: number, cols: number) {
-            this.top_left.row += rows;
-            this.top_left.col += cols;
-            this.bottom_right.row += rows;
-            this.bottom_right.col += cols;
+            this.top += rows;
+            this.left += cols;
+            this.bottom += rows;
+            this.right += cols;
         }
 
         toString(): string {
-            return this.top_left + '/' + this.bottom_right;
+            return this.top + 'x' + this.left + '/' +
+                   this.bottom + 'x' + this.right;
         }
     }
 }
