@@ -135,6 +135,9 @@ var utils;
         };
 
         /* Return the difference of this with other as a list of Rectangles.
+        Assumes other is completely included inside this.
+        If this is a problem for you, use this.subtract(other.intersect(this)).
+        
         Examples:
         this (o), other (x), top (T), left (L), right (R), bottom (B)
         
@@ -154,8 +157,6 @@ var utils;
         oooooo    --xxxx    LL
         oooooo    --xxxx    LL
         oooooo    --xxxx    LL
-        xxxx
-        xxxx
         
         
         oooooo    xx----      RRRR
@@ -415,6 +416,7 @@ var ascii_draw;
             }
             FillSelection.prototype.execute = function () {
                 console.log('execute FillSelection');
+
                 for (var i = 0; i < ascii_draw.selection.contents.length; i++) {
                     ascii_draw.applyToRectangle(ascii_draw.selection.contents[i], ascii_draw.controllers.writeToCell, this.character);
                 }
