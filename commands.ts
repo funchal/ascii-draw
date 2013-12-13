@@ -32,6 +32,35 @@ module ascii_draw {
             }
         }
 
+        export class FillSelection implements Command {
+            constructor(public character: string) {}
+
+            save_raw_contents: string;
+
+            execute(): void {
+                console.log('execute FillSelection');
+                // FIXME: save_raw_contents = selection.getRawContents();
+                for (var i = 0; i < selection.contents.length; i++) {
+                    applyToRectangle(selection.contents[i], controllers.writeToCell, this.character);
+                }
+
+                if (selection.isUnit()) {
+                    selection.move(0, 1);
+                }
+            }
+
+            unexecute(): void {
+                console.log('unexecute FillSelection');
+                if (selection.isUnit()) {
+                    selection.move(0, -1);
+                }
+
+                for (var i = 0; i < selection.contents.length; i++) {
+                    applyToRectangle(selection.contents[i], controllers.writeToCell, ' ');
+                }
+            }
+        }
+
         export function init(): void {
             undo_button = <HTMLButtonElement>document.getElementById('undo-button');
             redo_button = <HTMLButtonElement>document.getElementById('redo-button');

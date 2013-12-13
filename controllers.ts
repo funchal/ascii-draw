@@ -68,6 +68,8 @@ module ascii_draw {
                 if (highlighting) {
                     return;
                 }
+
+                /* this should really be implemented by a MoveController */
                 selection.move(displacement[0], displacement[1]);
             }
 
@@ -76,13 +78,7 @@ module ascii_draw {
                     return;
                 }
 
-                for (var i = 0; i < selection.contents.length; i++) {
-                    applyToRectangle(selection.contents[i], writeToCell, character);
-                }
-
-                if (selection.isUnit()) {
-                    selection.move(0, 1);
-                }
+                commands.invoke(new commands.FillSelection(character));
             }
 
             function drawRectangle(rect: Rectangle):void {
@@ -156,20 +152,20 @@ module ascii_draw {
             }
 
             export function onArrowDown(displacement: Array<number>): void {
-                var pos = new CellPosition(begin_highlight.row + displacement[0],
-                           begin_highlight.col + displacement[1]);
-                setHighlight(pos, pos);
-
-            }
-            export function onKeyPress(character: string): void {
-                applyToRectangle(new Rectangle(begin_highlight, end_highlight, true /*normalize*/),
-                                 writeToCell, character);
-                if (begin_highlight.isEqual(end_highlight)) {
-                    var displacement = [0, 1];
-                    var pos = new CellPosition(begin_highlight.row + displacement[0],
-                                               begin_highlight.col + displacement[1]);
-                    setHighlight(pos, pos);
+                if (highlighting) {
+                    return;
                 }
+
+                /* this should really be implemented by a MoveController */
+                selection.move(displacement[0], displacement[1]);
+            }
+
+            export function onKeyPress(character: string): void {
+                if (highlighting) {
+                    return;
+                }
+
+                commands.invoke(new commands.FillSelection(character));
             }
         }
 
@@ -295,7 +291,7 @@ module ascii_draw {
             return old_pieces;
         }
 
-        function writeToCell(cell: Cell, character: string): void {
+        export function writeToCell(cell: Cell, character: string): void {
             cell.textContent = character;
         }
 

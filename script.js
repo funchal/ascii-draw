@@ -123,7 +123,7 @@ var utils;
         };
 
         Rectangle.prototype.isUnit = function () {
-            return (this.top_left.row == this.bottom_right.row) || (this.top_left.col == this.bottom_right.col);
+            return (this.top_left.row === this.bottom_right.row) && (this.top_left.col === this.bottom_right.col);
         };
 
         Rectangle.prototype.isEmpty = function () {
@@ -409,6 +409,35 @@ var ascii_draw;
         })();
         commands.ReplaceSelection = ReplaceSelection;
 
+        var FillSelection = (function () {
+            function FillSelection(character) {
+                this.character = character;
+            }
+            FillSelection.prototype.execute = function () {
+                console.log('execute FillSelection');
+                for (var i = 0; i < ascii_draw.selection.contents.length; i++) {
+                    ascii_draw.applyToRectangle(ascii_draw.selection.contents[i], ascii_draw.controllers.writeToCell, this.character);
+                }
+
+                if (ascii_draw.selection.isUnit()) {
+                    ascii_draw.selection.move(0, 1);
+                }
+            };
+
+            FillSelection.prototype.unexecute = function () {
+                console.log('unexecute FillSelection');
+                if (ascii_draw.selection.isUnit()) {
+                    ascii_draw.selection.move(0, -1);
+                }
+
+                for (var i = 0; i < ascii_draw.selection.contents.length; i++) {
+                    ascii_draw.applyToRectangle(ascii_draw.selection.contents[i], ascii_draw.controllers.writeToCell, ' ');
+                }
+            };
+            return FillSelection;
+        })();
+        commands.FillSelection = FillSelection;
+
         function init() {
             undo_button = document.getElementById('undo-button');
             redo_button = document.getElementById('redo-button');
@@ -541,6 +570,8 @@ var ascii_draw;
                 if (highlighting) {
                     return;
                 }
+
+                /* this should really be implemented by a MoveController */
                 ascii_draw.selection.move(displacement[0], displacement[1]);
             }
             RectangleController.onArrowDown = onArrowDown;
@@ -549,13 +580,8 @@ var ascii_draw;
                 if (highlighting) {
                     return;
                 }
-                for (var i = 0; i < ascii_draw.selection.contents.length; i++) {
-                    ascii_draw.applyToRectangle(ascii_draw.selection.contents[i], writeToCell, character);
-                }
 
-                if (ascii_draw.selection.isUnit()) {
-                    ascii_draw.selection.move(0, 1);
-                }
+                ascii_draw.commands.invoke(new ascii_draw.commands.FillSelection(character));
             }
             RectangleController.onKeyPress = onKeyPress;
 
@@ -567,25 +593,25 @@ var ascii_draw;
 
                 // print first row: +---+
                 var first_row = ascii_draw.grid.getRow(top);
-                writeToCell(ascii_draw.grid.getCell(first_row, left), '+');
+                controllers.writeToCell(ascii_draw.grid.getCell(first_row, left), '+');
                 for (var col = left + 1; col <= right - 1; col++) {
-                    writeToCell(ascii_draw.grid.getCell(first_row, col), '-');
+                    controllers.writeToCell(ascii_draw.grid.getCell(first_row, col), '-');
                 }
-                writeToCell(ascii_draw.grid.getCell(first_row, right), '+');
+                controllers.writeToCell(ascii_draw.grid.getCell(first_row, right), '+');
 
                 for (var row = top + 1; row <= bottom - 1; row++) {
                     var current_row = ascii_draw.grid.getRow(row);
-                    writeToCell(ascii_draw.grid.getCell(current_row, left), '|');
-                    writeToCell(ascii_draw.grid.getCell(current_row, right), '|');
+                    controllers.writeToCell(ascii_draw.grid.getCell(current_row, left), '|');
+                    controllers.writeToCell(ascii_draw.grid.getCell(current_row, right), '|');
                 }
 
                 // print last row
                 var last_row = ascii_draw.grid.getRow(bottom);
-                writeToCell(ascii_draw.grid.getCell(last_row, left), '+');
+                controllers.writeToCell(ascii_draw.grid.getCell(last_row, left), '+');
                 for (var col = left + 1; col <= right - 1; col++) {
-                    writeToCell(ascii_draw.grid.getCell(last_row, col), '-');
+                    controllers.writeToCell(ascii_draw.grid.getCell(last_row, col), '-');
                 }
-                writeToCell(ascii_draw.grid.getCell(last_row, right), '+');
+                controllers.writeToCell(ascii_draw.grid.getCell(last_row, right), '+');
             }
         })(controllers.RectangleController || (controllers.RectangleController = {}));
         var RectangleController = controllers.RectangleController;
@@ -636,17 +662,21 @@ var ascii_draw;
             SelectMoveController.onMouseLeave = onMouseLeave;
 
             function onArrowDown(displacement) {
-                var pos = new CellPosition(controllers.begin_highlight.row + displacement[0], controllers.begin_highlight.col + displacement[1]);
-                controllers.setHighlight(pos, pos);
+                if (highlighting) {
+                    return;
+                }
+
+                /* this should really be implemented by a MoveController */
+                ascii_draw.selection.move(displacement[0], displacement[1]);
             }
             SelectMoveController.onArrowDown = onArrowDown;
+
             function onKeyPress(character) {
-                ascii_draw.applyToRectangle(new Rectangle(controllers.begin_highlight, controllers.end_highlight, true), writeToCell, character);
-                if (controllers.begin_highlight.isEqual(controllers.end_highlight)) {
-                    var displacement = [0, 1];
-                    var pos = new CellPosition(controllers.begin_highlight.row + displacement[0], controllers.begin_highlight.col + displacement[1]);
-                    controllers.setHighlight(pos, pos);
+                if (highlighting) {
+                    return;
                 }
+
+                ascii_draw.commands.invoke(new ascii_draw.commands.FillSelection(character));
             }
             SelectMoveController.onKeyPress = onKeyPress;
         })(controllers.SelectMoveController || (controllers.SelectMoveController = {}));
@@ -764,6 +794,7 @@ var ascii_draw;
         function writeToCell(cell, character) {
             cell.textContent = character;
         }
+        controllers.writeToCell = writeToCell;
 
         function setHighlighted(cell, highlighted) {
             if (cell['data-highlighted'] !== highlighted) {

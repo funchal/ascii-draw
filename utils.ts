@@ -126,8 +126,8 @@ module utils {
         }
 
         isUnit(): boolean {
-            return (this.top_left.row == this.bottom_right.row) ||
-                   (this.top_left.col == this.bottom_right.col);
+            return (this.top_left.row === this.bottom_right.row) &&
+                   (this.top_left.col === this.bottom_right.col);
         }
 
         isEmpty(): boolean {
