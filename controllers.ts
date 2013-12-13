@@ -42,8 +42,6 @@ module ascii_draw {
 
             export function onMouseUp(): void {
                 if (highlighting) {
-                    highlighting = false;
-
                     var new_selection = setHollowHighlight(new CellPosition(0, 0), new CellPosition(0, 0));
                     highlighting = false;
 

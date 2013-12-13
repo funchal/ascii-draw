@@ -543,8 +543,6 @@ var ascii_draw;
 
             function onMouseUp() {
                 if (highlighting) {
-                    highlighting = false;
-
                     var new_selection = setHollowHighlight(new CellPosition(0, 0), new CellPosition(0, 0));
                     highlighting = false;
 
