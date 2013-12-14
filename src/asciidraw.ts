@@ -20,6 +20,8 @@ module ascii_draw {
 
     export var emptyCell: string = ' ';
 
+    var mouse_pos: CellPosition = null;
+
     function initiateCopyAction(): void {
         if (window.getSelection && document.createRange) {
             copypastearea.textContent = selection.getContents();
@@ -164,7 +166,8 @@ module ascii_draw {
     }
 
     function onMouseUp(event: MouseEvent): void {
-        controllers.current.onMouseUp();
+        var target = grid.getTargetCell(event.target);
+        controllers.current.onMouseUp(target);
         event.stopPropagation();
         event.preventDefault();
     }
@@ -172,14 +175,33 @@ module ascii_draw {
     function onMouseOver(event: MouseEvent): void {
         var target = grid.getTargetCell(event.target);
         if (target !== null) {
-            controllers.current.onMouseOver(target);
+            var pos = grid.getCellPosition(target);
+            setMousePosition(pos);
+            controllers.current.onMouseOver(pos);
         }
         event.stopPropagation();
         event.preventDefault();
     }
 
+    function setMousePosition(new_pos: CellPosition): void {
+        if (mouse_pos !== null) {
+            var cell = grid.getCell(grid.getRow(mouse_pos.row), mouse_pos.col);
+            utils.removeClass(cell, 'mouse');
+        }
+        mouse_pos = new_pos;
+
+        var mousestatus = document.getElementById('mousestatus');
+        if (mouse_pos !== null) {
+            var cell = grid.getCell(grid.getRow(mouse_pos.row), mouse_pos.col);
+            utils.addClass(cell, 'mouse');
+            mousestatus.textContent = 'Cursor: ' + mouse_pos;
+        } else {
+            mousestatus.textContent = '';
+        }
+    }
+
     function onMouseLeave(event: MouseEvent): void {
-        controllers.current.onMouseLeave();
+        setMousePosition(null);
         event.stopPropagation();
         event.preventDefault();
     }

@@ -15,9 +15,8 @@ module ascii_draw {
             activate(): void;
             deactivate(): void;
             onMouseDown(target: Cell): void;
-            onMouseUp(): void;
-            onMouseOver(target: Cell): void;
-            onMouseLeave(): void;
+            onMouseUp(target: Cell): void;
+            onMouseOver(pos: CellPosition): void;
             onArrowDown(displacement: Array<number>): void;
             onKeyPress(character: string): void;
         }
@@ -40,25 +39,30 @@ module ascii_draw {
                 writeToCell(target, '+');
             }
 
-            export function onMouseUp(): void {
+            export function onMouseUp(target: Cell): void {
                 if (highlighting) {
-                    var new_selection = setHollowHighlight(new CellPosition(0, 0), new CellPosition(0, 0));
+                    if (target) {
+                        var pos = grid.getCellPosition(target);
+                        asyncMouseOver(pos);
+                    }
+                    var new_selection = setHollowHighlight(new CellPosition(0, 0),
+                                                           new CellPosition(0, 0));
                     highlighting = false;
 
                     commands.invoke(new commands.ReplaceSelection(new_selection));
                 }
             }
 
-            export function onMouseOver(target: Cell): void {
-                var pos = grid.getCellPosition(target);
-                setMousePosition(pos);
+            function asyncMouseOver(pos: CellPosition) {
                 if (highlighting) {
                     updateRectangleAndHighlight(pos);
                 }
             }
 
-            export function onMouseLeave(): void {
-                setMousePosition(null);
+            export function onMouseOver(pos: CellPosition): void {
+                if (highlighting) {
+                    window.setTimeout(asyncMouseOver.bind(undefined, pos), 0);
+                }
             }
 
             export function onArrowDown(displacement: Array<number>): void {
@@ -337,8 +341,12 @@ module ascii_draw {
                 setHighlight(grid.getCellPosition(target), grid.getCellPosition(target));
             }
 
-            export function onMouseUp(): void {
+            export function onMouseUp(target: Cell): void {
                 if (highlighting) {
+                    if (target) {
+                        var pos = grid.getCellPosition(target);
+                        asyncMouseOver(pos);
+                    }
                     var new_selection = new Rectangle(begin_highlight, end_highlight, true /*normalize*/);
                     setHighlight(new CellPosition(0, 0), new CellPosition(0, 0));
                     highlighting = false;
@@ -347,16 +355,16 @@ module ascii_draw {
                 }
             }
 
-            export function onMouseOver(target: Cell): void {
-                var pos = grid.getCellPosition(target);
-                setMousePosition(pos);
+            function asyncMouseOver(pos: CellPosition): void {
                 if (highlighting) {
                     setHighlight(begin_highlight, pos);
                 }
             }
 
-            export function onMouseLeave(): void {
-                setMousePosition(null);
+            export function onMouseOver(pos: CellPosition): void {
+                if (highlighting) {
+                    window.setTimeout(asyncMouseOver.bind(undefined, pos), 0);
+                }
             }
 
             export function onArrowDown(displacement: Array<number>): void {
@@ -381,7 +389,6 @@ module ascii_draw {
         export var end_highlight: CellPosition = begin_highlight;
 
         var highlighting = false;
-        var mouse_pos: CellPosition = null;
 
         export var current: Controller = SelectMoveController;
 
@@ -397,23 +404,6 @@ module ascii_draw {
             current.activate();
             selection.clear();
             selection.add(new Rectangle(begin_highlight, end_highlight, true /*normalize*/));
-        }
-
-        function setMousePosition(new_pos: CellPosition): void {
-            if (mouse_pos !== null) {
-                var cell = grid.getCell(grid.getRow(mouse_pos.row), mouse_pos.col);
-                utils.removeClass(cell, 'mouse');
-            }
-            mouse_pos = new_pos;
-
-            var mousestatus = document.getElementById('mousestatus');
-            if (mouse_pos !== null) {
-                var cell = grid.getCell(grid.getRow(mouse_pos.row), mouse_pos.col);
-                utils.addClass(cell, 'mouse');
-                mousestatus.textContent = 'Cursor: ' + mouse_pos;
-            } else {
-                mousestatus.textContent = '';
-            }
         }
 
         export function setHighlight(new_begin_highlight: CellPosition,
@@ -512,7 +502,7 @@ module ascii_draw {
                     utils.removeClass(cell, 'highlighted');
                 }
             } else {
-                console.log('highlighted already set to ' + highlighted);
+                //console.log('highlighted already set to ' + highlighted);
             }
         }
     }
