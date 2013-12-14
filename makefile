@@ -15,13 +15,16 @@ all: script.js $(IMG)
 .PHONY: clean
 clean:
 	rm -f script.js
+
+.PHONY: imgclean
+imgclean:
 	rm -f img/*.png
 
 .PHONY: check
 check:
 	jshint -c jshint.json script.js
 
-script.js: asciidraw.ts $(wildcard *.ts) $(MAKEFILE_LIST)
+script.js: src/asciidraw.ts $(wildcard src/*.ts) $(MAKEFILE_LIST)
 	tsc $< --out $@ --noImplicitAny
 
 img/%.png: img/icons.svg $(MAKEFILE_LIST)
