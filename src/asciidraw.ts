@@ -6,7 +6,7 @@
 module ascii_draw {
     import Rectangle = utils.Rectangle;
     import CellPosition = utils.Point;
-    import SelectMoveController = controllers.SelectMoveController;
+    import SelectController = controllers.SelectController;
     import RectangleController = controllers.RectangleController;
 
     var copypastearea: HTMLTextAreaElement;
@@ -236,7 +236,7 @@ module ascii_draw {
             'click', controllers.swap(RectangleController), false);
 
         selection_button.addEventListener(
-            'click', controllers.swap(SelectMoveController), false);
+            'click', controllers.swap(SelectController), false);
     }
 }
 

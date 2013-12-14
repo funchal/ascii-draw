@@ -508,10 +508,88 @@ var ascii_draw;
     })(ascii_draw.commands || (ascii_draw.commands = {}));
     var commands = ascii_draw.commands;
 })(ascii_draw || (ascii_draw = {}));
+var ascii_draw;
+(function (ascii_draw) {
+    (function (controllers) {
+        (function (SelectController) {
+            var Rectangle = utils.Rectangle;
+            var CellPosition = utils.Point;
+
+            function activate() {
+                console.log('activate SelectController');
+                utils.addClass(ascii_draw.selection_button, 'pressed');
+            }
+            SelectController.activate = activate;
+
+            function deactivate() {
+                console.log('deactivate SelectController');
+                utils.removeClass(ascii_draw.selection_button, 'pressed');
+            }
+            SelectController.deactivate = deactivate;
+
+            function onMouseDown(target) {
+                // TODO: if current cell is highlighted change to move mode
+                ascii_draw.controllers.highlighting = true;
+                ascii_draw.controllers.setHighlight(ascii_draw.grid.getCellPosition(target), ascii_draw.grid.getCellPosition(target));
+            }
+            SelectController.onMouseDown = onMouseDown;
+
+            function onMouseUp(target) {
+                if (ascii_draw.controllers.highlighting) {
+                    if (target) {
+                        var pos = ascii_draw.grid.getCellPosition(target);
+                        asyncMouseOver(pos);
+                    }
+                    var new_selection = new Rectangle(ascii_draw.controllers.begin_highlight, ascii_draw.controllers.end_highlight, true);
+                    ascii_draw.controllers.setHighlight(new CellPosition(0, 0), new CellPosition(0, 0));
+                    ascii_draw.controllers.highlighting = false;
+
+                    ascii_draw.commands.invoke(new ascii_draw.commands.ReplaceSelection([new_selection]));
+                }
+            }
+            SelectController.onMouseUp = onMouseUp;
+
+            function asyncMouseOver(pos) {
+                if (ascii_draw.controllers.highlighting) {
+                    ascii_draw.controllers.setHighlight(ascii_draw.controllers.begin_highlight, pos);
+                }
+            }
+
+            function onMouseOver(pos) {
+                if (ascii_draw.controllers.highlighting) {
+                    window.setTimeout(asyncMouseOver.bind(undefined, pos), 0);
+                }
+            }
+            SelectController.onMouseOver = onMouseOver;
+
+            function onArrowDown(displacement) {
+                if (ascii_draw.controllers.highlighting) {
+                    return;
+                }
+
+                /* this should really be implemented by a MoveController */
+                ascii_draw.selection.move(displacement[0], displacement[1]);
+            }
+            SelectController.onArrowDown = onArrowDown;
+
+            function onKeyPress(character) {
+                if (ascii_draw.controllers.highlighting) {
+                    return;
+                }
+
+                ascii_draw.commands.invoke(new ascii_draw.commands.FillSelection(character));
+            }
+            SelectController.onKeyPress = onKeyPress;
+        })(controllers.SelectController || (controllers.SelectController = {}));
+        var SelectController = controllers.SelectController;
+    })(ascii_draw.controllers || (ascii_draw.controllers = {}));
+    var controllers = ascii_draw.controllers;
+})(ascii_draw || (ascii_draw = {}));
 ///<reference path='utils.ts'/>
 ///<reference path='grid.ts'/>
 ///<reference path='selection.ts'/>
 ///<reference path='commands.ts'/>
+///<reference path='selectcontroller.ts'/>
 'use strict';
 var ascii_draw;
 (function (ascii_draw) {
@@ -534,20 +612,20 @@ var ascii_draw;
 
             function onMouseDown(target) {
                 // TODO: if current cell is highlighted change to move mode
-                highlighting = true;
+                controllers.highlighting = true;
                 setHollowHighlight(ascii_draw.grid.getCellPosition(target), ascii_draw.grid.getCellPosition(target));
                 controllers.writeToCell(target, '+');
             }
             RectangleController.onMouseDown = onMouseDown;
 
             function onMouseUp(target) {
-                if (highlighting) {
+                if (controllers.highlighting) {
                     if (target) {
                         var pos = ascii_draw.grid.getCellPosition(target);
                         asyncMouseOver(pos);
                     }
                     var new_selection = setHollowHighlight(new CellPosition(0, 0), new CellPosition(0, 0));
-                    highlighting = false;
+                    controllers.highlighting = false;
 
                     ascii_draw.commands.invoke(new ascii_draw.commands.ReplaceSelection(new_selection));
                 }
@@ -555,20 +633,20 @@ var ascii_draw;
             RectangleController.onMouseUp = onMouseUp;
 
             function asyncMouseOver(pos) {
-                if (highlighting) {
+                if (controllers.highlighting) {
                     updateRectangleAndHighlight(pos);
                 }
             }
 
             function onMouseOver(pos) {
-                if (highlighting) {
+                if (controllers.highlighting) {
                     window.setTimeout(asyncMouseOver.bind(undefined, pos), 0);
                 }
             }
             RectangleController.onMouseOver = onMouseOver;
 
             function onArrowDown(displacement) {
-                if (highlighting) {
+                if (controllers.highlighting) {
                     return;
                 }
 
@@ -578,7 +656,7 @@ var ascii_draw;
             RectangleController.onArrowDown = onArrowDown;
 
             function onKeyPress(character) {
-                if (highlighting) {
+                if (controllers.highlighting) {
                     return;
                 }
 
@@ -743,81 +821,12 @@ var ascii_draw;
         })(controllers.RectangleController || (controllers.RectangleController = {}));
         var RectangleController = controllers.RectangleController;
 
-        (function (SelectMoveController) {
-            function activate() {
-                console.log('activate SelectMoveController');
-                utils.addClass(ascii_draw.selection_button, 'pressed');
-            }
-            SelectMoveController.activate = activate;
-
-            function deactivate() {
-                console.log('deactivate SelectMoveController');
-                utils.removeClass(ascii_draw.selection_button, 'pressed');
-            }
-            SelectMoveController.deactivate = deactivate;
-
-            function onMouseDown(target) {
-                // TODO: if current cell is highlighted change to move mode
-                highlighting = true;
-                controllers.setHighlight(ascii_draw.grid.getCellPosition(target), ascii_draw.grid.getCellPosition(target));
-            }
-            SelectMoveController.onMouseDown = onMouseDown;
-
-            function onMouseUp(target) {
-                if (highlighting) {
-                    if (target) {
-                        var pos = ascii_draw.grid.getCellPosition(target);
-                        asyncMouseOver(pos);
-                    }
-                    var new_selection = new Rectangle(controllers.begin_highlight, controllers.end_highlight, true);
-                    controllers.setHighlight(new CellPosition(0, 0), new CellPosition(0, 0));
-                    highlighting = false;
-
-                    ascii_draw.commands.invoke(new ascii_draw.commands.ReplaceSelection([new_selection]));
-                }
-            }
-            SelectMoveController.onMouseUp = onMouseUp;
-
-            function asyncMouseOver(pos) {
-                if (highlighting) {
-                    controllers.setHighlight(controllers.begin_highlight, pos);
-                }
-            }
-
-            function onMouseOver(pos) {
-                if (highlighting) {
-                    window.setTimeout(asyncMouseOver.bind(undefined, pos), 0);
-                }
-            }
-            SelectMoveController.onMouseOver = onMouseOver;
-
-            function onArrowDown(displacement) {
-                if (highlighting) {
-                    return;
-                }
-
-                /* this should really be implemented by a MoveController */
-                ascii_draw.selection.move(displacement[0], displacement[1]);
-            }
-            SelectMoveController.onArrowDown = onArrowDown;
-
-            function onKeyPress(character) {
-                if (highlighting) {
-                    return;
-                }
-
-                ascii_draw.commands.invoke(new ascii_draw.commands.FillSelection(character));
-            }
-            SelectMoveController.onKeyPress = onKeyPress;
-        })(controllers.SelectMoveController || (controllers.SelectMoveController = {}));
-        var SelectMoveController = controllers.SelectMoveController;
-
         controllers.begin_highlight = new CellPosition(0, 0);
         controllers.end_highlight = controllers.begin_highlight;
 
-        var highlighting = false;
+        controllers.highlighting = false;
 
-        controllers.current = SelectMoveController;
+        controllers.current = ascii_draw.controllers.SelectController;
 
         function swap(new_controller) {
             return function () {
@@ -930,7 +939,7 @@ var ascii_draw;
 (function (ascii_draw) {
     var Rectangle = utils.Rectangle;
     var CellPosition = utils.Point;
-    var SelectMoveController = ascii_draw.controllers.SelectMoveController;
+    var SelectController = ascii_draw.controllers.SelectController;
     var RectangleController = ascii_draw.controllers.RectangleController;
 
     var copypastearea;
@@ -1153,7 +1162,7 @@ var ascii_draw;
 
         ascii_draw.rectangle_button.addEventListener('click', ascii_draw.controllers.swap(RectangleController), false);
 
-        ascii_draw.selection_button.addEventListener('click', ascii_draw.controllers.swap(SelectMoveController), false);
+        ascii_draw.selection_button.addEventListener('click', ascii_draw.controllers.swap(SelectController), false);
     }
     ascii_draw.init = init;
 })(ascii_draw || (ascii_draw = {}));

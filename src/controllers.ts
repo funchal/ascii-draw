@@ -2,6 +2,7 @@
 ///<reference path='grid.ts'/>
 ///<reference path='selection.ts'/>
 ///<reference path='commands.ts'/>
+///<reference path='selectcontroller.ts'/>
 
 'use strict';
 
@@ -324,73 +325,12 @@ module ascii_draw {
             }
         }
 
-        export module SelectMoveController {
-            export function activate(): void {
-                console.log('activate SelectMoveController');
-                utils.addClass(selection_button, 'pressed');
-            }
-
-            export function deactivate(): void {
-                console.log('deactivate SelectMoveController');
-                utils.removeClass(selection_button, 'pressed');
-            }
-
-            export function onMouseDown(target: Cell): void {
-                // TODO: if current cell is highlighted change to move mode
-                highlighting = true;
-                setHighlight(grid.getCellPosition(target), grid.getCellPosition(target));
-            }
-
-            export function onMouseUp(target: Cell): void {
-                if (highlighting) {
-                    if (target) {
-                        var pos = grid.getCellPosition(target);
-                        asyncMouseOver(pos);
-                    }
-                    var new_selection = new Rectangle(begin_highlight, end_highlight, true /*normalize*/);
-                    setHighlight(new CellPosition(0, 0), new CellPosition(0, 0));
-                    highlighting = false;
-
-                    commands.invoke(new commands.ReplaceSelection([new_selection]));
-                }
-            }
-
-            function asyncMouseOver(pos: CellPosition): void {
-                if (highlighting) {
-                    setHighlight(begin_highlight, pos);
-                }
-            }
-
-            export function onMouseOver(pos: CellPosition): void {
-                if (highlighting) {
-                    window.setTimeout(asyncMouseOver.bind(undefined, pos), 0);
-                }
-            }
-
-            export function onArrowDown(displacement: Array<number>): void {
-                if (highlighting) {
-                    return;
-                }
-
-                /* this should really be implemented by a MoveController */
-                selection.move(displacement[0], displacement[1]);
-            }
-
-            export function onKeyPress(character: string): void {
-                if (highlighting) {
-                    return;
-                }
-
-                commands.invoke(new commands.FillSelection(character));
-            }
-        }
-
         export var begin_highlight: CellPosition = new CellPosition(0, 0);
         export var end_highlight: CellPosition = begin_highlight;
 
-        var highlighting = false;
+        export var highlighting = false;
 
-        export var current: Controller = SelectMoveController;
+        export var current: Controller = SelectController;
 
         export function swap(new_controller: Controller): () => void {
             return function(): void {
