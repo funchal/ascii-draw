@@ -8,6 +8,8 @@ module ascii_draw {
         var nrows: number = 0;
         var ncols: number = 0;
 
+        export var emptyCell: string = ' ';
+
         export interface Row extends HTMLDivElement {};
         export interface Cell extends HTMLSpanElement {};
 
@@ -50,8 +52,8 @@ module ascii_draw {
             for (var r = 0; r < new_nrows; r++) {
                 var row = getRow(r);
                 for (var c = ncols; c < new_ncols; c++) {
-                    var cell = row.appendChild(document.createElement('span'));
-                    cell.textContent = emptyCell;
+                    var cell = <Cell>row.appendChild(document.createElement('span'));
+                    writeToCell(cell, emptyCell);
                 }
 
                 for (var c = ncols; c > new_ncols; c--) {
@@ -75,6 +77,10 @@ module ascii_draw {
             utils.changeStyleRule('#grid span', 'width', font_size.width + 'px');
             utils.changeStyleRule('#grid span', 'height', font_size.height + 'px');
             utils.changeStyleRule('#grid div', 'height', font_size.height + 'px');
+        }
+
+        export function writeToCell(cell: Cell, character: string): void {
+            cell.textContent = character;
         }
     }
 }

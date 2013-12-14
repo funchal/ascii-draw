@@ -41,7 +41,7 @@ module ascii_draw {
                 console.log('execute FillSelection');
                 // FIXME: save_raw_contents = selection.getRawContents();
                 for (var i = 0; i < selection.contents.length; i++) {
-                    applyToRectangle(selection.contents[i], controllers.writeToCell, this.character);
+                    applyToRectangle(selection.contents[i], grid.writeToCell, this.character);
                 }
 
                 if (selection.isUnit()) {
@@ -56,7 +56,7 @@ module ascii_draw {
                 }
 
                 for (var i = 0; i < selection.contents.length; i++) {
-                    applyToRectangle(selection.contents[i], controllers.writeToCell, ' ');
+                    applyToRectangle(selection.contents[i], grid.writeToCell, ' ');
                 }
             }
         }

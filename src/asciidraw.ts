@@ -18,8 +18,6 @@ module ascii_draw {
     export var mousestatus: HTMLDivElement;
     export var selectionstatus: HTMLDivElement;
 
-    export var emptyCell: string = ' ';
-
     var mouse_pos: CellPosition = null;
 
     function initiateCopyAction(): void {
