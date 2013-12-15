@@ -1,10 +1,13 @@
 ///<reference path='utils.ts'/>
+///<reference path='select_cmd.ts'/>
+///<reference path='rectangle_cmd.ts'/>
 
 'use strict';
 
 module ascii_draw {
     export module commands {
         import Rectangle = utils.Rectangle;
+        import CellPosition = utils.Point;
 
         var history: Array<Command> = [];
         var limit = 100;
@@ -14,51 +17,12 @@ module ascii_draw {
         var undo_button: HTMLButtonElement;
 
         export interface Command {
-            execute(): void;
-            unexecute(): void;
-        }
-
-        export class ReplaceSelection implements Command {
-            save_selection: Array<Rectangle> = [];
-
-            execute(): void {
-                console.log('execute ReplaceSelection');
-                this.save_selection = selection.set(this.save_selection);
-            }
-
-            unexecute(): void {
-                console.log('unexecute ReplaceSelection');
-                this.save_selection = selection.set(this.save_selection);
-            }
-        }
-
-        export class FillSelection implements Command {
-            constructor(public character: string) {}
-
-            save_raw_contents: string;
-
-            execute(): void {
-                console.log('execute FillSelection');
-                // FIXME: save_raw_contents = selection.getRawContents();
-                for (var i = 0; i < selection.contents.length; i++) {
-                    applyToRectangle(selection.contents[i], grid.writeToCell, this.character);
-                }
-
-                if (selection.isUnit()) {
-                    selection.move(0, 1);
-                }
-            }
-
-            unexecute(): void {
-                console.log('unexecute FillSelection');
-                if (selection.isUnit()) {
-                    selection.move(0, -1);
-                }
-
-                for (var i = 0; i < selection.contents.length; i++) {
-                    applyToRectangle(selection.contents[i], grid.writeToCell, grid.emptyCell);
-                }
-            }
+            initiate(pos: CellPosition): void;
+            change(pos: CellPosition): void;
+            complete(): void;
+            cancel(): void;
+            undo(): void;
+            redo(): void;
         }
 
         export function init(): void {
@@ -69,13 +33,14 @@ module ascii_draw {
             redo_button.addEventListener('click', onRedo, false);
         }
 
-        export function invoke(cmd: Command): void {
+        export function complete(cmd: Command): void {
             history.splice(current, history.length - current, cmd);
             if (history.length > limit) {
                 history.shift();
                 current--;
             }
-            redo();
+            current++;
+            update();
         }
 
         export function onUndo(): void {
@@ -92,13 +57,13 @@ module ascii_draw {
 
         function undo(): void {
             current--;
-            history[current].unexecute();
+            history[current].undo();
             update();
         }
 
         function redo(): void {
             current++;
-            history[current-1].execute();
+            history[current-1].redo();
             update();
         }
 

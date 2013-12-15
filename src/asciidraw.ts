@@ -1,18 +1,16 @@
 ///<reference path='controllers.ts'/>
 ///<reference path='utils.ts'/>
+///<reference path='modes.ts'/>
 
 'use strict';
 
 module ascii_draw {
     import Rectangle = utils.Rectangle;
     import CellPosition = utils.Point;
-    import SelectController = controllers.SelectController;
-    import RectangleController = controllers.RectangleController;
+    import Cell = grid.Cell;
+    import Command = commands.Command;
 
     var copypastearea: HTMLTextAreaElement;
-
-    export var selection_button: HTMLButtonElement;
-    export var rectangle_button: HTMLButtonElement;
 
     export var gridstatus: HTMLDivElement;
     export var mousestatus: HTMLDivElement;
@@ -68,7 +66,7 @@ module ascii_draw {
     function onKeyPress(event: KeyboardEvent): void {
         if (!event.ctrlKey && !event.altKey &&
             !event.metaKey && event.charCode > 0) {
-            controllers.current.onKeyPress(String.fromCharCode(event.charCode));
+            //controllers.current.onKeyPress(String.fromCharCode(event.charCode));
             event.preventDefault();
         }
         event.stopPropagation();
@@ -114,7 +112,7 @@ module ascii_draw {
             }
 
             if (displacement !== null) {
-                controllers.current.onArrowDown(displacement);
+                //controllers.current.onArrowDown(displacement);
             }
         }
 
@@ -154,18 +152,32 @@ module ascii_draw {
         }
     }
 
+    export function setHighlighted(cell: Cell, highlighted: boolean): void {
+        if (cell['data-highlighted'] !== highlighted) {
+            cell['data-highlighted'] = highlighted;
+            if (highlighted) {
+                utils.addClass(cell, 'highlighted');
+            } else {
+                utils.removeClass(cell, 'highlighted');
+            }
+        } else {
+            //console.log('highlighted already set to ' + highlighted);
+        }
+    }
+
+    export var begin_highlight: CellPosition = new CellPosition(0, 0);
+    export var end_highlight: CellPosition = begin_highlight;
+
+    export var current_cmd: Command = null;
+
     function onMouseDown(event: MouseEvent): void {
         var target = grid.getTargetCell(event.target);
         if (target !== null) {
-            controllers.current.onMouseDown(target);
+            var pos = grid.getCellPosition(target);
+            current_cmd = modes.current.getCommand();
+            current_cmd.initiate(pos);
         }
-        event.stopPropagation();
-        event.preventDefault();
-    }
 
-    function onMouseUp(event: MouseEvent): void {
-        var target = grid.getTargetCell(event.target);
-        controllers.current.onMouseUp(target);
         event.stopPropagation();
         event.preventDefault();
     }
@@ -175,8 +187,27 @@ module ascii_draw {
         if (target !== null) {
             var pos = grid.getCellPosition(target);
             setMousePosition(pos);
-            controllers.current.onMouseOver(pos);
+            if (current_cmd !== null) {
+                window.setTimeout(current_cmd.change.bind(current_cmd, pos), 0);
+            }
         }
+
+        event.stopPropagation();
+        event.preventDefault();
+    }
+
+    function onMouseUp(event: MouseEvent): void {
+        if (current_cmd !== null) {
+            var target = grid.getTargetCell(event.target);
+            if (target !== null) {
+                var pos = grid.getCellPosition(target);
+                current_cmd.change(pos);
+            }
+            current_cmd.complete();
+            commands.complete(current_cmd);
+            current_cmd = null;
+        }
+
         event.stopPropagation();
         event.preventDefault();
     }
@@ -211,14 +242,12 @@ module ascii_draw {
 
     export function init(): void {
         copypastearea = <HTMLTextAreaElement>document.getElementById('copypastearea');
-        rectangle_button = <HTMLButtonElement>document.getElementById('rectangle-button');
-        selection_button = <HTMLButtonElement>document.getElementById('selection-button');
         gridstatus = <HTMLDivElement>document.getElementById('gridstatus');
         selectionstatus = <HTMLDivElement>document.getElementById('selectionstatus');
         mousestatus = <HTMLDivElement>document.getElementById('mousestatus');
 
         grid.init();
-        controllers.init();
+        modes.init();
         commands.init();
 
         grid.container.addEventListener('mousedown', onMouseDown, false);
@@ -229,12 +258,6 @@ module ascii_draw {
         window.addEventListener('keydown', onKeyDown, false);
         window.addEventListener('keyup', onKeyUp, false);
         window.addEventListener('keypress', onKeyPress, false);
-
-        rectangle_button.addEventListener(
-            'click', controllers.swap(RectangleController), false);
-
-        selection_button.addEventListener(
-            'click', controllers.swap(SelectController), false);
     }
 }
 
