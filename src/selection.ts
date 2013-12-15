@@ -6,6 +6,7 @@ module ascii_draw {
         import Cell = grid.Cell;
 
         export var contents: Array<Rectangle> = [];
+        export var floating: boolean = false;
 
         export function clear(): void {
             for (var i = 0; i < contents.length; i++) {

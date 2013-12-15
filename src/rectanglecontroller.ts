@@ -17,6 +17,7 @@ module ascii_draw {
 
             export function onMouseDown(target: Cell): void {
                 // TODO: if current cell is highlighted change to move mode
+                commands.invoke(new commands.ReplaceSelection());
                 highlighting = true;
 
                 var pos = grid.getCellPosition(target);
@@ -36,10 +37,8 @@ module ascii_draw {
                         var pos = grid.getCellPosition(target);
                         asyncMouseOver(pos);
                     }
-
-                    var selection = resetHighlight(new CellPosition(0, 0));
-
-                    commands.invoke(new commands.ReplaceSelection(selection));
+                    var new_selection = resetHighlight(new CellPosition(0, 0));
+                    selection.set(new_selection);
                 }
             }
 
@@ -68,8 +67,6 @@ module ascii_draw {
                 if (highlighting) {
                     return;
                 }
-
-                commands.invoke(new commands.FillSelection(character));
             }
 
             /* Return the interval of cells that are in [begin, change[

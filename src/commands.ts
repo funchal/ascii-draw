@@ -19,7 +19,7 @@ module ascii_draw {
         }
 
         export class ReplaceSelection implements Command {
-            constructor(public save_selection: Array<Rectangle>) {}
+            save_selection: Array<Rectangle> = [];
 
             execute(): void {
                 console.log('execute ReplaceSelection');
@@ -56,7 +56,7 @@ module ascii_draw {
                 }
 
                 for (var i = 0; i < selection.contents.length; i++) {
-                    applyToRectangle(selection.contents[i], grid.writeToCell, ' ');
+                    applyToRectangle(selection.contents[i], grid.writeToCell, grid.emptyCell);
                 }
             }
         }

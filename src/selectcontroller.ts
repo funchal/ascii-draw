@@ -17,6 +17,10 @@ module ascii_draw {
 
             export function onMouseDown(target: Cell): void {
                 // TODO: if current cell is highlighted change to move mode
+
+                // save old selection and create a pending command
+                commands.invoke(new commands.ReplaceSelection());
+
                 highlighting = true;
                 setHighlight(grid.getCellPosition(target), grid.getCellPosition(target));
             }
@@ -27,11 +31,12 @@ module ascii_draw {
                         var pos = grid.getCellPosition(target);
                         asyncMouseOver(pos);
                     }
+
                     var new_selection = new Rectangle(begin_highlight, end_highlight, true /*normalize*/);
                     setHighlight(new CellPosition(0, 0), new CellPosition(0, 0));
                     highlighting = false;
 
-                    commands.invoke(new commands.ReplaceSelection([new_selection]));
+                    selection.set([new_selection]);
                 }
             }
 
