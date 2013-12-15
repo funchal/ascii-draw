@@ -80,30 +80,37 @@ module ascii_draw
 
         updateCorners(begin: CellPosition, end: CellPosition, paint: boolean): void
         {
-            var character: string;
-            if (paint) {
-                character = '+';
-            } else {
-                character = grid.emptyCell;
-            }
+            var character = '+';
 
             var row = grid.getRow(begin.row);
 
             var cell = grid.getCell(row, begin.col);
+            if (!paint) {
+                character = cell['data-committed-content'];
+            }
             grid.writeToCell(cell, character);
             setHighlighted(cell, paint);
 
             cell = grid.getCell(row, end.col);
+            if (!paint) {
+                character = cell['data-committed-content'];
+            }
             grid.writeToCell(cell, character);
             setHighlighted(cell, paint);
 
             row = grid.getRow(end.row);
 
             cell = grid.getCell(row, begin.col);
+            if (!paint) {
+                character = cell['data-committed-content'];
+            }
             grid.writeToCell(cell, character);
             setHighlighted(cell, paint);
 
             cell = grid.getCell(row, end.col);
+            if (!paint) {
+                character = cell['data-committed-content'];
+            }
             grid.writeToCell(cell, character);
             setHighlighted(cell, paint);
         }
@@ -118,28 +125,26 @@ module ascii_draw
             if (interval) {
 
                 if (vertical) {
-                    var character: string;
-                    if (paint) {
-                        character = '|';
-                    } else {
-                        character = grid.emptyCell;
-                    }
+                    var character = '|';
                     for (var r = interval[0]; r <= interval[1]; r++) {
                         var row = grid.getRow(r);
                         var cell = grid.getCell(row, missing_coord);
+                        if (!paint) {
+                            character = cell['data-committed-content'];
+                            console.log('restoring ' + character);
+                        }
                         grid.writeToCell(cell, character);
                         setHighlighted(cell, paint);
                     }
                 } else {
-                    var character: string;
-                    if (paint) {
-                        character = '-';
-                    } else {
-                        character = grid.emptyCell;
-                    }
+                    var character = '-';
                     var row = grid.getRow(missing_coord);
                     for (var c = interval[0]; c <= interval[1]; c++) {
                         var cell = grid.getCell(row, c);
+                        if (!paint) {
+                            character = cell['data-committed-content'];
+                            console.log('restoring ' + character);
+                        }
                         grid.writeToCell(cell, character);
                         setHighlighted(cell, paint);
                     }

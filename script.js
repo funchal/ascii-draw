@@ -240,6 +240,7 @@ var ascii_draw;
         commands.init = init;
 
         function complete(cmd) {
+            commitSelection();
             history.splice(current, history.length - current, cmd);
             if (history.length > limit) {
                 history.shift();
@@ -295,6 +296,19 @@ var ascii_draw;
                 redo_button.disabled = false;
             } else {
                 redo_button.disabled = true;
+            }
+        }
+
+        function commitSelection() {
+            var selection_contents = ascii_draw.selection.contents;
+            for (var i = 0; i < selection_contents.length; i++) {
+                for (var r = 0; r < selection_contents[i].getHeight(); r++) {
+                    var row = ascii_draw.grid.getRow(selection_contents[i].top + r);
+                    for (var c = 0; c < selection_contents[i].getWidth(); c++) {
+                        var cell = ascii_draw.grid.getCell(row, selection_contents[i].left + c);
+                        cell['data-committed-content'] = cell.textContent;
+                    }
+                }
             }
         }
     })(ascii_draw.commands || (ascii_draw.commands = {}));
@@ -619,30 +633,37 @@ var ascii_draw;
         };
 
         RectangleCommand.prototype.updateCorners = function (begin, end, paint) {
-            var character;
-            if (paint) {
-                character = '+';
-            } else {
-                character = ascii_draw.grid.emptyCell;
-            }
+            var character = '+';
 
             var row = ascii_draw.grid.getRow(begin.row);
 
             var cell = ascii_draw.grid.getCell(row, begin.col);
+            if (!paint) {
+                character = cell['data-committed-content'];
+            }
             ascii_draw.grid.writeToCell(cell, character);
             ascii_draw.setHighlighted(cell, paint);
 
             cell = ascii_draw.grid.getCell(row, end.col);
+            if (!paint) {
+                character = cell['data-committed-content'];
+            }
             ascii_draw.grid.writeToCell(cell, character);
             ascii_draw.setHighlighted(cell, paint);
 
             row = ascii_draw.grid.getRow(end.row);
 
             cell = ascii_draw.grid.getCell(row, begin.col);
+            if (!paint) {
+                character = cell['data-committed-content'];
+            }
             ascii_draw.grid.writeToCell(cell, character);
             ascii_draw.setHighlighted(cell, paint);
 
             cell = ascii_draw.grid.getCell(row, end.col);
+            if (!paint) {
+                character = cell['data-committed-content'];
+            }
             ascii_draw.grid.writeToCell(cell, character);
             ascii_draw.setHighlighted(cell, paint);
         };
@@ -655,28 +676,26 @@ var ascii_draw;
         RectangleCommand.prototype.paintEdge = function (interval, missing_coord, vertical, paint) {
             if (interval) {
                 if (vertical) {
-                    var character;
-                    if (paint) {
-                        character = '|';
-                    } else {
-                        character = ascii_draw.grid.emptyCell;
-                    }
+                    var character = '|';
                     for (var r = interval[0]; r <= interval[1]; r++) {
                         var row = ascii_draw.grid.getRow(r);
                         var cell = ascii_draw.grid.getCell(row, missing_coord);
+                        if (!paint) {
+                            character = cell['data-committed-content'];
+                            console.log('restoring ' + character);
+                        }
                         ascii_draw.grid.writeToCell(cell, character);
                         ascii_draw.setHighlighted(cell, paint);
                     }
                 } else {
-                    var character;
-                    if (paint) {
-                        character = '-';
-                    } else {
-                        character = ascii_draw.grid.emptyCell;
-                    }
+                    var character = '-';
                     var row = ascii_draw.grid.getRow(missing_coord);
                     for (var c = interval[0]; c <= interval[1]; c++) {
                         var cell = ascii_draw.grid.getCell(row, c);
+                        if (!paint) {
+                            character = cell['data-committed-content'];
+                            console.log('restoring ' + character);
+                        }
                         ascii_draw.grid.writeToCell(cell, character);
                         ascii_draw.setHighlighted(cell, paint);
                     }

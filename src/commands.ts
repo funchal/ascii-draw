@@ -32,6 +32,7 @@ module ascii_draw {
         }
 
         export function complete(cmd: Command): void {
+            commitSelection();
             history.splice(current, history.length - current, cmd);
             if (history.length > limit) {
                 history.shift();
@@ -86,5 +87,20 @@ module ascii_draw {
                 redo_button.disabled = true;
             }
         }
+
+        function commitSelection(): void
+        {
+            var selection_contents = selection.contents;
+            for (var i = 0; i < selection_contents.length; i++) {
+                for (var r = 0; r < selection_contents[i].getHeight(); r++) {
+                    var row = grid.getRow(selection_contents[i].top + r);
+                    for (var c = 0; c < selection_contents[i].getWidth(); c++) {
+                        var cell = grid.getCell(row, selection_contents[i].left + c);
+                        cell['data-committed-content'] = cell.textContent;
+                    }
+                }
+            }
+        }
+
     }
 }
