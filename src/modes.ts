@@ -1,46 +1,38 @@
-///<reference path='commands.ts'/>
-///<reference path='select_cmd.ts'/>
-///<reference path='rectangle_cmd.ts'/>
-///<reference path='fill_cmd.ts'/>
-///<reference path='text_cmd.ts'/>
-
 'use strict';
 
-module ascii_draw {
-    export module modes {
-        import Command = commands.Command;
-
-        export interface Mode {
+module ascii_draw
+{
+    export module modes
+    {
+        export interface Mode
+        {
             activate(): void;
             deactivate(): void;
-            getCommand(): Command;
         }
 
-        module SelectMoveMode {
-            export function activate(): void {
+        export module SelectMoveMode
+        {
+            export function activate(): void
+            {
                 utils.addClass(selection_button, 'pressed');
             }
 
-            export function deactivate(): void {
+            export function deactivate(): void
+            {
                 utils.removeClass(selection_button, 'pressed');
-            }
-
-            export function getCommand(): Command {
-                return new SelectCommand();
             }
         }
 
-        module RectangleMode {
-            export function activate(): void {
+        export module RectangleMode
+        {
+            export function activate(): void
+            {
                 utils.addClass(rectangle_button, 'pressed');
             }
 
-            export function deactivate(): void {
+            export function deactivate(): void
+            {
                 utils.removeClass(rectangle_button, 'pressed');
-            }
-
-            export function getCommand(): Command {
-                return new RectangleCommand();
             }
         }
 
@@ -49,13 +41,15 @@ module ascii_draw {
 
         export var current: Mode = SelectMoveMode;
 
-        function change(new_mode: Mode): void {
+        function change(new_mode: Mode): void
+        {
             current.deactivate();
             current = new_mode;
             current.activate();
         }
 
-        export function init(): void {
+        export function init(): void
+        {
             rectangle_button =
                 <HTMLButtonElement>document.getElementById('rectangle-button');
             selection_button =

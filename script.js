@@ -215,6 +215,59 @@ var utils;
     })();
     utils.Rectangle = Rectangle;
 })(utils || (utils = {}));
+'use strict';
+var ascii_draw;
+(function (ascii_draw) {
+    (function (modes) {
+        (function (SelectMoveMode) {
+            function activate() {
+                utils.addClass(selection_button, 'pressed');
+            }
+            SelectMoveMode.activate = activate;
+
+            function deactivate() {
+                utils.removeClass(selection_button, 'pressed');
+            }
+            SelectMoveMode.deactivate = deactivate;
+        })(modes.SelectMoveMode || (modes.SelectMoveMode = {}));
+        var SelectMoveMode = modes.SelectMoveMode;
+
+        (function (RectangleMode) {
+            function activate() {
+                utils.addClass(rectangle_button, 'pressed');
+            }
+            RectangleMode.activate = activate;
+
+            function deactivate() {
+                utils.removeClass(rectangle_button, 'pressed');
+            }
+            RectangleMode.deactivate = deactivate;
+        })(modes.RectangleMode || (modes.RectangleMode = {}));
+        var RectangleMode = modes.RectangleMode;
+
+        var selection_button;
+        var rectangle_button;
+
+        modes.current = SelectMoveMode;
+
+        function change(new_mode) {
+            modes.current.deactivate();
+            modes.current = new_mode;
+            modes.current.activate();
+        }
+
+        function init() {
+            rectangle_button = document.getElementById('rectangle-button');
+            selection_button = document.getElementById('selection-button');
+
+            modes.current.activate();
+            selection_button.addEventListener('click', change.bind(undefined, SelectMoveMode), false);
+            rectangle_button.addEventListener('click', change.bind(undefined, RectangleMode), false);
+        }
+        modes.init = init;
+    })(ascii_draw.modes || (ascii_draw.modes = {}));
+    var modes = ascii_draw.modes;
+})(ascii_draw || (ascii_draw = {}));
 ///<reference path='utils.ts'/>
 'use strict';
 var ascii_draw;
@@ -229,6 +282,8 @@ var ascii_draw;
 
         var redo_button;
         var undo_button;
+
+        commands.pending = null;
 
         function init() {
             undo_button = document.getElementById('undo-button');
@@ -894,76 +949,62 @@ var ascii_draw;
     })();
     ascii_draw.TextCommand = TextCommand;
 })(ascii_draw || (ascii_draw = {}));
+///<reference path='selection.ts'/>
+'use strict';
+var ascii_draw;
+(function (ascii_draw) {
+    var Rectangle = utils.Rectangle;
+    var CellPosition = utils.Point;
+
+    var MoveCommand = (function () {
+        function MoveCommand() {
+            this.dx = 0;
+            this.dy = 0;
+            this.completed = false;
+        }
+        MoveCommand.prototype.initiate = function (pos) {
+            ascii_draw.begin_highlight = pos;
+            ascii_draw.end_highlight = pos;
+        };
+
+        MoveCommand.prototype.change = function (pos) {
+            if (!this.completed) {
+                this.dx = pos.row - ascii_draw.end_highlight.row;
+                this.dy = pos.col - ascii_draw.end_highlight.col;
+                ascii_draw.end_highlight = pos;
+                ascii_draw.selection.move(this.dx, this.dy);
+                // FIXME: move contents
+            }
+        };
+
+        MoveCommand.prototype.complete = function () {
+            this.dx = ascii_draw.end_highlight.row - ascii_draw.begin_highlight.row;
+            this.dy = ascii_draw.end_highlight.col - ascii_draw.begin_highlight.col;
+            this.completed = true;
+        };
+
+        MoveCommand.prototype.cancel = function () {
+        };
+
+        MoveCommand.prototype.undo = function () {
+            ascii_draw.selection.move(-this.dx, -this.dy);
+        };
+
+        MoveCommand.prototype.redo = function () {
+            ascii_draw.selection.move(this.dx, this.dy);
+        };
+        return MoveCommand;
+    })();
+    ascii_draw.MoveCommand = MoveCommand;
+})(ascii_draw || (ascii_draw = {}));
+///<reference path='utils.ts'/>
+///<reference path='modes.ts'/>
 ///<reference path='commands.ts'/>
 ///<reference path='select_cmd.ts'/>
 ///<reference path='rectangle_cmd.ts'/>
 ///<reference path='fill_cmd.ts'/>
 ///<reference path='text_cmd.ts'/>
-'use strict';
-var ascii_draw;
-(function (ascii_draw) {
-    (function (modes) {
-        var SelectMoveMode;
-        (function (SelectMoveMode) {
-            function activate() {
-                utils.addClass(selection_button, 'pressed');
-            }
-            SelectMoveMode.activate = activate;
-
-            function deactivate() {
-                utils.removeClass(selection_button, 'pressed');
-            }
-            SelectMoveMode.deactivate = deactivate;
-
-            function getCommand() {
-                return new ascii_draw.SelectCommand();
-            }
-            SelectMoveMode.getCommand = getCommand;
-        })(SelectMoveMode || (SelectMoveMode = {}));
-
-        var RectangleMode;
-        (function (RectangleMode) {
-            function activate() {
-                utils.addClass(rectangle_button, 'pressed');
-            }
-            RectangleMode.activate = activate;
-
-            function deactivate() {
-                utils.removeClass(rectangle_button, 'pressed');
-            }
-            RectangleMode.deactivate = deactivate;
-
-            function getCommand() {
-                return new ascii_draw.RectangleCommand();
-            }
-            RectangleMode.getCommand = getCommand;
-        })(RectangleMode || (RectangleMode = {}));
-
-        var selection_button;
-        var rectangle_button;
-
-        modes.current = SelectMoveMode;
-
-        function change(new_mode) {
-            modes.current.deactivate();
-            modes.current = new_mode;
-            modes.current.activate();
-        }
-
-        function init() {
-            rectangle_button = document.getElementById('rectangle-button');
-            selection_button = document.getElementById('selection-button');
-
-            modes.current.activate();
-            selection_button.addEventListener('click', change.bind(undefined, SelectMoveMode), false);
-            rectangle_button.addEventListener('click', change.bind(undefined, RectangleMode), false);
-        }
-        modes.init = init;
-    })(ascii_draw.modes || (ascii_draw.modes = {}));
-    var modes = ascii_draw.modes;
-})(ascii_draw || (ascii_draw = {}));
-///<reference path='utils.ts'/>
-///<reference path='modes.ts'/>
+///<reference path='move_cmd.ts'/>
 'use strict';
 var ascii_draw;
 (function (ascii_draw) {
@@ -1025,7 +1066,7 @@ var ascii_draw;
 
     function onKeyPress(event) {
         if (!event.ctrlKey && !event.altKey && !event.metaKey && event.charCode > 0) {
-            if (ascii_draw.current_cmd === null) {
+            if (ascii_draw.commands.pending === null) {
                 if (ascii_draw.selection.isUnit()) {
                     var cmd = new ascii_draw.TextCommand();
                     cmd.character = String.fromCharCode(event.charCode);
@@ -1136,14 +1177,20 @@ var ascii_draw;
     ascii_draw.begin_highlight = new CellPosition(0, 0);
     ascii_draw.end_highlight = ascii_draw.begin_highlight;
 
-    ascii_draw.current_cmd = null;
-
     function onMouseDown(event) {
         var target = ascii_draw.grid.getTargetCell(event.target);
         if (target !== null) {
             var pos = ascii_draw.grid.getCellPosition(target);
-            ascii_draw.current_cmd = ascii_draw.modes.current.getCommand();
-            ascii_draw.current_cmd.initiate(pos);
+            if (target['data-selected'] === true) {
+                ascii_draw.commands.pending = new ascii_draw.MoveCommand();
+            } else {
+                if (ascii_draw.modes.current == ascii_draw.modes.SelectMoveMode) {
+                    ascii_draw.commands.pending = new ascii_draw.SelectCommand();
+                } else if (ascii_draw.modes.current == ascii_draw.modes.RectangleMode) {
+                    ascii_draw.commands.pending = new ascii_draw.RectangleCommand();
+                }
+            }
+            ascii_draw.commands.pending.initiate(pos);
         }
 
         event.stopPropagation();
@@ -1155,8 +1202,8 @@ var ascii_draw;
         if (target !== null) {
             var pos = ascii_draw.grid.getCellPosition(target);
             setMousePosition(pos);
-            if (ascii_draw.current_cmd !== null) {
-                window.setTimeout(ascii_draw.current_cmd.change.bind(ascii_draw.current_cmd, pos), 0);
+            if (ascii_draw.commands.pending !== null) {
+                window.setTimeout(ascii_draw.commands.pending.change.bind(ascii_draw.commands.pending, pos), 0);
             }
         }
 
@@ -1165,15 +1212,15 @@ var ascii_draw;
     }
 
     function onMouseUp(event) {
-        if (ascii_draw.current_cmd !== null) {
+        if (ascii_draw.commands.pending !== null) {
             var target = ascii_draw.grid.getTargetCell(event.target);
             if (target !== null) {
                 var pos = ascii_draw.grid.getCellPosition(target);
-                ascii_draw.current_cmd.change(pos);
+                ascii_draw.commands.pending.change(pos);
             }
-            ascii_draw.current_cmd.complete();
-            ascii_draw.commands.complete(ascii_draw.current_cmd);
-            ascii_draw.current_cmd = null;
+            ascii_draw.commands.pending.complete();
+            ascii_draw.commands.complete(ascii_draw.commands.pending);
+            ascii_draw.commands.pending = null;
         }
 
         event.stopPropagation();

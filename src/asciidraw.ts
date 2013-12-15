@@ -1,9 +1,16 @@
 ///<reference path='utils.ts'/>
 ///<reference path='modes.ts'/>
+///<reference path='commands.ts'/>
+///<reference path='select_cmd.ts'/>
+///<reference path='rectangle_cmd.ts'/>
+///<reference path='fill_cmd.ts'/>
+///<reference path='text_cmd.ts'/>
+///<reference path='move_cmd.ts'/>
 
 'use strict';
 
-module ascii_draw {
+module ascii_draw
+{
     import Rectangle = utils.Rectangle;
     import CellPosition = utils.Point;
     import Cell = grid.Cell;
@@ -17,7 +24,8 @@ module ascii_draw {
 
     var mouse_pos: CellPosition = null;
 
-    function initiateCopyAction(): void {
+    function initiateCopyAction(): void
+    {
         if (window.getSelection && document.createRange) {
             copypastearea.textContent = selection.getContents();
             var sel = window.getSelection();
@@ -30,22 +38,26 @@ module ascii_draw {
         }
     }
 
-    function completeCopyAction(): void {
+    function completeCopyAction(): void
+    {
         copypastearea.value = '';
         console.log('copy');
     }
 
-    function initiatePasteAction(): void {
+    function initiatePasteAction(): void
+    {
         copypastearea.value = '';
         copypastearea.focus();
     }
 
-    function completePasteAction(): void {
+    function completePasteAction(): void
+    {
         console.log('paste: ' + copypastearea.value);
         copypastearea.value = '';
     }
 
-    function onKeyUp(event: KeyboardEvent): void {
+    function onKeyUp(event: KeyboardEvent): void
+    {
         if (event.ctrlKey && !event.altKey && !event.shiftKey) {
             switch (event.keyCode) {
                 case 67: /* ctrl+c: copy */
@@ -62,10 +74,11 @@ module ascii_draw {
         event.stopPropagation();
     }
 
-    function onKeyPress(event: KeyboardEvent): void {
+    function onKeyPress(event: KeyboardEvent): void
+    {
         if (!event.ctrlKey && !event.altKey &&
             !event.metaKey && event.charCode > 0) {
-            if (current_cmd === null) {
+            if (commands.pending === null) {
                 if (selection.isUnit()) {
                     var cmd = new TextCommand();
                     cmd.character = String.fromCharCode(event.charCode);
@@ -83,7 +96,8 @@ module ascii_draw {
         event.stopPropagation();
     }
 
-    function onKeyDown(event: KeyboardEvent): void {
+    function onKeyDown(event: KeyboardEvent): void
+    {
         if (!event.ctrlKey && !event.altKey &&
             !event.shiftKey && !event.metaKey) {
             var displacement: Array<number> = null;
@@ -163,7 +177,8 @@ module ascii_draw {
         }
     }
 
-    export function setHighlighted(cell: Cell, highlighted: boolean): void {
+    export function setHighlighted(cell: Cell, highlighted: boolean): void
+    {
         if (cell['data-highlighted'] !== highlighted) {
             cell['data-highlighted'] = highlighted;
             if (highlighted) {
@@ -179,27 +194,35 @@ module ascii_draw {
     export var begin_highlight: CellPosition = new CellPosition(0, 0);
     export var end_highlight: CellPosition = begin_highlight;
 
-    export var current_cmd: Command = null;
-
-    function onMouseDown(event: MouseEvent): void {
+    function onMouseDown(event: MouseEvent): void
+    {
         var target = grid.getTargetCell(event.target);
         if (target !== null) {
             var pos = grid.getCellPosition(target);
-            current_cmd = modes.current.getCommand();
-            current_cmd.initiate(pos);
+            if (target['data-selected'] === true) {
+                commands.pending = new MoveCommand();
+            } else {
+                if (modes.current == modes.SelectMoveMode) {
+                    commands.pending = new SelectCommand();
+                } else if (modes.current == modes.RectangleMode) {
+                    commands.pending = new RectangleCommand();
+                }
+            }
+            commands.pending.initiate(pos);
         }
 
         event.stopPropagation();
         event.preventDefault();
     }
 
-    function onMouseOver(event: MouseEvent): void {
+    function onMouseOver(event: MouseEvent): void
+    {
         var target = grid.getTargetCell(event.target);
         if (target !== null) {
             var pos = grid.getCellPosition(target);
             setMousePosition(pos);
-            if (current_cmd !== null) {
-                window.setTimeout(current_cmd.change.bind(current_cmd, pos), 0);
+            if (commands.pending !== null) {
+                window.setTimeout(commands.pending.change.bind(commands.pending, pos), 0);
             }
         }
 
@@ -207,23 +230,25 @@ module ascii_draw {
         event.preventDefault();
     }
 
-    function onMouseUp(event: MouseEvent): void {
-        if (current_cmd !== null) {
+    function onMouseUp(event: MouseEvent): void
+    {
+        if (commands.pending !== null) {
             var target = grid.getTargetCell(event.target);
             if (target !== null) {
                 var pos = grid.getCellPosition(target);
-                current_cmd.change(pos);
+                commands.pending.change(pos);
             }
-            current_cmd.complete();
-            commands.complete(current_cmd);
-            current_cmd = null;
+            commands.pending.complete();
+            commands.complete(commands.pending);
+            commands.pending = null;
         }
 
         event.stopPropagation();
         event.preventDefault();
     }
 
-    function setMousePosition(new_pos: CellPosition): void {
+    function setMousePosition(new_pos: CellPosition): void
+    {
         if (mouse_pos !== null) {
             var cell = grid.getCell(grid.getRow(mouse_pos.row), mouse_pos.col);
             utils.removeClass(cell, 'mouse');
@@ -240,18 +265,21 @@ module ascii_draw {
         }
     }
 
-    function onMouseLeave(event: MouseEvent): void {
+    function onMouseLeave(event: MouseEvent): void
+    {
         setMousePosition(null);
         event.stopPropagation();
         event.preventDefault();
     }
 
-    function onContextMenu(event: MouseEvent): void {
+    function onContextMenu(event: MouseEvent): void
+    {
         event.stopPropagation();
         event.preventDefault();
     }
 
-    export function init(): void {
+    export function init(): void
+    {
         copypastearea = <HTMLTextAreaElement>document.getElementById('copypastearea');
         gridstatus = <HTMLDivElement>document.getElementById('gridstatus');
         selectionstatus = <HTMLDivElement>document.getElementById('selectionstatus');
