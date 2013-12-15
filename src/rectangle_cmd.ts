@@ -5,7 +5,7 @@ module ascii_draw
     import Rectangle = utils.Rectangle;
     import CellPosition = utils.Point;
     import Command = commands.Command;
-
+    import Cell = grid.Cell;
     export class RectangleCommand implements Command
     {
         save_selection: Array<Rectangle> = [];
@@ -78,6 +78,19 @@ module ascii_draw
             }
         }
 
+        clearCell(cell: Cell): void
+        {
+            var character = cell['data-committed-content'];
+            grid.writeToCell(cell, character);
+            setHighlighted(cell, false);
+        }
+
+        paintCell(cell: Cell, character: string): void
+        {
+            grid.writeToCell(cell, character);
+            setHighlighted(cell, true);
+        }
+
         updateCorners(begin: CellPosition, end: CellPosition, paint: boolean): void
         {
             var character = '+';
@@ -85,34 +98,34 @@ module ascii_draw
             var row = grid.getRow(begin.row);
 
             var cell = grid.getCell(row, begin.col);
-            if (!paint) {
-                character = cell['data-committed-content'];
+            if (paint) {
+                this.paintCell(cell, '+');
+            } else {
+                this.clearCell(cell);
             }
-            grid.writeToCell(cell, character);
-            setHighlighted(cell, paint);
 
             cell = grid.getCell(row, end.col);
-            if (!paint) {
-                character = cell['data-committed-content'];
+            if (paint) {
+                this.paintCell(cell, '+');
+            } else {
+                this.clearCell(cell);
             }
-            grid.writeToCell(cell, character);
-            setHighlighted(cell, paint);
 
             row = grid.getRow(end.row);
 
             cell = grid.getCell(row, begin.col);
-            if (!paint) {
-                character = cell['data-committed-content'];
+            if (paint) {
+                this.paintCell(cell, '+');
+            } else {
+                this.clearCell(cell);
             }
-            grid.writeToCell(cell, character);
-            setHighlighted(cell, paint);
 
             cell = grid.getCell(row, end.col);
-            if (!paint) {
-                character = cell['data-committed-content'];
+            if (paint) {
+                this.paintCell(cell, '+');
+            } else {
+                this.clearCell(cell);
             }
-            grid.writeToCell(cell, character);
-            setHighlighted(cell, paint);
         }
 
         /* Paint or clear a flat rectangle.
@@ -125,28 +138,24 @@ module ascii_draw
             if (interval) {
 
                 if (vertical) {
-                    var character = '|';
                     for (var r = interval[0]; r <= interval[1]; r++) {
                         var row = grid.getRow(r);
                         var cell = grid.getCell(row, missing_coord);
-                        if (!paint) {
-                            character = cell['data-committed-content'];
-                            console.log('restoring ' + character);
+                        if (paint) {
+                            this.paintCell(cell, '|');
+                        } else {
+                            this.clearCell(cell);
                         }
-                        grid.writeToCell(cell, character);
-                        setHighlighted(cell, paint);
                     }
                 } else {
-                    var character = '-';
                     var row = grid.getRow(missing_coord);
                     for (var c = interval[0]; c <= interval[1]; c++) {
                         var cell = grid.getCell(row, c);
-                        if (!paint) {
-                            character = cell['data-committed-content'];
-                            console.log('restoring ' + character);
+                        if (paint) {
+                            this.paintCell(cell, '-');
+                        } else {
+                            this.clearCell(cell);
                         }
-                        grid.writeToCell(cell, character);
-                        setHighlighted(cell, paint);
                     }
                 }
             }

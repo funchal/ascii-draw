@@ -691,40 +691,51 @@ var ascii_draw;
             }
         };
 
+        RectangleCommand.prototype.clearCell = function (cell) {
+            var character = cell['data-committed-content'];
+            ascii_draw.grid.writeToCell(cell, character);
+            ascii_draw.setHighlighted(cell, false);
+        };
+
+        RectangleCommand.prototype.paintCell = function (cell, character) {
+            ascii_draw.grid.writeToCell(cell, character);
+            ascii_draw.setHighlighted(cell, true);
+        };
+
         RectangleCommand.prototype.updateCorners = function (begin, end, paint) {
             var character = '+';
 
             var row = ascii_draw.grid.getRow(begin.row);
 
             var cell = ascii_draw.grid.getCell(row, begin.col);
-            if (!paint) {
-                character = cell['data-committed-content'];
+            if (paint) {
+                this.paintCell(cell, '+');
+            } else {
+                this.clearCell(cell);
             }
-            ascii_draw.grid.writeToCell(cell, character);
-            ascii_draw.setHighlighted(cell, paint);
 
             cell = ascii_draw.grid.getCell(row, end.col);
-            if (!paint) {
-                character = cell['data-committed-content'];
+            if (paint) {
+                this.paintCell(cell, '+');
+            } else {
+                this.clearCell(cell);
             }
-            ascii_draw.grid.writeToCell(cell, character);
-            ascii_draw.setHighlighted(cell, paint);
 
             row = ascii_draw.grid.getRow(end.row);
 
             cell = ascii_draw.grid.getCell(row, begin.col);
-            if (!paint) {
-                character = cell['data-committed-content'];
+            if (paint) {
+                this.paintCell(cell, '+');
+            } else {
+                this.clearCell(cell);
             }
-            ascii_draw.grid.writeToCell(cell, character);
-            ascii_draw.setHighlighted(cell, paint);
 
             cell = ascii_draw.grid.getCell(row, end.col);
-            if (!paint) {
-                character = cell['data-committed-content'];
+            if (paint) {
+                this.paintCell(cell, '+');
+            } else {
+                this.clearCell(cell);
             }
-            ascii_draw.grid.writeToCell(cell, character);
-            ascii_draw.setHighlighted(cell, paint);
         };
 
         /* Paint or clear a flat rectangle.
@@ -735,28 +746,24 @@ var ascii_draw;
         RectangleCommand.prototype.paintEdge = function (interval, missing_coord, vertical, paint) {
             if (interval) {
                 if (vertical) {
-                    var character = '|';
                     for (var r = interval[0]; r <= interval[1]; r++) {
                         var row = ascii_draw.grid.getRow(r);
                         var cell = ascii_draw.grid.getCell(row, missing_coord);
-                        if (!paint) {
-                            character = cell['data-committed-content'];
-                            console.log('restoring ' + character);
+                        if (paint) {
+                            this.paintCell(cell, '|');
+                        } else {
+                            this.clearCell(cell);
                         }
-                        ascii_draw.grid.writeToCell(cell, character);
-                        ascii_draw.setHighlighted(cell, paint);
                     }
                 } else {
-                    var character = '-';
                     var row = ascii_draw.grid.getRow(missing_coord);
                     for (var c = interval[0]; c <= interval[1]; c++) {
                         var cell = ascii_draw.grid.getCell(row, c);
-                        if (!paint) {
-                            character = cell['data-committed-content'];
-                            console.log('restoring ' + character);
+                        if (paint) {
+                            this.paintCell(cell, '-');
+                        } else {
+                            this.clearCell(cell);
                         }
-                        ascii_draw.grid.writeToCell(cell, character);
-                        ascii_draw.setHighlighted(cell, paint);
                     }
                 }
             }
