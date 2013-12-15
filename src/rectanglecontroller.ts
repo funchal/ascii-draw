@@ -17,6 +17,7 @@ module ascii_draw {
 
             export function onMouseDown(target: Cell): void {
                 // TODO: if current cell is highlighted change to move mode
+                commands.invoke(new commands.ReplaceSelection());
                 highlighting = true;
                 setHollowHighlight(grid.getCellPosition(target), grid.getCellPosition(target));
                 grid.writeToCell(target, '+');
@@ -30,9 +31,8 @@ module ascii_draw {
                     }
                     var new_selection = setHollowHighlight(new CellPosition(0, 0),
                                                            new CellPosition(0, 0));
+                    selection.set(new_selection);
                     highlighting = false;
-
-                    commands.invoke(new commands.ReplaceSelection(new_selection));
                 }
             }
 
@@ -61,8 +61,6 @@ module ascii_draw {
                 if (highlighting) {
                     return;
                 }
-
-                commands.invoke(new commands.FillSelection(character));
             }
 
             /* Return the interval of cells that are in [begin, change[
