@@ -314,7 +314,6 @@ var ascii_draw;
         var Rectangle = utils.Rectangle;
 
         selection.contents = [];
-        selection.floating = false;
 
         function clear() {
             for (var i = 0; i < selection.contents.length; i++) {
