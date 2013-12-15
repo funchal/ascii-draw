@@ -199,14 +199,14 @@ module ascii_draw
         var target = grid.getTargetCell(event.target);
         if (target !== null) {
             var pos = grid.getCellPosition(target);
-            if (modes.current == modes.SelectMoveMode) {
-                if (target['data-selected'] === true) {
-                    commands.pending = new MoveCommand();
-                } else {
+            if (target['data-selected'] === true) {
+                commands.pending = new MoveCommand();
+            } else {
+                if (modes.current == modes.SelectMoveMode) {
                     commands.pending = new SelectCommand();
+                } else if (modes.current == modes.RectangleMode) {
+                    commands.pending = new RectangleCommand();
                 }
-            } else if (modes.current == modes.RectangleMode) {
-                commands.pending = new RectangleCommand();
             }
             commands.pending.initiate(pos);
         }

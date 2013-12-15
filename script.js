@@ -1177,14 +1177,14 @@ var ascii_draw;
         var target = ascii_draw.grid.getTargetCell(event.target);
         if (target !== null) {
             var pos = ascii_draw.grid.getCellPosition(target);
-            if (ascii_draw.modes.current == ascii_draw.modes.SelectMoveMode) {
-                if (target['data-selected'] === true) {
-                    ascii_draw.commands.pending = new ascii_draw.MoveCommand();
-                } else {
+            if (target['data-selected'] === true) {
+                ascii_draw.commands.pending = new ascii_draw.MoveCommand();
+            } else {
+                if (ascii_draw.modes.current == ascii_draw.modes.SelectMoveMode) {
                     ascii_draw.commands.pending = new ascii_draw.SelectCommand();
+                } else if (ascii_draw.modes.current == ascii_draw.modes.RectangleMode) {
+                    ascii_draw.commands.pending = new ascii_draw.RectangleCommand();
                 }
-            } else if (ascii_draw.modes.current == ascii_draw.modes.RectangleMode) {
-                ascii_draw.commands.pending = new ascii_draw.RectangleCommand();
             }
             ascii_draw.commands.pending.initiate(pos);
         }
