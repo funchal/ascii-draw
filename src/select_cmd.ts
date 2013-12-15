@@ -1,3 +1,5 @@
+///<reference path='selection.ts'/>
+
 'use strict';
 
 module ascii_draw
@@ -8,12 +10,12 @@ module ascii_draw
 
     export class SelectCommand implements Command
     {
-        save_selection: Array<Rectangle> = [];
+        saved_selection: Array<Rectangle> = [];
         completed: boolean = false;
 
         initiate(pos: CellPosition)
         {
-            this.save_selection = selection.set([]);
+            this.saved_selection = selection.set([]);
             this.setHighlight(pos, pos);
         }
 
@@ -27,8 +29,8 @@ module ascii_draw
         complete(): void
         {
             var new_selection = new Rectangle(begin_highlight, end_highlight, true /*normalize*/);
-            this.setHighlight(new CellPosition(0, 0), new CellPosition(0, 0));
             selection.set([new_selection]);
+            this.setHighlight(new CellPosition(0, 0), new CellPosition(0, 0));
             this.completed = true;
         }
 
@@ -38,12 +40,12 @@ module ascii_draw
 
         undo(): void
         {
-            this.save_selection = selection.set(this.save_selection);
+            this.saved_selection = selection.set(this.saved_selection);
         }
 
         redo(): void
         {
-            this.save_selection = selection.set(this.save_selection);
+            this.saved_selection = selection.set(this.saved_selection);
         }
 
         setHighlight(new_begin_highlight: CellPosition, new_end_highlight: CellPosition): void

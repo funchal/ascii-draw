@@ -13,9 +13,10 @@ module ascii_draw
 
         initiate(pos: CellPosition)
         {
+            // FIXME: set begin_selection at parent function
             this.save_selection = selection.set([]);
             this.resetHighlight(pos);
-            var cell = grid.getCell(grid.getRow(pos.row), pos.col);;
+            var cell = grid.getCell(grid.getRow(pos.row), pos.col);
             grid.writeToCell(cell, '+');
             var selectionstatus = document.getElementById('selectionstatus');
             selectionstatus.textContent = 'Highlight: 1x1';
@@ -23,6 +24,7 @@ module ascii_draw
 
         change(pos: CellPosition): void
         {
+            // FIXME: set end_selection at parent function
             if (!this.completed) {
                 this.updateRectangleAndHighlight(pos);
             }
@@ -159,6 +161,7 @@ module ascii_draw
         */
         updateRectangleAndHighlight(new_end_highlight: CellPosition): void
         {
+            // FIXME: move this to parent function
             if (new_end_highlight.isEqual(end_highlight)) {
                 return;
             }

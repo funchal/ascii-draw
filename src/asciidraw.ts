@@ -1,4 +1,3 @@
-///<reference path='controllers.ts'/>
 ///<reference path='utils.ts'/>
 ///<reference path='modes.ts'/>
 
@@ -66,7 +65,19 @@ module ascii_draw {
     function onKeyPress(event: KeyboardEvent): void {
         if (!event.ctrlKey && !event.altKey &&
             !event.metaKey && event.charCode > 0) {
-            //controllers.current.onKeyPress(String.fromCharCode(event.charCode));
+            if (current_cmd === null) {
+                if (selection.isUnit()) {
+                    var cmd = new TextCommand();
+                    cmd.character = String.fromCharCode(event.charCode);
+                    cmd.complete();
+                    commands.complete(cmd);
+                } else {
+                    var cmd = new FillCommand();
+                    cmd.character = String.fromCharCode(event.charCode);
+                    cmd.complete();
+                    commands.complete(cmd);
+                }
+            }
             event.preventDefault();
         }
         event.stopPropagation();

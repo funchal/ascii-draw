@@ -1,3 +1,9 @@
+///<reference path='commands.ts'/>
+///<reference path='select_cmd.ts'/>
+///<reference path='rectangle_cmd.ts'/>
+///<reference path='fill_cmd.ts'/>
+///<reference path='text_cmd.ts'/>
+
 'use strict';
 
 module ascii_draw {

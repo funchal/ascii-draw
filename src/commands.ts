@@ -1,6 +1,4 @@
 ///<reference path='utils.ts'/>
-///<reference path='select_cmd.ts'/>
-///<reference path='rectangle_cmd.ts'/>
 
 'use strict';
 

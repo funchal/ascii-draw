@@ -215,6 +215,91 @@ var utils;
     })();
     utils.Rectangle = Rectangle;
 })(utils || (utils = {}));
+///<reference path='utils.ts'/>
+'use strict';
+var ascii_draw;
+(function (ascii_draw) {
+    (function (commands) {
+        var Rectangle = utils.Rectangle;
+        var CellPosition = utils.Point;
+
+        var history = [];
+        var limit = 100;
+        var current = 0;
+
+        var redo_button;
+        var undo_button;
+
+        function init() {
+            undo_button = document.getElementById('undo-button');
+            redo_button = document.getElementById('redo-button');
+            update();
+            undo_button.addEventListener('click', onUndo, false);
+            redo_button.addEventListener('click', onRedo, false);
+        }
+        commands.init = init;
+
+        function complete(cmd) {
+            history.splice(current, history.length - current, cmd);
+            if (history.length > limit) {
+                history.shift();
+                current--;
+            }
+            current++;
+            update();
+        }
+        commands.complete = complete;
+
+        function onUndo() {
+            if (canUndo()) {
+                undo();
+            }
+        }
+        commands.onUndo = onUndo;
+
+        function onRedo() {
+            if (canRedo()) {
+                redo();
+            }
+        }
+        commands.onRedo = onRedo;
+
+        function undo() {
+            current--;
+            history[current].undo();
+            update();
+        }
+
+        function redo() {
+            current++;
+            history[current - 1].redo();
+            update();
+        }
+
+        function canUndo() {
+            return (current > 0);
+        }
+
+        function canRedo() {
+            return (current < history.length);
+        }
+
+        function update() {
+            if (canUndo()) {
+                undo_button.disabled = false;
+            } else {
+                undo_button.disabled = true;
+            }
+
+            if (canRedo()) {
+                redo_button.disabled = false;
+            } else {
+                redo_button.disabled = true;
+            }
+        }
+    })(ascii_draw.commands || (ascii_draw.commands = {}));
+    var commands = ascii_draw.commands;
+})(ascii_draw || (ascii_draw = {}));
 'use strict';
 var ascii_draw;
 (function (ascii_draw) {
@@ -307,6 +392,7 @@ var ascii_draw;
     })(ascii_draw.grid || (ascii_draw.grid = {}));
     var grid = ascii_draw.grid;
 })(ascii_draw || (ascii_draw = {}));
+///<reference path='grid.ts'/>
 'use strict';
 var ascii_draw;
 (function (ascii_draw) {
@@ -387,6 +473,7 @@ var ascii_draw;
     })(ascii_draw.selection || (ascii_draw.selection = {}));
     var selection = ascii_draw.selection;
 })(ascii_draw || (ascii_draw = {}));
+///<reference path='selection.ts'/>
 'use strict';
 var ascii_draw;
 (function (ascii_draw) {
@@ -395,11 +482,11 @@ var ascii_draw;
 
     var SelectCommand = (function () {
         function SelectCommand() {
-            this.save_selection = [];
+            this.saved_selection = [];
             this.completed = false;
         }
         SelectCommand.prototype.initiate = function (pos) {
-            this.save_selection = ascii_draw.selection.set([]);
+            this.saved_selection = ascii_draw.selection.set([]);
             this.setHighlight(pos, pos);
         };
 
@@ -411,8 +498,8 @@ var ascii_draw;
 
         SelectCommand.prototype.complete = function () {
             var new_selection = new Rectangle(ascii_draw.begin_highlight, ascii_draw.end_highlight, true);
-            this.setHighlight(new CellPosition(0, 0), new CellPosition(0, 0));
             ascii_draw.selection.set([new_selection]);
+            this.setHighlight(new CellPosition(0, 0), new CellPosition(0, 0));
             this.completed = true;
         };
 
@@ -420,11 +507,11 @@ var ascii_draw;
         };
 
         SelectCommand.prototype.undo = function () {
-            this.save_selection = ascii_draw.selection.set(this.save_selection);
+            this.saved_selection = ascii_draw.selection.set(this.saved_selection);
         };
 
         SelectCommand.prototype.redo = function () {
-            this.save_selection = ascii_draw.selection.set(this.save_selection);
+            this.saved_selection = ascii_draw.selection.set(this.saved_selection);
         };
 
         SelectCommand.prototype.setHighlight = function (new_begin_highlight, new_end_highlight) {
@@ -472,16 +559,17 @@ var ascii_draw;
             this.completed = false;
         }
         RectangleCommand.prototype.initiate = function (pos) {
+            // FIXME: set begin_selection at parent function
             this.save_selection = ascii_draw.selection.set([]);
             this.resetHighlight(pos);
             var cell = ascii_draw.grid.getCell(ascii_draw.grid.getRow(pos.row), pos.col);
-            ;
             ascii_draw.grid.writeToCell(cell, '+');
             var selectionstatus = document.getElementById('selectionstatus');
             selectionstatus.textContent = 'Highlight: 1x1';
         };
 
         RectangleCommand.prototype.change = function (pos) {
+            // FIXME: set end_selection at parent function
             if (!this.completed) {
                 this.updateRectangleAndHighlight(pos);
             }
@@ -609,6 +697,7 @@ var ascii_draw;
         selection and selectionstatus.
         */
         RectangleCommand.prototype.updateRectangleAndHighlight = function (new_end_highlight) {
+            // FIXME: move this to parent function
             if (new_end_highlight.isEqual(ascii_draw.end_highlight)) {
                 return;
             }
@@ -708,106 +797,85 @@ var ascii_draw;
     })();
     ascii_draw.RectangleCommand = RectangleCommand;
 })(ascii_draw || (ascii_draw = {}));
-///<reference path='utils.ts'/>
+'use strict';
+var ascii_draw;
+(function (ascii_draw) {
+    var Rectangle = utils.Rectangle;
+    var CellPosition = utils.Point;
+
+    var FillCommand = (function () {
+        function FillCommand() {
+        }
+        FillCommand.prototype.initiate = function (pos) {
+        };
+        FillCommand.prototype.change = function (pos) {
+        };
+
+        FillCommand.prototype.complete = function () {
+            this.redo();
+        };
+
+        FillCommand.prototype.cancel = function () {
+        };
+
+        FillCommand.prototype.undo = function () {
+            for (var i = 0; i < ascii_draw.selection.contents.length; i++) {
+                ascii_draw.applyToRectangle(ascii_draw.selection.contents[i], ascii_draw.grid.writeToCell, ascii_draw.grid.emptyCell);
+            }
+        };
+
+        FillCommand.prototype.redo = function () {
+            for (var i = 0; i < ascii_draw.selection.contents.length; i++) {
+                ascii_draw.applyToRectangle(ascii_draw.selection.contents[i], ascii_draw.grid.writeToCell, this.character);
+            }
+        };
+        return FillCommand;
+    })();
+    ascii_draw.FillCommand = FillCommand;
+})(ascii_draw || (ascii_draw = {}));
+'use strict';
+var ascii_draw;
+(function (ascii_draw) {
+    var Rectangle = utils.Rectangle;
+    var CellPosition = utils.Point;
+
+    var TextCommand = (function () {
+        function TextCommand() {
+        }
+        TextCommand.prototype.initiate = function (pos) {
+        };
+        TextCommand.prototype.change = function (pos) {
+        };
+
+        TextCommand.prototype.complete = function () {
+            this.redo();
+        };
+
+        TextCommand.prototype.cancel = function () {
+        };
+
+        TextCommand.prototype.undo = function () {
+            ascii_draw.selection.move(0, -1);
+            for (var i = 0; i < ascii_draw.selection.contents.length; i++) {
+                ascii_draw.applyToRectangle(ascii_draw.selection.contents[i], ascii_draw.grid.writeToCell, ascii_draw.grid.emptyCell);
+            }
+        };
+
+        TextCommand.prototype.redo = function () {
+            for (var i = 0; i < ascii_draw.selection.contents.length; i++) {
+                ascii_draw.applyToRectangle(ascii_draw.selection.contents[i], ascii_draw.grid.writeToCell, this.character);
+            }
+            ascii_draw.selection.move(0, 1);
+        };
+        return TextCommand;
+    })();
+    ascii_draw.TextCommand = TextCommand;
+})(ascii_draw || (ascii_draw = {}));
+///<reference path='commands.ts'/>
 ///<reference path='select_cmd.ts'/>
 ///<reference path='rectangle_cmd.ts'/>
-'use strict';
-var ascii_draw;
-(function (ascii_draw) {
-    (function (commands) {
-        var Rectangle = utils.Rectangle;
-        var CellPosition = utils.Point;
-
-        var history = [];
-        var limit = 100;
-        var current = 0;
-
-        var redo_button;
-        var undo_button;
-
-        function init() {
-            undo_button = document.getElementById('undo-button');
-            redo_button = document.getElementById('redo-button');
-            update();
-            undo_button.addEventListener('click', onUndo, false);
-            redo_button.addEventListener('click', onRedo, false);
-        }
-        commands.init = init;
-
-        function complete(cmd) {
-            history.splice(current, history.length - current, cmd);
-            if (history.length > limit) {
-                history.shift();
-                current--;
-            }
-            current++;
-            update();
-        }
-        commands.complete = complete;
-
-        function onUndo() {
-            if (canUndo()) {
-                undo();
-            }
-        }
-        commands.onUndo = onUndo;
-
-        function onRedo() {
-            if (canRedo()) {
-                redo();
-            }
-        }
-        commands.onRedo = onRedo;
-
-        function undo() {
-            current--;
-            history[current].undo();
-            update();
-        }
-
-        function redo() {
-            current++;
-            history[current - 1].redo();
-            update();
-        }
-
-        function canUndo() {
-            return (current > 0);
-        }
-
-        function canRedo() {
-            return (current < history.length);
-        }
-
-        function update() {
-            if (canUndo()) {
-                undo_button.disabled = false;
-            } else {
-                undo_button.disabled = true;
-            }
-
-            if (canRedo()) {
-                redo_button.disabled = false;
-            } else {
-                redo_button.disabled = true;
-            }
-        }
-    })(ascii_draw.commands || (ascii_draw.commands = {}));
-    var commands = ascii_draw.commands;
-})(ascii_draw || (ascii_draw = {}));
-///<reference path='utils.ts'/>
-///<reference path='grid.ts'/>
-///<reference path='selection.ts'/>
-///<reference path='commands.ts'/>
-'use strict';
-var ascii_draw;
-(function (ascii_draw) {
-    (function (controllers) {
-        var Rectangle = utils.Rectangle;
-        var CellPosition = utils.Point;
-    })(ascii_draw.controllers || (ascii_draw.controllers = {}));
-    var controllers = ascii_draw.controllers;
-})(ascii_draw || (ascii_draw = {}));
+///<reference path='fill_cmd.ts'/>
+///<reference path='text_cmd.ts'/>
 'use strict';
 var ascii_draw;
 (function (ascii_draw) {
@@ -871,7 +939,6 @@ var ascii_draw;
     })(ascii_draw.modes || (ascii_draw.modes = {}));
     var modes = ascii_draw.modes;
 })(ascii_draw || (ascii_draw = {}));
-///<reference path='controllers.ts'/>
 ///<reference path='utils.ts'/>
 ///<reference path='modes.ts'/>
 'use strict';
@@ -935,7 +1002,19 @@ var ascii_draw;
 
     function onKeyPress(event) {
         if (!event.ctrlKey && !event.altKey && !event.metaKey && event.charCode > 0) {
-            //controllers.current.onKeyPress(String.fromCharCode(event.charCode));
+            if (ascii_draw.current_cmd === null) {
+                if (ascii_draw.selection.isUnit()) {
+                    var cmd = new ascii_draw.TextCommand();
+                    cmd.character = String.fromCharCode(event.charCode);
+                    cmd.complete();
+                    ascii_draw.commands.complete(cmd);
+                } else {
+                    var cmd = new ascii_draw.FillCommand();
+                    cmd.character = String.fromCharCode(event.charCode);
+                    cmd.complete();
+                    ascii_draw.commands.complete(cmd);
+                }
+            }
             event.preventDefault();
         }
         event.stopPropagation();

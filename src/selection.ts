@@ -1,3 +1,5 @@
+///<reference path='grid.ts'/>
+
 'use strict';
 
 module ascii_draw {
