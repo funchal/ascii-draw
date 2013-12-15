@@ -583,123 +583,105 @@ var ascii_draw;
             }
             RectangleController.onKeyPress = onKeyPress;
 
-            /*
-            requires change[0] <= change[1]
-            */
-            function updateInterval(row, change, horizontal, clear) {
-                var rect;
-                var character;
-                if (horizontal) {
-                    character = '-';
-                    rect = new Rectangle(new CellPosition(row, change[0]), new CellPosition(row, change[1]));
-                } else {
-                    character = '|';
-                    rect = new Rectangle(new CellPosition(change[0], row), new CellPosition(change[1], row));
-                }
-                if (clear) {
-                    character = ascii_draw.emptyCell;
-                }
-                ascii_draw.applyToRectangle(rect, function (cell, highlighted) {
-                    controllers.writeToCell(cell, character);
-                    setHighlighted(cell, !clear);
-                }, true);
-            }
-
-            function updateInnerLine(row, begin_col, end_col, horizontal, clear) {
-                var change = [
-                    Math.min(begin_col, end_col) + 1,
-                    Math.max(begin_col, end_col) - 1];
-
-                updateInterval(row, change, horizontal, clear);
-            }
-
-            /* Clear or paint the cells on row 'row' that are between columns
-            'begin' and 'change_col' but not between columns 'begin' and
-            'keep_col'.
+            /* Return the interval of cells that are in [begin, change[
+            but not in [begin, keep[.
             
-            All 3 examples assume horizontal = true and clear = true.
+            Examples:
             
-            Before call:                            After call:
-            
-            begin_col keep_col change_col           begin_col keep_col change_col
-            
-            |        |          |                   |        |          |
-            v        v          v                   v        v          v
-            
-            row ->  +-------------------+           row ->  +--------           +
-            
-            
-            
-            begin_col change_col keep_col           begin_col change_col keep_col
-            
-            |        |          |                   |        |          |
-            v        v          v                   v        v          v
-            
-            row ->  +--------+                      row ->  +--------+
-            
-            
-            
-            keep_col change_col change_col          keep_col change_col change_col
-            
-            |        |          |                   |        |          |
-            v        v          v                   v        v          v
-            
-            row ->           +----------+           row ->           +          +
+            begin keep change       keep  begin change       begin change keep
+            |     |     |           |     |     |            |      |     |
+            v     v     v           v     v     v            v      v     v
+            IIIIII                   IIIII
             
             */
-            function updateAdjacentEdge(row, begin_col, keep_col, change_col, horizontal, clear) {
-                var change;
-                if (change_col < begin_col && change_col < keep_col) {
-                    change = [change_col + 1, Math.min(begin_col - 1, keep_col)];
-                } else if (change_col > begin_col && change_col > keep_col) {
-                    change = [Math.max(begin_col + 1, keep_col), change_col - 1];
+            function getAdjacentEdge(begin, keep, change) {
+                var interval;
+                if (change < begin && change < keep) {
+                    interval = [change + 1, Math.min(begin - 1, keep)];
+                } else if (change > begin && change > keep) {
+                    interval = [Math.max(begin + 1, keep), change - 1];
                 }
 
-                if (change && change[0] <= change[1]) {
-                    updateInterval(row, change, horizontal, clear);
-                }
-            }
-
-            function updateOppositeEdge(begin_col, keep_row, keep_col, change_row, change_col, horizontal, clear) {
-                if (keep_row == change_row) {
-                    // The edge is still on the same row. Need to update
-                    // only the part of the edge that changed. Use the same
-                    // algorithm as for adjacent edges.
-                    updateAdjacentEdge(keep_row, begin_col, keep_col, change_col, horizontal, clear);
+                if (interval && interval[0] <= interval[1]) {
+                    return interval;
                 } else {
-                    // Easy case: the edge is on a new row. Update the
-                    // entire edge.
-                    updateInnerLine(change_row, begin_col, change_col, horizontal, clear);
+                    return null;
                 }
             }
 
-            function updateCorners(begin, end, clear) {
+            function updateCorners(begin, end, paint) {
                 var character;
-                if (clear) {
-                    character = ascii_draw.emptyCell;
-                } else {
+                if (paint) {
                     character = '+';
+                } else {
+                    character = ascii_draw.emptyCell;
                 }
 
                 var row = ascii_draw.grid.getRow(begin.row);
 
                 var cell = ascii_draw.grid.getCell(row, begin.col);
                 controllers.writeToCell(cell, character);
-                setHighlighted(cell, !clear);
+                setHighlighted(cell, paint);
 
                 cell = ascii_draw.grid.getCell(row, end.col);
                 controllers.writeToCell(cell, character);
-                setHighlighted(cell, !clear);
+                setHighlighted(cell, paint);
 
                 row = ascii_draw.grid.getRow(end.row);
 
                 cell = ascii_draw.grid.getCell(row, begin.col);
                 controllers.writeToCell(cell, character);
-                setHighlighted(cell, !clear);
+                setHighlighted(cell, paint);
 
                 cell = ascii_draw.grid.getCell(row, end.col);
                 controllers.writeToCell(cell, character);
-                setHighlighted(cell, !clear);
+                setHighlighted(cell, paint);
+            }
+
+            /* Paint or clear a flat rectangle.
+            
+            paintEdge([10, 20], 3, true, true) fills the col 3 from row 10
+            to row 20 with '|' and highlights the area.
+            */
+            function paintEdge(interval, missing_coord, vertical, paint) {
+                if (interval) {
+                    if (vertical) {
+                        var character;
+                        if (paint) {
+                            character = '|';
+                        } else {
+                            character = ascii_draw.emptyCell;
+                        }
+                        for (var r = interval[0]; r <= interval[1]; r++) {
+                            var row = ascii_draw.grid.getRow(r);
+                            var cell = ascii_draw.grid.getCell(row, missing_coord);
+                            controllers.writeToCell(cell, character);
+                            setHighlighted(cell, paint);
+                        }
+                    } else {
+                        var character;
+                        if (paint) {
+                            character = '-';
+                        } else {
+                            character = ascii_draw.emptyCell;
+                        }
+                        var row = ascii_draw.grid.getRow(missing_coord);
+                        for (var c = interval[0]; c <= interval[1]; c++) {
+                            var cell = ascii_draw.grid.getCell(row, c);
+                            controllers.writeToCell(cell, character);
+                            setHighlighted(cell, paint);
+                        }
+                    }
+                }
+            }
+
+            /*
+            getInnerInterval(20, 10) returns [11, 19].
+            */
+            function getInnerInterval(val1, val2) {
+                return [
+                    Math.min(val1, val2) + 1,
+                    Math.max(val1, val2) - 1];
             }
 
             function updateRectangleAndHighlight(new_end_highlight) {
@@ -708,32 +690,64 @@ var ascii_draw;
                 }
 
                 // clear
-                updateCorners(controllers.begin_highlight, controllers.end_highlight, true);
+                updateCorners(controllers.begin_highlight, controllers.end_highlight, false);
 
-                updateAdjacentEdge(controllers.begin_highlight.row, controllers.begin_highlight.col, new_end_highlight.col, controllers.end_highlight.col, true, true);
+                var clear;
 
-                updateAdjacentEdge(controllers.begin_highlight.col, controllers.begin_highlight.row, new_end_highlight.row, controllers.end_highlight.row, false, true);
+                // adjacent horizontal
+                clear = getAdjacentEdge(controllers.begin_highlight.col, new_end_highlight.col, controllers.end_highlight.col); /* change */
+                paintEdge(clear, controllers.begin_highlight.row, false, false);
 
+                // opposite horizontal
                 // don't clear the opposite edge if it overlaps with the adjacent edge
                 if (controllers.begin_highlight.row != controllers.end_highlight.row) {
-                    updateOppositeEdge(controllers.begin_highlight.col, new_end_highlight.row, new_end_highlight.col, controllers.end_highlight.row, controllers.end_highlight.col, true, true);
+                    if (new_end_highlight.row != controllers.end_highlight.row) {
+                        // The edge is on a new row. Update the entire edge.
+                        clear = getInnerInterval(controllers.begin_highlight.col, controllers.end_highlight.col);
+                    }
+
+                    // else: The edge is still on the same row.
+                    // Only update the part of the edge that changed. This is
+                    // the same interval as the adjacent horizontal case.
+                    paintEdge(clear, controllers.end_highlight.row, false, false);
                 }
 
-                // don't clear the opposite edge if it overlaps with the adjacent edge
+                // adjacent vertical
+                clear = getAdjacentEdge(controllers.begin_highlight.row, new_end_highlight.row, controllers.end_highlight.row);
+                paintEdge(clear, controllers.begin_highlight.col, true, false);
+
+                // opposite vertical
                 if (controllers.begin_highlight.col != controllers.end_highlight.col) {
-                    updateOppositeEdge(controllers.begin_highlight.row, new_end_highlight.col, new_end_highlight.row, controllers.end_highlight.col, controllers.end_highlight.row, false, true);
+                    if (new_end_highlight.col != controllers.end_highlight.col) {
+                        clear = getInnerInterval(controllers.begin_highlight.row, controllers.end_highlight.row);
+                    }
+                    paintEdge(clear, controllers.end_highlight.col, true, false);
                 }
 
                 // paint
-                updateAdjacentEdge(controllers.begin_highlight.row, controllers.begin_highlight.col, controllers.end_highlight.col, new_end_highlight.col, true, false);
+                updateCorners(controllers.begin_highlight, new_end_highlight, true);
 
-                updateAdjacentEdge(controllers.begin_highlight.col, controllers.begin_highlight.row, controllers.end_highlight.row, new_end_highlight.row, false, false);
+                var paint;
 
-                updateOppositeEdge(controllers.begin_highlight.col, controllers.end_highlight.row, controllers.end_highlight.col, new_end_highlight.row, new_end_highlight.col, true, false);
+                // adjacent horizontal
+                paint = getAdjacentEdge(controllers.begin_highlight.col, controllers.end_highlight.col, new_end_highlight.col);
+                paintEdge(paint, controllers.begin_highlight.row, false, true);
 
-                updateOppositeEdge(controllers.begin_highlight.row, controllers.end_highlight.col, controllers.end_highlight.row, new_end_highlight.col, new_end_highlight.row, false, false);
+                // opposite horizontal
+                if (new_end_highlight.row != controllers.end_highlight.row) {
+                    paint = getInnerInterval(controllers.begin_highlight.col, new_end_highlight.col);
+                }
+                paintEdge(paint, new_end_highlight.row, false, true);
 
-                updateCorners(controllers.begin_highlight, new_end_highlight, false);
+                // adjacent vertical
+                paint = getAdjacentEdge(controllers.begin_highlight.row, controllers.end_highlight.row, new_end_highlight.row);
+                paintEdge(paint, controllers.begin_highlight.col, true, true);
+
+                // opposite vertical
+                if (new_end_highlight.col != controllers.end_highlight.col) {
+                    paint = getInnerInterval(controllers.begin_highlight.row, new_end_highlight.row);
+                }
+                paintEdge(paint, new_end_highlight.col, true, true);
 
                 controllers.end_highlight = new_end_highlight;
             }
