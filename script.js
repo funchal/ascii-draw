@@ -540,8 +540,12 @@ var ascii_draw;
             }
             RectangleController.onMouseDown = onMouseDown;
 
-            function onMouseUp() {
+            function onMouseUp(target) {
                 if (highlighting) {
+                    if (target) {
+                        var pos = ascii_draw.grid.getCellPosition(target);
+                        asyncMouseOver(pos);
+                    }
                     var new_selection = setHollowHighlight(new CellPosition(0, 0), new CellPosition(0, 0));
                     highlighting = false;
 
@@ -550,19 +554,18 @@ var ascii_draw;
             }
             RectangleController.onMouseUp = onMouseUp;
 
-            function onMouseOver(target) {
-                var pos = ascii_draw.grid.getCellPosition(target);
-                setMousePosition(pos);
+            function asyncMouseOver(pos) {
                 if (highlighting) {
                     updateRectangleAndHighlight(pos);
                 }
             }
-            RectangleController.onMouseOver = onMouseOver;
 
-            function onMouseLeave() {
-                setMousePosition(null);
+            function onMouseOver(pos) {
+                if (highlighting) {
+                    window.setTimeout(asyncMouseOver.bind(undefined, pos), 0);
+                }
             }
-            RectangleController.onMouseLeave = onMouseLeave;
+            RectangleController.onMouseOver = onMouseOver;
 
             function onArrowDown(displacement) {
                 if (highlighting) {
@@ -774,8 +777,12 @@ var ascii_draw;
             }
             SelectMoveController.onMouseDown = onMouseDown;
 
-            function onMouseUp() {
+            function onMouseUp(target) {
                 if (highlighting) {
+                    if (target) {
+                        var pos = ascii_draw.grid.getCellPosition(target);
+                        asyncMouseOver(pos);
+                    }
                     var new_selection = new Rectangle(controllers.begin_highlight, controllers.end_highlight, true);
                     controllers.setHighlight(new CellPosition(0, 0), new CellPosition(0, 0));
                     highlighting = false;
@@ -785,19 +792,18 @@ var ascii_draw;
             }
             SelectMoveController.onMouseUp = onMouseUp;
 
-            function onMouseOver(target) {
-                var pos = ascii_draw.grid.getCellPosition(target);
-                setMousePosition(pos);
+            function asyncMouseOver(pos) {
                 if (highlighting) {
                     controllers.setHighlight(controllers.begin_highlight, pos);
                 }
             }
-            SelectMoveController.onMouseOver = onMouseOver;
 
-            function onMouseLeave() {
-                setMousePosition(null);
+            function onMouseOver(pos) {
+                if (highlighting) {
+                    window.setTimeout(asyncMouseOver.bind(undefined, pos), 0);
+                }
             }
-            SelectMoveController.onMouseLeave = onMouseLeave;
+            SelectMoveController.onMouseOver = onMouseOver;
 
             function onArrowDown(displacement) {
                 if (highlighting) {
@@ -824,7 +830,6 @@ var ascii_draw;
         controllers.end_highlight = controllers.begin_highlight;
 
         var highlighting = false;
-        var mouse_pos = null;
 
         controllers.current = SelectMoveController;
 
@@ -843,23 +848,6 @@ var ascii_draw;
             ascii_draw.selection.add(new Rectangle(controllers.begin_highlight, controllers.end_highlight, true));
         }
         controllers.init = init;
-
-        function setMousePosition(new_pos) {
-            if (mouse_pos !== null) {
-                var cell = ascii_draw.grid.getCell(ascii_draw.grid.getRow(mouse_pos.row), mouse_pos.col);
-                utils.removeClass(cell, 'mouse');
-            }
-            mouse_pos = new_pos;
-
-            var mousestatus = document.getElementById('mousestatus');
-            if (mouse_pos !== null) {
-                var cell = ascii_draw.grid.getCell(ascii_draw.grid.getRow(mouse_pos.row), mouse_pos.col);
-                utils.addClass(cell, 'mouse');
-                mousestatus.textContent = 'Cursor: ' + mouse_pos;
-            } else {
-                mousestatus.textContent = '';
-            }
-        }
 
         function setHighlight(new_begin_highlight, new_end_highlight) {
             var new_highlight = new Rectangle(new_begin_highlight, new_end_highlight, true);
@@ -943,7 +931,7 @@ var ascii_draw;
                     utils.removeClass(cell, 'highlighted');
                 }
             } else {
-                console.log('highlighted already set to ' + highlighted);
+                //console.log('highlighted already set to ' + highlighted);
             }
         }
     })(ascii_draw.controllers || (ascii_draw.controllers = {}));
@@ -969,6 +957,8 @@ var ascii_draw;
     ascii_draw.selectionstatus;
 
     ascii_draw.emptyCell = ' ';
+
+    var mouse_pos = null;
 
     function initiateCopyAction() {
         if (window.getSelection && document.createRange) {
@@ -1109,7 +1099,8 @@ var ascii_draw;
     }
 
     function onMouseUp(event) {
-        ascii_draw.controllers.current.onMouseUp();
+        var target = ascii_draw.grid.getTargetCell(event.target);
+        ascii_draw.controllers.current.onMouseUp(target);
         event.stopPropagation();
         event.preventDefault();
     }
@@ -1117,14 +1108,33 @@ var ascii_draw;
     function onMouseOver(event) {
         var target = ascii_draw.grid.getTargetCell(event.target);
         if (target !== null) {
-            ascii_draw.controllers.current.onMouseOver(target);
+            var pos = ascii_draw.grid.getCellPosition(target);
+            setMousePosition(pos);
+            ascii_draw.controllers.current.onMouseOver(pos);
         }
         event.stopPropagation();
         event.preventDefault();
     }
 
+    function setMousePosition(new_pos) {
+        if (mouse_pos !== null) {
+            var cell = ascii_draw.grid.getCell(ascii_draw.grid.getRow(mouse_pos.row), mouse_pos.col);
+            utils.removeClass(cell, 'mouse');
+        }
+        mouse_pos = new_pos;
+
+        var mousestatus = document.getElementById('mousestatus');
+        if (mouse_pos !== null) {
+            var cell = ascii_draw.grid.getCell(ascii_draw.grid.getRow(mouse_pos.row), mouse_pos.col);
+            utils.addClass(cell, 'mouse');
+            mousestatus.textContent = 'Cursor: ' + mouse_pos;
+        } else {
+            mousestatus.textContent = '';
+        }
+    }
+
     function onMouseLeave(event) {
-        ascii_draw.controllers.current.onMouseLeave();
+        setMousePosition(null);
         event.stopPropagation();
         event.preventDefault();
     }
