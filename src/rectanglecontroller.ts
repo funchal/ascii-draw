@@ -18,21 +18,28 @@ module ascii_draw {
             export function onMouseDown(target: Cell): void {
                 // TODO: if current cell is highlighted change to move mode
                 highlighting = true;
-                setHollowHighlight(grid.getCellPosition(target), grid.getCellPosition(target));
+
+                var pos = grid.getCellPosition(target);
+                resetHighlight(pos);
+
                 grid.writeToCell(target, '+');
+
+                var selectionstatus = document.getElementById('selectionstatus');
+                selectionstatus.textContent = 'Highlight: 1x1';
             }
 
             export function onMouseUp(target: Cell): void {
                 if (highlighting) {
+                    highlighting = false;
+
                     if (target) {
                         var pos = grid.getCellPosition(target);
                         asyncMouseOver(pos);
                     }
-                    var new_selection = setHollowHighlight(new CellPosition(0, 0),
-                                                           new CellPosition(0, 0));
-                    highlighting = false;
 
-                    commands.invoke(new commands.ReplaceSelection(new_selection));
+                    var selection = resetHighlight(new CellPosition(0, 0));
+
+                    commands.invoke(new commands.ReplaceSelection(selection));
                 }
             }
 
@@ -177,9 +184,11 @@ module ascii_draw {
                         Math.max(val1, val2) - 1];
             }
 
+            /* Clear previous selection, paint new selection, update begin/end
+            selection and selectionstatus.
+            */
             function updateRectangleAndHighlight(new_end_highlight: CellPosition): Array<Rectangle>
             {
-
                 if (new_end_highlight.isEqual(end_highlight)) {
                     return;
                 }
@@ -259,6 +268,34 @@ module ascii_draw {
                 paintEdge(paint, new_end_highlight.col, true, true);
 
                 end_highlight = new_end_highlight;
+
+                // update status bar
+                var new_highlight = new Rectangle(begin_highlight,
+                                                  end_highlight,
+                                                  true /* normalize */);
+                var selectionstatus = document.getElementById('selectionstatus');
+                selectionstatus.textContent = 'Highlight: ' +
+                        new_highlight.getHeight() + 'x' + new_highlight.getWidth();
+            }
+
+            function resetHighlight(new_position: CellPosition): Array<Rectangle> {
+                // un-highlight previous selection
+                var selection = getHollowRectangle(new Rectangle(begin_highlight,
+                                                                 end_highlight,
+                                                                 true));
+                for (var i = 0; i < selection.length ; i++) {
+                    applyToRectangle(selection[i], setHighlighted, false);
+                }
+
+                // update position
+                begin_highlight = new_position;
+                end_highlight = new_position;
+
+                // highlight position
+                var cell = grid.getCell(grid.getRow(new_position.row), new_position.col);
+                setHighlighted(cell, true);
+
+                return selection;
             }
 
             function getHollowRectangle(rect: Rectangle): Array<Rectangle> {
@@ -269,43 +306,6 @@ module ascii_draw {
                                          rect.right - 1));
                 var surrounding = rect.subtract(inside_rect);
                 return surrounding;
-            }
-
-            function setHollowHighlight(new_begin_highlight: CellPosition,
-                                        new_end_highlight: CellPosition): Array<Rectangle> {
-                var new_highlight = new Rectangle(new_begin_highlight,
-                                                  new_end_highlight,
-                                                  true /*normalize*/);
-                var old_highlight = new Rectangle(begin_highlight,
-                                                  end_highlight,
-                                                  true /*normalize*/);
-
-                if (old_highlight.isEqual(new_highlight)) {
-                    return;
-                }
-
-                begin_highlight = new_begin_highlight;
-                end_highlight = new_end_highlight;
-
-                var old_pieces = getHollowRectangle(old_highlight);
-                for (var piece = 0; piece < old_pieces.length; piece++) {
-                    applyToRectangle(old_pieces[piece], setHighlighted, false);
-                }
-
-                var new_pieces = getHollowRectangle(new_highlight);
-                for (var piece = 0; piece < new_pieces.length; piece++) {
-                    applyToRectangle(new_pieces[piece], setHighlighted, true);
-                }
-
-                var selectionstatus = document.getElementById('selectionstatus');
-                if (new_highlight.getHeight() > 1 || new_highlight.getWidth() > 1) {
-                    selectionstatus.textContent = 'Highlight: ' +
-                        new_highlight.getHeight() + 'x' + new_highlight.getWidth();
-                } else {
-                    selectionstatus.textContent = '';
-                }
-
-                return old_pieces;
             }
         }
     }

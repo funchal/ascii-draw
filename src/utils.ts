@@ -148,6 +148,10 @@ module utils {
         }
 
         /* Return the difference of this with other as a list of Rectangles.
+
+        Requires that other is inside this. You can use intersect to meet
+        this requirement.
+
         Examples:
         this (o), other (x), top (T), left (L), right (R), bottom (B)
 
@@ -167,8 +171,6 @@ module utils {
             oooooo    --xxxx    LL
             oooooo    --xxxx    LL
             oooooo    --xxxx    LL
-                        xxxx
-                        xxxx
 
 
             oooooo    xx----      RRRR

@@ -135,6 +135,10 @@ var utils;
         };
 
         /* Return the difference of this with other as a list of Rectangles.
+        
+        Requires that other is inside this. You can use intersect to meet
+        this requirement.
+        
         Examples:
         this (o), other (x), top (T), left (L), right (R), bottom (B)
         
@@ -154,8 +158,6 @@ var utils;
         oooooo    --xxxx    LL
         oooooo    --xxxx    LL
         oooooo    --xxxx    LL
-        xxxx
-        xxxx
         
         
         oooooo    xx----      RRRR
@@ -614,21 +616,29 @@ var ascii_draw;
             function onMouseDown(target) {
                 // TODO: if current cell is highlighted change to move mode
                 ascii_draw.controllers.highlighting = true;
-                setHollowHighlight(ascii_draw.grid.getCellPosition(target), ascii_draw.grid.getCellPosition(target));
+
+                var pos = ascii_draw.grid.getCellPosition(target);
+                resetHighlight(pos);
+
                 ascii_draw.grid.writeToCell(target, '+');
+
+                var selectionstatus = document.getElementById('selectionstatus');
+                selectionstatus.textContent = 'Highlight: 1x1';
             }
             RectangleController.onMouseDown = onMouseDown;
 
             function onMouseUp(target) {
                 if (ascii_draw.controllers.highlighting) {
+                    ascii_draw.controllers.highlighting = false;
+
                     if (target) {
                         var pos = ascii_draw.grid.getCellPosition(target);
                         asyncMouseOver(pos);
                     }
-                    var new_selection = setHollowHighlight(new CellPosition(0, 0), new CellPosition(0, 0));
-                    ascii_draw.controllers.highlighting = false;
 
-                    ascii_draw.commands.invoke(new ascii_draw.commands.ReplaceSelection(new_selection));
+                    var selection = resetHighlight(new CellPosition(0, 0));
+
+                    ascii_draw.commands.invoke(new ascii_draw.commands.ReplaceSelection(selection));
                 }
             }
             RectangleController.onMouseUp = onMouseUp;
@@ -766,6 +776,9 @@ var ascii_draw;
                     Math.max(val1, val2) - 1];
             }
 
+            /* Clear previous selection, paint new selection, update begin/end
+            selection and selectionstatus.
+            */
             function updateRectangleAndHighlight(new_end_highlight) {
                 if (new_end_highlight.isEqual(ascii_draw.controllers.end_highlight)) {
                     return;
@@ -832,43 +845,35 @@ var ascii_draw;
                 paintEdge(paint, new_end_highlight.col, true, true);
 
                 ascii_draw.controllers.end_highlight = new_end_highlight;
+
+                // update status bar
+                var new_highlight = new Rectangle(ascii_draw.controllers.begin_highlight, ascii_draw.controllers.end_highlight, true);
+                var selectionstatus = document.getElementById('selectionstatus');
+                selectionstatus.textContent = 'Highlight: ' + new_highlight.getHeight() + 'x' + new_highlight.getWidth();
+            }
+
+            function resetHighlight(new_position) {
+                // un-highlight previous selection
+                var selection = getHollowRectangle(new Rectangle(ascii_draw.controllers.begin_highlight, ascii_draw.controllers.end_highlight, true));
+                for (var i = 0; i < selection.length; i++) {
+                    ascii_draw.applyToRectangle(selection[i], ascii_draw.controllers.setHighlighted, false);
+                }
+
+                // update position
+                ascii_draw.controllers.begin_highlight = new_position;
+                ascii_draw.controllers.end_highlight = new_position;
+
+                // highlight position
+                var cell = ascii_draw.grid.getCell(ascii_draw.grid.getRow(new_position.row), new_position.col);
+                ascii_draw.controllers.setHighlighted(cell, true);
+
+                return selection;
             }
 
             function getHollowRectangle(rect) {
                 var inside_rect = new Rectangle(new CellPosition(rect.top + 1, rect.left + 1), new CellPosition(rect.bottom - 1, rect.right - 1));
                 var surrounding = rect.subtract(inside_rect);
                 return surrounding;
-            }
-
-            function setHollowHighlight(new_begin_highlight, new_end_highlight) {
-                var new_highlight = new Rectangle(new_begin_highlight, new_end_highlight, true);
-                var old_highlight = new Rectangle(ascii_draw.controllers.begin_highlight, ascii_draw.controllers.end_highlight, true);
-
-                if (old_highlight.isEqual(new_highlight)) {
-                    return;
-                }
-
-                ascii_draw.controllers.begin_highlight = new_begin_highlight;
-                ascii_draw.controllers.end_highlight = new_end_highlight;
-
-                var old_pieces = getHollowRectangle(old_highlight);
-                for (var piece = 0; piece < old_pieces.length; piece++) {
-                    ascii_draw.applyToRectangle(old_pieces[piece], ascii_draw.controllers.setHighlighted, false);
-                }
-
-                var new_pieces = getHollowRectangle(new_highlight);
-                for (var piece = 0; piece < new_pieces.length; piece++) {
-                    ascii_draw.applyToRectangle(new_pieces[piece], ascii_draw.controllers.setHighlighted, true);
-                }
-
-                var selectionstatus = document.getElementById('selectionstatus');
-                if (new_highlight.getHeight() > 1 || new_highlight.getWidth() > 1) {
-                    selectionstatus.textContent = 'Highlight: ' + new_highlight.getHeight() + 'x' + new_highlight.getWidth();
-                } else {
-                    selectionstatus.textContent = '';
-                }
-
-                return old_pieces;
             }
         })(controllers.RectangleController || (controllers.RectangleController = {}));
         var RectangleController = controllers.RectangleController;
