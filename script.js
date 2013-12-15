@@ -394,9 +394,13 @@ var ascii_draw;
 
             var font_size = utils.computeFontSize();
 
-            utils.changeStyleRule('#grid span', 'width', font_size.width + 'px');
-            utils.changeStyleRule('#grid span', 'height', font_size.height + 'px');
-            utils.changeStyleRule('#grid div', 'height', font_size.height + 'px');
+            // add 1 px to each dimension to compensate for borders
+            var width = font_size.width + 1;
+            var height = font_size.height + 1;
+
+            utils.changeStyleRule('#grid span', 'width', width + 'px');
+            utils.changeStyleRule('#grid span', 'height', height + 'px');
+            utils.changeStyleRule('#grid div', 'height', height + 'px');
         }
 
         function writeToCell(cell, character) {
