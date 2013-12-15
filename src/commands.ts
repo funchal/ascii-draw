@@ -2,19 +2,15 @@
 
 'use strict';
 
-module ascii_draw {
-    export module commands {
+module ascii_draw
+{
+    export module commands
+    {
         import Rectangle = utils.Rectangle;
         import CellPosition = utils.Point;
 
-        var history: Array<Command> = [];
-        var limit = 100;
-        var current = 0;
-
-        var redo_button: HTMLButtonElement;
-        var undo_button: HTMLButtonElement;
-
-        export interface Command {
+        export interface Command
+        {
             initiate(pos: CellPosition): void;
             change(pos: CellPosition): void;
             complete(): void;
@@ -23,7 +19,17 @@ module ascii_draw {
             redo(): void;
         }
 
-        export function init(): void {
+        var history: Array<Command> = [];
+        var limit = 100;
+        var current = 0;
+
+        var redo_button: HTMLButtonElement;
+        var undo_button: HTMLButtonElement;
+
+        export var pending: Command = null;
+
+        export function init(): void
+        {
             undo_button = <HTMLButtonElement>document.getElementById('undo-button');
             redo_button = <HTMLButtonElement>document.getElementById('redo-button');
             update();
@@ -31,7 +37,8 @@ module ascii_draw {
             redo_button.addEventListener('click', onRedo, false);
         }
 
-        export function complete(cmd: Command): void {
+        export function complete(cmd: Command): void
+        {
             commitSelection();
             history.splice(current, history.length - current, cmd);
             if (history.length > limit) {
@@ -42,39 +49,46 @@ module ascii_draw {
             update();
         }
 
-        export function onUndo(): void {
+        export function onUndo(): void
+        {
             if (canUndo()) {
                 undo();
             }
         }
 
-        export function onRedo(): void {
+        export function onRedo(): void
+        {
             if (canRedo()) {
                 redo();
             }
         }
 
-        function undo(): void {
+        function undo(): void
+        {
             current--;
             history[current].undo();
             update();
         }
 
-        function redo(): void {
+        function redo(): void
+        {
             current++;
             history[current-1].redo();
             update();
         }
 
-        function canUndo(): boolean {
+        function canUndo(): boolean
+        {
             return (current > 0);
         }
 
-        function canRedo(): boolean {
+        function canRedo(): boolean
+        {
             return (current < history.length);
         }
 
-        function update(): void {
+        function update(): void
+        {
             if (canUndo()) {
                 undo_button.disabled = false;
             } else {

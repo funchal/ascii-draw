@@ -1,6 +1,7 @@
 'use strict';
 
-module utils {
+module utils
+{
     export function changeStyleRule(selector: string,
                                     style: string,
                                     value: string): void
@@ -34,11 +35,13 @@ module utils {
         }
     }
 
-    export function stacktrace() {
+    export function stacktrace()
+    {
         console.log((<any>new Error()).stack);
     }
 
-    export function computeFontSize(): { width: number; height: number; } {
+    export function computeFontSize(): { width: number; height: number; }
+    {
         var tmp = document.createElement('table');
         var row = <HTMLTableRowElement>tmp.insertRow();
         var cell = row.insertCell();
@@ -64,7 +67,8 @@ module utils {
     }
 
     /* find the index of a given element in its parent */
-    export function indexInParent(element: HTMLElement): number {
+    export function indexInParent(element: HTMLElement): number
+    {
         var children = element.parentElement.children;
         for (var i = 0; i < children.length; i++) {
             if (children[i] == element) {
@@ -74,26 +78,31 @@ module utils {
         return -1;
     }
 
-    export class Point {
-        constructor(public row: number = 0, public col: number = 0) {}
+    export class Point
+    {
+        constructor(public row: number = 0, public col: number = 0)
+        {}
 
-        toString(): string {
+        toString(): string
+        {
             return this.row + 'x' + this.col;
         }
 
-        isEqual(other: Point): boolean {
+        isEqual(other: Point): boolean
+        {
             return (this.row == other.row && this.col == other.col);
         }
     }
 
-    export class Rectangle {
+    export class Rectangle
+    {
         public top: number;
         public left: number;
         public right: number;
         public bottom: number;
 
-        constructor(top_left: Point,
-                    bottom_right: Point, normalize?: boolean) {
+        constructor(top_left: Point, bottom_right: Point, normalize?: boolean)
+        {
             if (normalize && bottom_right.row < top_left.row) {
                 this.top = bottom_right.row;
                 this.bottom = top_left.row;
@@ -110,7 +119,8 @@ module utils {
             }
         }
 
-        intersect(other: Rectangle): Rectangle {
+        intersect(other: Rectangle): Rectangle
+        {
             var top_left = new Point(
                 Math.max(this.top, other.top),
                 Math.max(this.left, other.left));
@@ -120,27 +130,32 @@ module utils {
             return new Rectangle(top_left, bottom_right);
         }
 
-        getHeight(): number {
+        getHeight(): number
+        {
             // Warning: can be < 0 if this.isEmpty()
             return this.bottom - this.top + 1;
         }
 
-        getWidth(): number {
+        getWidth(): number
+        {
             // Warning: can be < 0 if this.isEmpty()
             return this.right - this.left + 1;
         }
 
-        isUnit(): boolean {
+        isUnit(): boolean
+        {
             return (this.top === this.bottom) &&
                    (this.left === this.right);
         }
 
-        isEmpty(): boolean {
+        isEmpty(): boolean
+        {
             return (this.top > this.bottom) ||
                    (this.left > this.right);
         }
 
-        isEqual(other: Rectangle): boolean {
+        isEqual(other: Rectangle): boolean
+        {
             return (this.top == other.top &&
                     this.left == other.left &&
                     this.right == other.right &&
@@ -181,7 +196,8 @@ module utils {
             oooooo    ------    BBBBBB
 
         */
-        subtract(other: Rectangle): Array<Rectangle> {
+        subtract(other: Rectangle): Array<Rectangle>
+        {
             var rect_array: Array<Rectangle> = [];
             if (this.isEmpty()) {
                 return rect_array;
@@ -222,14 +238,16 @@ module utils {
             return rect_array;
         }
 
-        move(rows: number, cols: number) {
+        move(rows: number, cols: number)
+        {
             this.top += rows;
             this.left += cols;
             this.bottom += rows;
             this.right += cols;
         }
 
-        toString(): string {
+        toString(): string
+        {
             return this.top + 'x' + this.left + '/' +
                    this.bottom + 'x' + this.right;
         }

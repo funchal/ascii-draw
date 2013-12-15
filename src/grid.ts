@@ -1,7 +1,9 @@
 'use strict';
 
-module ascii_draw {
-    export module grid {
+module ascii_draw
+{
+    export module grid
+    {
         import CellPosition = utils.Point;
 
         export var container: HTMLDivElement;
@@ -13,26 +15,31 @@ module ascii_draw {
         export interface Row extends HTMLDivElement {};
         export interface Cell extends HTMLSpanElement {};
 
-        export function init(): void {
+        export function init(): void
+        {
             container = <HTMLDivElement>document.getElementById('grid');
             changeFont();
             setSize(50, 120);
         }
 
-        export function getRow(row: number): Row {
+        export function getRow(row: number): Row
+        {
             return <Row>container.children[row];
         }
 
-        export function getCell(row: Row, col: number): Cell {
+        export function getCell(row: Row, col: number): Cell
+        {
             return <Cell>row.children[col];
         }
 
-        export function getCellPosition(cell: Cell): CellPosition {
+        export function getCellPosition(cell: Cell): CellPosition
+        {
             return new CellPosition(utils.indexInParent(cell.parentElement),
                                     utils.indexInParent(cell));
         }
 
-        export function getTargetCell(target: EventTarget): Cell {
+        export function getTargetCell(target: EventTarget): Cell
+        {
             if (target instanceof HTMLSpanElement) {
                 return <Cell>target;
             } else {
@@ -40,7 +47,8 @@ module ascii_draw {
             }
         }
 
-        function setSize(new_nrows: number, new_ncols: number): void {
+        function setSize(new_nrows: number, new_ncols: number): void
+        {
             for (var r = nrows; r < new_nrows; r++) {
                 container.appendChild(document.createElement('div'));
             }
@@ -67,7 +75,8 @@ module ascii_draw {
             gridstatus.textContent = 'Grid size: ' + nrows + 'x' + ncols + ' (' + nrows*ncols + ')';
         }
 
-        function changeFont(): void {
+        function changeFont(): void
+        {
             utils.changeStyleRule('#grid span', 'width', 'auto');
             utils.changeStyleRule('#grid span', 'height', 'auto');
             utils.changeStyleRule('#grid div', 'height', 'auto');
@@ -79,7 +88,8 @@ module ascii_draw {
             utils.changeStyleRule('#grid div', 'height', font_size.height + 'px');
         }
 
-        export function writeToCell(cell: Cell, character: string): void {
+        export function writeToCell(cell: Cell, character: string): void
+        {
             cell.textContent = character;
         }
     }
