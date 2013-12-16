@@ -376,8 +376,8 @@ var ascii_draw;
         var CellPosition = utils.Point;
 
         grid.container;
-        var nrows = 0;
-        var ncols = 0;
+        grid.nrows = 0;
+        grid.ncols = 0;
 
         grid.emptyCell = ' ';
 
@@ -416,30 +416,30 @@ var ascii_draw;
         grid.getTargetCell = getTargetCell;
 
         function setSize(new_nrows, new_ncols) {
-            for (var r = nrows; r < new_nrows; r++) {
+            for (var r = grid.nrows; r < new_nrows; r++) {
                 grid.container.appendChild(document.createElement('div'));
             }
 
-            for (var r = nrows; r > new_nrows; r--) {
+            for (var r = grid.nrows; r > new_nrows; r--) {
                 grid.container.removeChild(grid.container.children[r]);
             }
 
             for (var r = 0; r < new_nrows; r++) {
                 var row = getRow(r);
-                for (var c = ncols; c < new_ncols; c++) {
+                for (var c = grid.ncols; c < new_ncols; c++) {
                     var cell = row.appendChild(document.createElement('span'));
                     writeToCell(cell, grid.emptyCell);
                 }
 
-                for (var c = ncols; c > new_ncols; c--) {
+                for (var c = grid.ncols; c > new_ncols; c--) {
                     row.removeChild(row.children[r]);
                 }
             }
 
-            nrows = new_nrows;
-            ncols = new_ncols;
+            grid.nrows = new_nrows;
+            grid.ncols = new_ncols;
 
-            ascii_draw.gridstatus.textContent = 'Grid size: ' + nrows + 'x' + ncols + ' (' + nrows * ncols + ')';
+            ascii_draw.gridstatus.textContent = 'Grid size: ' + grid.nrows + 'x' + grid.ncols + ' (' + grid.nrows * grid.ncols + ')';
         }
 
         function changeFont() {
@@ -644,7 +644,19 @@ var ascii_draw;
         RectangleCommand.prototype.change = function (pos) {
             // FIXME: set end_selection at parent function
             if (!this.completed) {
+                // FIXME: move this to parent function
+                if (pos.isEqual(ascii_draw.end_highlight)) {
+                    return;
+                }
+
                 this.updateRectangleAndHighlight(pos);
+
+                ascii_draw.end_highlight = pos;
+
+                // update status bar
+                var new_highlight = new Rectangle(ascii_draw.begin_highlight, ascii_draw.end_highlight, true);
+                var selectionstatus = document.getElementById('selectionstatus');
+                selectionstatus.textContent = 'Highlight: ' + new_highlight.getHeight() + 'x' + new_highlight.getWidth();
             }
         };
 
@@ -665,194 +677,59 @@ var ascii_draw;
             this.save_selection = ascii_draw.selection.set(this.save_selection);
         };
 
-        /* Return the interval of cells that are in [begin, change[
-        but not in [begin, keep[.
-        
-        Examples:
-        
-        begin keep change       keep  begin change       begin change keep
-        |     |     |           |     |     |            |      |     |
-        v     v     v           v     v     v            v      v     v
-        IIIIII                   IIIII
-        
-        */
-        RectangleCommand.prototype.getAdjacentEdge = function (begin, keep, change) {
-            var interval;
-            if (change < begin && change < keep) {
-                interval = [change + 1, Math.min(begin - 1, keep)];
-            } else if (change > begin && change > keep) {
-                interval = [Math.max(begin + 1, keep), change - 1];
-            }
-
-            if (interval && interval[0] <= interval[1]) {
-                return interval;
-            } else {
-                return null;
-            }
-        };
-
-        RectangleCommand.prototype.clearCell = function (cell) {
-            var character = cell['data-committed-content'];
-            ascii_draw.grid.writeToCell(cell, character);
-            ascii_draw.setHighlighted(cell, false);
-        };
-
-        RectangleCommand.prototype.paintCell = function (cell, character) {
-            ascii_draw.grid.writeToCell(cell, character);
-            ascii_draw.setHighlighted(cell, true);
-        };
-
-        RectangleCommand.prototype.updateCorners = function (begin, end, paint) {
-            var character = '+';
-
-            var row = ascii_draw.grid.getRow(begin.row);
-
-            var cell = ascii_draw.grid.getCell(row, begin.col);
-            if (paint) {
-                this.paintCell(cell, '+');
-            } else {
-                this.clearCell(cell);
-            }
-
-            cell = ascii_draw.grid.getCell(row, end.col);
-            if (paint) {
-                this.paintCell(cell, '+');
-            } else {
-                this.clearCell(cell);
-            }
-
-            row = ascii_draw.grid.getRow(end.row);
-
-            cell = ascii_draw.grid.getCell(row, begin.col);
-            if (paint) {
-                this.paintCell(cell, '+');
-            } else {
-                this.clearCell(cell);
-            }
-
-            cell = ascii_draw.grid.getCell(row, end.col);
-            if (paint) {
-                this.paintCell(cell, '+');
-            } else {
-                this.clearCell(cell);
-            }
-        };
-
-        /* Paint or clear a flat rectangle.
-        
-        paintEdge([10, 20], 3, true, true) fills the col 3 from row 10
-        to row 20 with '|' and highlights the area.
-        */
-        RectangleCommand.prototype.paintEdge = function (interval, missing_coord, vertical, paint) {
-            if (interval) {
-                if (vertical) {
-                    for (var r = interval[0]; r <= interval[1]; r++) {
-                        var row = ascii_draw.grid.getRow(r);
-                        var cell = ascii_draw.grid.getCell(row, missing_coord);
-                        if (paint) {
-                            this.paintCell(cell, '|');
-                        } else {
-                            this.clearCell(cell);
-                        }
-                    }
-                } else {
-                    var row = ascii_draw.grid.getRow(missing_coord);
-                    for (var c = interval[0]; c <= interval[1]; c++) {
-                        var cell = ascii_draw.grid.getCell(row, c);
-                        if (paint) {
-                            this.paintCell(cell, '-');
-                        } else {
-                            this.clearCell(cell);
-                        }
-                    }
+        RectangleCommand.prototype.fillArrayWithRectangle = function (array, rect) {
+            for (var r = 0; r < ascii_draw.grid.nrows; r++) {
+                array[r] = new Array(ascii_draw.grid.ncols);
+                for (var c = 0; c < ascii_draw.grid.ncols; c++) {
+                    array[r][c] = null;
                 }
             }
+            for (var c = rect.left + 1; c <= rect.right - 1; c++) {
+                array[rect.top][c] = '-';
+                array[rect.bottom][c] = '-';
+            }
+            for (var r = rect.top + 1; r <= rect.bottom - 1; r++) {
+                array[r][rect.left] = '|';
+                array[r][rect.right] = '|';
+            }
+            array[rect.top][rect.left] = '+';
+            array[rect.bottom][rect.left] = '+';
+            array[rect.top][rect.right] = '+';
+            array[rect.bottom][rect.right] = '+';
         };
 
-        /*
-        getInnerInterval(20, 10) returns [11, 19].
-        */
-        RectangleCommand.prototype.getInnerInterval = function (val1, val2) {
-            return [
-                Math.min(val1, val2) + 1,
-                Math.max(val1, val2) - 1];
-        };
-
-        /* Clear previous selection, paint new selection, update begin/end
-        selection and selectionstatus.
+        /* Clear previous selection and paint new selection
         */
         RectangleCommand.prototype.updateRectangleAndHighlight = function (new_end_highlight) {
-            // FIXME: move this to parent function
-            if (new_end_highlight.isEqual(ascii_draw.end_highlight)) {
-                return;
-            }
+            var grid_old = new Array(ascii_draw.grid.nrows);
+            this.fillArrayWithRectangle(grid_old, new Rectangle(ascii_draw.begin_highlight, ascii_draw.end_highlight, true));
+            var grid_new = new Array(ascii_draw.grid.nrows);
+            this.fillArrayWithRectangle(grid_new, new Rectangle(ascii_draw.begin_highlight, new_end_highlight, true));
 
-            // clear
-            this.updateCorners(ascii_draw.begin_highlight, ascii_draw.end_highlight, false);
-
-            var clear;
-
-            // adjacent horizontal
-            clear = this.getAdjacentEdge(ascii_draw.begin_highlight.col, new_end_highlight.col, ascii_draw.end_highlight.col); /* change */
-            this.paintEdge(clear, ascii_draw.begin_highlight.row, false, false);
-
-            // opposite horizontal
-            // don't clear the opposite edge if it overlaps with the adjacent edge
-            if (ascii_draw.begin_highlight.row != ascii_draw.end_highlight.row) {
-                if (new_end_highlight.row != ascii_draw.end_highlight.row) {
-                    // The edge is on a new row. Update the entire edge.
-                    clear = this.getInnerInterval(ascii_draw.begin_highlight.col, ascii_draw.end_highlight.col);
+            for (var r = 0; r < ascii_draw.grid.nrows; r++) {
+                var row = null;
+                for (var c = 0; c < ascii_draw.grid.ncols; c++) {
+                    var old_content = grid_old[r][c];
+                    var new_content = grid_new[r][c];
+                    if (new_content == old_content) {
+                        continue;
+                    }
+                    if (row == null) {
+                        row = ascii_draw.grid.getRow(r);
+                    }
+                    var cell = ascii_draw.grid.getCell(row, c);
+                    if (new_content == null) {
+                        var character = cell['data-committed-content'];
+                        ascii_draw.grid.writeToCell(cell, character);
+                        ascii_draw.setHighlighted(cell, false);
+                    } else {
+                        ascii_draw.grid.writeToCell(cell, new_content);
+                        if (old_content == null) {
+                            ascii_draw.setHighlighted(cell, true);
+                        }
+                    }
                 }
-
-                // else: The edge is still on the same row.
-                // Only update the part of the edge that changed. This is
-                // the same interval as the adjacent horizontal case.
-                this.paintEdge(clear, ascii_draw.end_highlight.row, false, false);
             }
-
-            // adjacent vertical
-            clear = this.getAdjacentEdge(ascii_draw.begin_highlight.row, new_end_highlight.row, ascii_draw.end_highlight.row);
-            this.paintEdge(clear, ascii_draw.begin_highlight.col, true, false);
-
-            // opposite vertical
-            if (ascii_draw.begin_highlight.col != ascii_draw.end_highlight.col) {
-                if (new_end_highlight.col != ascii_draw.end_highlight.col) {
-                    clear = this.getInnerInterval(ascii_draw.begin_highlight.row, ascii_draw.end_highlight.row);
-                }
-                this.paintEdge(clear, ascii_draw.end_highlight.col, true, false);
-            }
-
-            // paint
-            this.updateCorners(ascii_draw.begin_highlight, new_end_highlight, true);
-
-            var paint;
-
-            // adjacent horizontal
-            paint = this.getAdjacentEdge(ascii_draw.begin_highlight.col, ascii_draw.end_highlight.col, new_end_highlight.col);
-            this.paintEdge(paint, ascii_draw.begin_highlight.row, false, true);
-
-            // opposite horizontal
-            if (new_end_highlight.row != ascii_draw.end_highlight.row) {
-                paint = this.getInnerInterval(ascii_draw.begin_highlight.col, new_end_highlight.col);
-            }
-            this.paintEdge(paint, new_end_highlight.row, false, true);
-
-            // adjacent vertical
-            paint = this.getAdjacentEdge(ascii_draw.begin_highlight.row, ascii_draw.end_highlight.row, new_end_highlight.row);
-            this.paintEdge(paint, ascii_draw.begin_highlight.col, true, true);
-
-            // opposite vertical
-            if (new_end_highlight.col != ascii_draw.end_highlight.col) {
-                paint = this.getInnerInterval(ascii_draw.begin_highlight.row, new_end_highlight.row);
-            }
-            this.paintEdge(paint, new_end_highlight.col, true, true);
-
-            ascii_draw.end_highlight = new_end_highlight;
-
-            // update status bar
-            var new_highlight = new Rectangle(ascii_draw.begin_highlight, ascii_draw.end_highlight, true);
-            var selectionstatus = document.getElementById('selectionstatus');
-            selectionstatus.textContent = 'Highlight: ' + new_highlight.getHeight() + 'x' + new_highlight.getWidth();
         };
 
         RectangleCommand.prototype.resetHighlight = function (new_position) {

@@ -7,8 +7,8 @@ module ascii_draw
         import CellPosition = utils.Point;
 
         export var container: HTMLDivElement;
-        var nrows: number = 0;
-        var ncols: number = 0;
+        export var nrows: number = 0;
+        export var ncols: number = 0;
 
         export var emptyCell: string = ' ';
 
