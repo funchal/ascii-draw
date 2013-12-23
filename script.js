@@ -857,8 +857,9 @@ var ascii_draw;
                 this.dx = pos.row - ascii_draw.end_highlight.row;
                 this.dy = pos.col - ascii_draw.end_highlight.col;
                 ascii_draw.end_highlight = pos;
+
+                this.moveContents();
                 ascii_draw.selection.move(this.dx, this.dy);
-                // FIXME: move contents
             }
         };
 
@@ -877,6 +878,59 @@ var ascii_draw;
 
         MoveCommand.prototype.redo = function () {
             ascii_draw.selection.move(this.dx, this.dy);
+        };
+
+        MoveCommand.prototype.moveContents = function () {
+            var grid_old = new Array(ascii_draw.grid.nrows);
+            for (var r = 0; r < ascii_draw.grid.nrows; r++) {
+                grid_old[r] = new Array(ascii_draw.grid.ncols);
+                for (var c = 0; c < ascii_draw.grid.ncols; c++) {
+                    grid_old[r][c] = null;
+                }
+            }
+            var grid_new = new Array(ascii_draw.grid.nrows);
+            for (var r = 0; r < ascii_draw.grid.nrows; r++) {
+                grid_new[r] = new Array(ascii_draw.grid.ncols);
+                for (var c = 0; c < ascii_draw.grid.ncols; c++) {
+                    grid_new[r][c] = null;
+                }
+            }
+
+            for (var s = 0; s < ascii_draw.selection.contents.length; s++) {
+                var rect = ascii_draw.selection.contents[s];
+                for (var r = rect.top; r <= rect.bottom; r++) {
+                    var row = ascii_draw.grid.getRow(r);
+                    for (var c = rect.left; c <= rect.right; c++) {
+                        var cell = ascii_draw.grid.getCell(row, c);
+                        var cell_contents = cell.textContent;
+                        grid_old[r][c] = cell_contents;
+
+                        // TODO: check grid bounds
+                        grid_new[r + this.dx][c + this.dy] = cell_contents;
+                    }
+                }
+            }
+
+            for (var r = 0; r < ascii_draw.grid.nrows; r++) {
+                var row = null;
+                for (var c = 0; c < ascii_draw.grid.ncols; c++) {
+                    var old_content = grid_old[r][c];
+                    var new_content = grid_new[r][c];
+                    if (new_content == old_content) {
+                        continue;
+                    }
+                    if (row == null) {
+                        row = ascii_draw.grid.getRow(r);
+                    }
+                    var cell = ascii_draw.grid.getCell(row, c);
+                    if (new_content == null) {
+                        var character = cell['data-committed-content'];
+                        ascii_draw.grid.writeToCell(cell, character);
+                    } else {
+                        ascii_draw.grid.writeToCell(cell, new_content);
+                    }
+                }
+            }
         };
         return MoveCommand;
     })();
