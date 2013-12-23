@@ -843,13 +843,40 @@ var ascii_draw;
 
     var MoveCommand = (function () {
         function MoveCommand() {
+            // shift since last call to change()
             this.dx = 0;
             this.dy = 0;
+            // shift since last call to initiate()
+            this.total_dx = 0;
+            this.total_dy = 0;
             this.completed = false;
         }
         MoveCommand.prototype.initiate = function (pos) {
             ascii_draw.begin_highlight = pos;
             ascii_draw.end_highlight = pos;
+
+            this.total_dx = 0;
+            this.total_dy = 0;
+
+            // copy selection contents and commit emptyCell to selected cells
+            this.initial_selection = new Array(ascii_draw.grid.nrows);
+            for (var r = 0; r < ascii_draw.grid.nrows; r++) {
+                this.initial_selection[r] = new Array(ascii_draw.grid.ncols);
+                for (var c = 0; c < ascii_draw.grid.ncols; c++) {
+                    this.initial_selection[r][c] = null;
+                }
+            }
+            for (var s = 0; s < ascii_draw.selection.contents.length; s++) {
+                var rect = ascii_draw.selection.contents[s];
+                for (var r = rect.top; r <= rect.bottom; r++) {
+                    var row = ascii_draw.grid.getRow(r);
+                    for (var c = rect.left; c <= rect.right; c++) {
+                        var cell = ascii_draw.grid.getCell(row, c);
+                        this.initial_selection[r][c] = cell.textContent;
+                        cell['data-committed-content'] = ascii_draw.grid.emptyCell;
+                    }
+                }
+            }
         };
 
         MoveCommand.prototype.change = function (pos) {
@@ -860,6 +887,9 @@ var ascii_draw;
 
                 this.moveContents();
                 ascii_draw.selection.move(this.dx, this.dy);
+
+                this.total_dx += this.dx;
+                this.total_dy += this.dy;
             }
         };
 
@@ -880,42 +910,21 @@ var ascii_draw;
             ascii_draw.selection.move(this.dx, this.dy);
         };
 
+        MoveCommand.prototype.getContent = function (row, col) {
+            if (0 <= row && row < ascii_draw.grid.nrows && 0 <= col && col < ascii_draw.grid.ncols) {
+                return this.initial_selection[row][col];
+            } else {
+                return null;
+            }
+        };
+
         MoveCommand.prototype.moveContents = function () {
-            var grid_old = new Array(ascii_draw.grid.nrows);
-            for (var r = 0; r < ascii_draw.grid.nrows; r++) {
-                grid_old[r] = new Array(ascii_draw.grid.ncols);
-                for (var c = 0; c < ascii_draw.grid.ncols; c++) {
-                    grid_old[r][c] = null;
-                }
-            }
-            var grid_new = new Array(ascii_draw.grid.nrows);
-            for (var r = 0; r < ascii_draw.grid.nrows; r++) {
-                grid_new[r] = new Array(ascii_draw.grid.ncols);
-                for (var c = 0; c < ascii_draw.grid.ncols; c++) {
-                    grid_new[r][c] = null;
-                }
-            }
-
-            for (var s = 0; s < ascii_draw.selection.contents.length; s++) {
-                var rect = ascii_draw.selection.contents[s];
-                for (var r = rect.top; r <= rect.bottom; r++) {
-                    var row = ascii_draw.grid.getRow(r);
-                    for (var c = rect.left; c <= rect.right; c++) {
-                        var cell = ascii_draw.grid.getCell(row, c);
-                        var cell_contents = cell.textContent;
-                        grid_old[r][c] = cell_contents;
-
-                        // TODO: check grid bounds
-                        grid_new[r + this.dx][c + this.dy] = cell_contents;
-                    }
-                }
-            }
-
             for (var r = 0; r < ascii_draw.grid.nrows; r++) {
                 var row = null;
                 for (var c = 0; c < ascii_draw.grid.ncols; c++) {
-                    var old_content = grid_old[r][c];
-                    var new_content = grid_new[r][c];
+                    var old_content = this.getContent(r - this.total_dx, c - this.total_dy);
+                    var new_content = this.getContent(r - this.total_dx - this.dx, c - this.total_dy - this.dy);
+
                     if (new_content == old_content) {
                         continue;
                     }
@@ -924,9 +933,11 @@ var ascii_draw;
                     }
                     var cell = ascii_draw.grid.getCell(row, c);
                     if (new_content == null) {
+                        // restore
                         var character = cell['data-committed-content'];
                         ascii_draw.grid.writeToCell(cell, character);
                     } else {
+                        // override
                         ascii_draw.grid.writeToCell(cell, new_content);
                     }
                 }
