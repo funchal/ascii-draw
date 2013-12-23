@@ -62,6 +62,7 @@ module ascii_draw
                 for (var c = ncols; c < new_ncols; c++) {
                     var cell = <Cell>row.appendChild(document.createElement('span'));
                     writeToCell(cell, emptyCell);
+                    cell['data-committed-content'] = emptyCell;
                 }
 
                 for (var c = ncols; c > new_ncols; c--) {

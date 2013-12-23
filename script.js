@@ -429,6 +429,7 @@ var ascii_draw;
                 for (var c = grid.ncols; c < new_ncols; c++) {
                     var cell = row.appendChild(document.createElement('span'));
                     writeToCell(cell, grid.emptyCell);
+                    cell['data-committed-content'] = grid.emptyCell;
                 }
 
                 for (var c = grid.ncols; c > new_ncols; c--) {
