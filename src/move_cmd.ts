@@ -18,7 +18,8 @@ module ascii_draw
         total_dy: number = 0;
 
         completed: boolean = false;
-        initial_selection: Array<Array<string>>;
+        initial_selection: Array<Array<string>> = null;
+        move_contents: boolean = true;
 
         initiate(pos: CellPosition)
         {
@@ -28,24 +29,8 @@ module ascii_draw
             this.total_dx = 0;
             this.total_dy = 0;
 
-            // copy selection contents and commit emptyCell to selected cells
-            this.initial_selection = new Array(grid.nrows);
-            for (var r = 0; r < grid.nrows; r++) {
-                this.initial_selection[r] = new Array(grid.ncols);
-                for (var c = 0; c < grid.ncols; c++) {
-                    this.initial_selection[r][c] = null;
-                }
-            }
-            for (var s = 0; s < selection.contents.length; s++) {
-                var rect = selection.contents[s];
-                for (var r = rect.top; r <= rect.bottom; r++) {
-                    var row = grid.getRow(r);
-                    for (var c = rect.left; c <= rect.right; c++) {
-                        var cell = grid.getCell(row, c);
-                        this.initial_selection[r][c] = cell.textContent;
-                        cell['data-committed-content'] = grid.emptyCell;
-                    }
-                }
+            if (this.move_contents) {
+                this.backup_contents();
             }
         }
 
@@ -56,7 +41,9 @@ module ascii_draw
                 this.dy = pos.col - end_highlight.col;
                 end_highlight = pos;
 
-                this.moveContents();
+                if (this.move_contents) {
+                    this.moveContents();
+                }
                 selection.move(this.dx, this.dy);
 
                 this.total_dx += this.dx;
@@ -121,5 +108,28 @@ module ascii_draw
                 }
             }
         }
+
+        backup_contents(): void {
+            // copy selection contents and commit emptyCell to selected cells
+            this.initial_selection = new Array(grid.nrows);
+            for (var r = 0; r < grid.nrows; r++) {
+                this.initial_selection[r] = new Array(grid.ncols);
+                for (var c = 0; c < grid.ncols; c++) {
+                    this.initial_selection[r][c] = null;
+                }
+            }
+            for (var s = 0; s < selection.contents.length; s++) {
+                var rect = selection.contents[s];
+                for (var r = rect.top; r <= rect.bottom; r++) {
+                    var row = grid.getRow(r);
+                    for (var c = rect.left; c <= rect.right; c++) {
+                        var cell = grid.getCell(row, c);
+                        this.initial_selection[r][c] = cell.textContent;
+                        cell['data-committed-content'] = grid.emptyCell;
+                    }
+                }
+            }
+        }
+
     }
 }

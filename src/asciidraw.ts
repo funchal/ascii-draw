@@ -136,8 +136,16 @@ module ascii_draw
                     break;
             }
 
-            if (displacement !== null) {
-                //controllers.current.onArrowDown(displacement);
+            if (commands.pending === null && 
+                    displacement !== null && 
+                    selection.isUnit()) {
+                var cmd = new MoveCommand();
+                cmd.move_contents = false;
+                var rect: Rectangle = <Rectangle>selection.contents[0];
+                cmd.initiate(new CellPosition(rect.top, rect.left));
+                cmd.change(new CellPosition(displacement[0], displacement[1]));
+                cmd.complete();
+                commands.complete(cmd);
             }
         }
 

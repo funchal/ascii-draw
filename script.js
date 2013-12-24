@@ -850,6 +850,8 @@ var ascii_draw;
             this.total_dx = 0;
             this.total_dy = 0;
             this.completed = false;
+            this.initial_selection = null;
+            this.move_contents = true;
         }
         MoveCommand.prototype.initiate = function (pos) {
             ascii_draw.begin_highlight = pos;
@@ -858,24 +860,8 @@ var ascii_draw;
             this.total_dx = 0;
             this.total_dy = 0;
 
-            // copy selection contents and commit emptyCell to selected cells
-            this.initial_selection = new Array(ascii_draw.grid.nrows);
-            for (var r = 0; r < ascii_draw.grid.nrows; r++) {
-                this.initial_selection[r] = new Array(ascii_draw.grid.ncols);
-                for (var c = 0; c < ascii_draw.grid.ncols; c++) {
-                    this.initial_selection[r][c] = null;
-                }
-            }
-            for (var s = 0; s < ascii_draw.selection.contents.length; s++) {
-                var rect = ascii_draw.selection.contents[s];
-                for (var r = rect.top; r <= rect.bottom; r++) {
-                    var row = ascii_draw.grid.getRow(r);
-                    for (var c = rect.left; c <= rect.right; c++) {
-                        var cell = ascii_draw.grid.getCell(row, c);
-                        this.initial_selection[r][c] = cell.textContent;
-                        cell['data-committed-content'] = ascii_draw.grid.emptyCell;
-                    }
-                }
+            if (this.move_contents) {
+                this.backup_contents();
             }
         };
 
@@ -885,7 +871,9 @@ var ascii_draw;
                 this.dy = pos.col - ascii_draw.end_highlight.col;
                 ascii_draw.end_highlight = pos;
 
-                this.moveContents();
+                if (this.move_contents) {
+                    this.moveContents();
+                }
                 ascii_draw.selection.move(this.dx, this.dy);
 
                 this.total_dx += this.dx;
@@ -939,6 +927,28 @@ var ascii_draw;
                     } else {
                         // override
                         ascii_draw.grid.writeToCell(cell, new_content);
+                    }
+                }
+            }
+        };
+
+        MoveCommand.prototype.backup_contents = function () {
+            // copy selection contents and commit emptyCell to selected cells
+            this.initial_selection = new Array(ascii_draw.grid.nrows);
+            for (var r = 0; r < ascii_draw.grid.nrows; r++) {
+                this.initial_selection[r] = new Array(ascii_draw.grid.ncols);
+                for (var c = 0; c < ascii_draw.grid.ncols; c++) {
+                    this.initial_selection[r][c] = null;
+                }
+            }
+            for (var s = 0; s < ascii_draw.selection.contents.length; s++) {
+                var rect = ascii_draw.selection.contents[s];
+                for (var r = rect.top; r <= rect.bottom; r++) {
+                    var row = ascii_draw.grid.getRow(r);
+                    for (var c = rect.left; c <= rect.right; c++) {
+                        var cell = ascii_draw.grid.getCell(row, c);
+                        this.initial_selection[r][c] = cell.textContent;
+                        cell['data-committed-content'] = ascii_draw.grid.emptyCell;
                     }
                 }
             }
@@ -1072,8 +1082,14 @@ var ascii_draw;
                     break;
             }
 
-            if (displacement !== null) {
-                //controllers.current.onArrowDown(displacement);
+            if (ascii_draw.commands.pending === null && displacement !== null && ascii_draw.selection.isUnit()) {
+                var cmd = new ascii_draw.MoveCommand();
+                cmd.move_contents = false;
+                var rect = ascii_draw.selection.contents[0];
+                cmd.initiate(new CellPosition(rect.top, rect.left));
+                cmd.change(new CellPosition(displacement[0], displacement[1]));
+                cmd.complete();
+                ascii_draw.commands.complete(cmd);
             }
         }
 
