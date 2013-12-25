@@ -76,7 +76,7 @@ module ascii_draw
             if (0 <= row && row < grid.nrows && 0 <= col && col < grid.ncols) {
                 return this.initial_selection[row][col];
             } else {
-                return null;
+                return grid.emptyCell;
             }
         }
 
@@ -97,7 +97,7 @@ module ascii_draw
                         row = grid.getRow(r);
                     }
                     var cell = grid.getCell(row, c);
-                    if (new_content == null) {
+                    if (new_content == grid.emptyCell) {
                         // restore
                         var character = cell['data-committed-content'];
                         grid.writeToCell(cell, character);
@@ -115,7 +115,7 @@ module ascii_draw
             for (var r = 0; r < grid.nrows; r++) {
                 this.initial_selection[r] = new Array(grid.ncols);
                 for (var c = 0; c < grid.ncols; c++) {
-                    this.initial_selection[r][c] = null;
+                    this.initial_selection[r][c] = grid.emptyCell;
                 }
             }
             for (var s = 0; s < selection.contents.length; s++) {

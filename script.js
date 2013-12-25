@@ -902,7 +902,7 @@ var ascii_draw;
             if (0 <= row && row < ascii_draw.grid.nrows && 0 <= col && col < ascii_draw.grid.ncols) {
                 return this.initial_selection[row][col];
             } else {
-                return null;
+                return ascii_draw.grid.emptyCell;
             }
         };
 
@@ -920,7 +920,7 @@ var ascii_draw;
                         row = ascii_draw.grid.getRow(r);
                     }
                     var cell = ascii_draw.grid.getCell(row, c);
-                    if (new_content == null) {
+                    if (new_content == ascii_draw.grid.emptyCell) {
                         // restore
                         var character = cell['data-committed-content'];
                         ascii_draw.grid.writeToCell(cell, character);
@@ -938,7 +938,7 @@ var ascii_draw;
             for (var r = 0; r < ascii_draw.grid.nrows; r++) {
                 this.initial_selection[r] = new Array(ascii_draw.grid.ncols);
                 for (var c = 0; c < ascii_draw.grid.ncols; c++) {
-                    this.initial_selection[r][c] = null;
+                    this.initial_selection[r][c] = ascii_draw.grid.emptyCell;
                 }
             }
             for (var s = 0; s < ascii_draw.selection.contents.length; s++) {
